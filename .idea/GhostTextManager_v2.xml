@@ -1,0 +1,630 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GhostTextManager">
+    <option name="inputs">
+      <map>
+        <entry key="AJOUTE les applications dans admin">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761069415971" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="[plugin:vite:import-analysis] Failed to resolve import &quot;../screens/AssistantToGrade&quot; from &quot;src/routes/App.jsx&quot;. Does the file exist?&#10;C:/Users/Administrateur/Videos/Syntaxe/syntaxe-gu/web/src/routes/App.jsx:30:29&#10;40 |  import AssistantTPTD from &quot;../screens/AssistantTPTD&quot;;&#10;41 |  import AssistantQuizzes from &quot;../screens/AssistantQuizzes&quot;;&#10;42 |  import AssistantToGrade from &quot;../screens/AssistantToGrade&quot;;&#10;   |                                ^&#10;43 |  import AssistantProfile from &quot;../screens/AssistantProfile&quot;;&#10;44 |  export default function App() {">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761057858683" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="^maintenant tu commence avec la page de connexion quand chaque connexion soit appliqué selon le role compris?&#10;&#10;donc utilise le backend de django et tu enlev le dashbord dans http://localhost:5173/ utilise la page de connexion compris?&#10;&#10;donc plus de données mockée mais de vrai donnée depuis la base de données&#10;&#10;fait tout ce que tu as fait donc remplace le donnée mockée">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761063653308" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="avant de continuer le backend je veux d'abord terminer le frontend avec react&#10;&#10;on y vas avec toute les roles en utilisant d'abord le donnée mockée &#10;&#10;je veux le presenter deja">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761050840765" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="chunk-NUMECXU6.js?v=138c9bd2:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools&#10;react-router-dom.js?v=138c9bd2:4393 ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.&#10;warnOnce @&lt;file_name&gt;&#10;react-router-dom.js?v=138c9bd2:4393 ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.&#10;warnOnce @&lt;file_name&gt;&#10;(index):1 Access to XMLHttpRequest at 'http://localhost:8000/api/auth/me/' from origin 'http://localhost:5173' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'. The credentials mode of requests initiated by the XMLHttpRequest is controlled by the withCredentials attribute.&#10;:8000/api/auth/me/:1  Failed to load resource: net::ERR_FAILED&#10;(index):1 Access to XMLHttpRequest at 'http://localhost:8000/api/auth/me/' from origin 'http://localhost:5173' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: The value of the 'Access-Control-Allow-Origin' header in the response must not be the wildcard '*' when the request's credentials mode is 'include'. The credentials mode of requests initiated by the XMLHttpRequest is controlled by the withCredentials attribute.&#10;:8000/api/auth/me/:1  Failed to load resource: net::ERR_FAILED">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761065570160" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="chunk-NUMECXU6.js?v=138c9bd2:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools&#10;react-router-dom.js?v=138c9bd2:4393 ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.&#10;warnOnce @&lt;file_name&gt;&#10;react-router-dom.js?v=138c9bd2:4393 ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.&#10;warnOnce @&lt;file_name&gt;&#10;:8000/api/student/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/student/meta:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/student/grades/recent:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/student/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/student/meta:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/student/grades/recent:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;&#10;&#10;et recommence la base de donnée a zero pour bien organiser ca donc ajout de role egalement, donc tout avec le frontend&#10;&#10;vas y">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761066964245" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="continuer">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="8.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761065218739" />
+                  <option value="1761064920661" />
+                  <option value="1761064838984" />
+                  <option value="1761064451876" />
+                  <option value="1761064382643" />
+                  <option value="1761064245669" />
+                  <option value="1761064212420" />
+                  <option value="1761061542181" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="continuer et met tout fonctionnel ne me pose plus la question moi j'attends le resultat final">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761061091306" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="continuer tout donc avec le deux cahier de charge et tu fusionne ca pour que ca soit plus fonctionnelle">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761048382418" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="corrige ca [plugin:vite:import-analysis] Failed to resolve import &quot;../screens/AssistantProfile&quot; from &quot;src/routes/App.jsx&quot;. Does the file exist?&#10;C:/Users/Administrateur/Videos/Syntaxe/syntaxe-gu/web/src/routes/App.jsx:31:29&#10;41 |  import AssistantQuizzes from &quot;../screens/AssistantQuizzes&quot;;&#10;42 |  import AssistantToGrade from &quot;../screens/AssistantToGrade&quot;;&#10;43 |  import AssistantProfile from &quot;../screens/AssistantProfile&quot;;&#10;   |                                ^&#10;44 |  export default function App() {&#10;45 |    return /* @&lt;file_name&gt;">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761057967059" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="corrige ca et continuer les etapes suivantes&#10;&#10;[plugin:vite:import-analysis] Failed to resolve import &quot;./store/store&quot; from &quot;src/main.jsx&quot;. Does the file exist?&#10;C:/Users/Administrateur/Videos/Syntaxe/syntaxe-gu/web/src/main.jsx:6:18&#10;5  |  import { BrowserRouter } from &quot;react-router-dom&quot;;&#10;6  |  import App from &quot;./routes/App&quot;;&#10;7  |  import store from &quot;./store/store&quot;;&#10;   |                     ^&#10;8  |  createRoot(document.getElementById(&quot;root&quot;)).render(&#10;9  |    /* @&lt;file_name&gt;&#10;    at TransformPluginContext._formatError (file:///C:/Users/Administrateur/Videos/Syntaxe/syntaxe-gu/web/node_modules/vite/dist/node/c">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761050542328" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="dans Nouveau TP/TD, quizz, met le champ de code de cours, auditoire, et dans Nouveau TP/TD ajoute la date de fin de remettre tu comprends?">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761058453295" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="dans Nouveau TP/TD, quizz, met le champ de code de cours, auditoire, et dans Nouveau TP/TD dans un combobox c'est mieux">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761058704252" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="dans le frontend dans ke dossier web &#10;maintenant je veux que tu creer encore un dossier backend c'est la ou tu mettra toute la base de donnée de django en lisant le frontend">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761068064822" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="ecrit en francais">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761049682232" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="ecrit le requirements.txt y a rien">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761049461543" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="fait ca et ajoute aussi &#10;l'onglet notifications lors de soumission de TP/TD ou Quiz d'etudiant de ses auditoires">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761059616376" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="fait tout fait vite et corrige ca &#10;&#10;[plugin:vite:react-babel] C:\Users\Administrateur\Videos\Syntaxe\syntaxe-gu\web\src\routes\App.jsx: Identifier 'StudentNotifications' has already been declared. (32:7)&#10;  35 |   return (&#10;C:/Users/Administrateur/Videos/Syntaxe/syntaxe-gu/web/src/routes/App.jsx:32:7&#10;30 |  import AssistantToGrade from '../screens/AssistantToGrade'&#10;31 |  import AssistantProfile from '../screens/AssistantProfile'&#10;32 |  import StudentNotifications from '../screens/StudentNotifications'&#10;   |         ^&#10;33 |  &#10;34 |  export default function App() {">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761059996253" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="fait tout ne me demandes plus les etapes suivantes">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761057152347" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="implement ca tous les modules restants (Caisse, Bibliothèque, PDG, DG, SGA, SGAD, Section, Département, Jury, Apparitorat, IT) avec:&#10;KPIs + listes (mock), filtres, toasts, squelettes&#10;Pages et routes intégrées (accès direct depuis le portail)&#10;Notifications Assistant sur soumissions">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761061187751" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="je me suis connecté entant que etudiant mais ca me dirige vers assisant pourquoi?&#10;&#10;et j'ai cette erreur met aussi la deconnexion">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761065995477" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="je n'arrive pas a me connecter dans etudiant comment acceder">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761052842536" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="je veux que tu termine tous les modules demandés (Caisse, Bibliothèque, PDG, DG, SGA, SGAD, Section, Département, Jury, Apparitorat, IT) avec:&#10;pages + routes,&#10;KPIs + listes mock (avec filtres),&#10;toasts/squelettes,&#10;&#10;&#10;ecrit en francais avec les données mockée">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761061447083" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="mockApi.js:1   Failed to load resource: the server responded with a status of 500 (Internal Server Error)&#10;[NEW] Explain Console errors by using Copilot in Edge: click&#10;         &#10;         to explain an error. &#10;        Learn more&#10;        Don't show again">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761051012725" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="ok avec les cahier de charge, integre toutes le fonctionnalités d'etudiants dans ca page">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761053453122" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="ok cree ca dans un cahier de charge fini.md et tu commences a coder">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761048008103" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="ok maintenant &#10;&#10;continuer avec tout ca &#10;&#10;CAI&#10;Caisse&#10;Paiements, Reçus&#10;BIB&#10;Bibliothèque&#10;Catalogue, Prêts, Réservations&#10;PDG&#10;PDG&#10;Vue globale &amp; KPIs&#10;DG&#10;Directeur Général&#10;Pilotage&#10;SGA&#10;SGA&#10;Scolarité académique&#10;SGAD&#10;SGAD&#10;Administratif &amp; finances&#10;SEC&#10;Chef de section&#10;Pilotage section&#10;DEP&#10;Chef de département&#10;Cours &amp; auditoires&#10;JUR&#10;Jury&#10;Soutenances&#10;APP&#10;Apparitorat&#10;Présences, discipline&#10;IT&#10;Service IT&#10;&#10;&#10;vas-y tous complet">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761060630704" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="ok vas y">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761059409881" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="oublions d'abord le backend maintenant concentrons nous sur le frontend met le design  ultra moderne et plus professionnel&#10;&#10;fait vraiment ce que tu sais faire plus bien presenter ca tu comprends?&#10;&#10;vas - y lance&#10;&#10;on termine d'abord le frontend">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761051189936" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="oui Ok tu peux continuer avec Assistant mais ajoute le profil de l'etudiant compris?">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761056606472" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="oui et puis tu doit mettre tout le role aussi comme Rôles et permissions&#10;Références (src/store/slices/authSlice.js):&#10;&#10;pdg, directeur_general, sga, sgad, chef_section, chef_departement, enseignant, assistant, apparitorat, caisse, service_it, etudiant, bibliothecaire, jury&#10;&#10;donc tu lis seulement le cahier de charge tu comprends?">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761047830473" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="oui fait ca j'attends le resultat">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761060909540" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="oui on y va avec les finitions, et tu ajoutes une page “Notes” complète (moyenne, détails par cours, export CSV) et “Documents” (attestations/inscriptions) dans l’espace Étudiant">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761056019855" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="oui on y va dans les prochaines ameliorations front &#10;Remplir Discussions (chat par cours) avec envoi/affichage des messages par cours&#10;Pages Notifications, Calendrier, Bibliothèque, Paiements avec UI détaillée (listes, filtres, badges, formats montant/date)&#10;Toaster/notifications UI après soumissions&#10;Micro-interactions/animations (ultra moderne)&#10;et complete ca &#10;&#10;Discussions (chat de cours), ou&#10;Notifications et Calendrier, ou&#10;Bibliothèque et Paiements ?">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761055180969" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="oui oui">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="3.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761059822819" />
+                  <option value="1761059340109" />
+                  <option value="1761058850831" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="oui oui donc tous ce qui sera bien pour assistant et professionnel pour une université">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761059109871" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="oui oui et corrige ca &#10;&#10;[plugin:vite:import-analysis] Failed to resolve import &quot;../screens/AssistantQuizzes&quot; from &quot;src/routes/App.jsx&quot;. Does the file exist?&#10;C:/Users/Administrateur/Videos/Syntaxe/syntaxe-gu/web/src/routes/App.jsx:29:29&#10;39 |  import AssistantGrades from &quot;../screens/AssistantGrades&quot;;&#10;40 |  import AssistantTPTD from &quot;../screens/AssistantTPTD&quot;;&#10;41 |  import AssistantQuizzes from &quot;../screens/AssistantQuizzes&quot;;&#10;   |                                ^&#10;42 |  import AssistantToGrade from &quot;../screens/AssistantToGrade&quot;;&#10;43 |  import AssistantProfile from &quot;../screens/AssistantProfile&quot;;">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761057697654" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="oui oui et corrige ca [plugin:vite:import-analysis] Failed to resolve import &quot;../screens/AssistantTPTD&quot; from &quot;src/routes/App.jsx&quot;. Does the file exist?&#10;C:/Users/Administrateur/Videos/Syntaxe/syntaxe-gu/web/src/routes/App.jsx:28:26&#10;38 |  import AssistantAuditoriums from &quot;../screens/AssistantAuditoriums&quot;;&#10;39 |  import AssistantGrades from &quot;../screens/AssistantGrades&quot;;&#10;40 |  import AssistantTPTD from &quot;../screens/AssistantTPTD&quot;;&#10;   |                             ^&#10;41 |  import AssistantQuizzes from &quot;../screens/AssistantQuizzes&quot;;&#10;42 |  import AssistantToGrade from &quot;../screens/AssistantToGrade&quot;;">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761057582551" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="oui oui et je veux ajouter ceci dans etudiant,  l'onglet pour mes cours d'ou l'etudiant verra ces cours de son auditoire, discussion de cours donc un chat, son profil, notifications (de tp/td, quizz, bientot nous allons chasser pour les frais, les examens bientot, etc..) calendrier academique, mes travaux, bibliotheque, paiement; et autre pour les universiter dans chaque cours met le credit">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761054836291" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="oui oui met tout ce qu'il faut pour etudiant et rend la page plus professionnel et ultra design qui sera beau a voir a l'oeil pour attirer plus de clients &#10;&#10;et tu met le tableau de bord bien organiser, les menus lateral &#10;&#10;j'aurai aussi besoin de afficher l'auditoire, session , departement et autres debrouit toi fais en tant qu'expert">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761054020866" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="oui oui vas y et ajoutes toutes les applications de cours, roles ainsi de suite">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761068789704" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="oui oui vas-y">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761055420733" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="oui tu melange assistant et enseignant ils sont la meme personne tu met son tableau de bord, ses auditoires ou il donne cours, les notes de chaque etudiant par auditoire, son profil, et affiche tous ces cours par auditoire et le menu lateral comme dans l'etudiant donc met tout">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761056993308" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="parfait continuer et mettre le table dans admin&#10;&#10;et puis on commence le frontend directement">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761050183835" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="pas comme ca donc cree vraiment un vrai site web pour l'université tu comprends?&#10;&#10;donc une fois connecté dans l'etudiant on vois juste le donnée de l'etudiant, ainsi de suite tu comprends ?&#10;&#10;vas y fait le">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761051561964" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="resoudre ca et puis tu continues avec etudiant et finaliser ca en suite on ira avec assistant &#10;&#10;[plugin:vite:react-babel] C:\Users\Administrateur\Videos\Syntaxe\syntaxe-gu\web\src\routes\App.jsx: Identifier 'StudentChat' has already been declared. (19:7)&#10;  22 | import StudentLibrary from '../screens/StudentLibrary'&#10;C:/Users/Administrateur/Videos/Syntaxe/syntaxe-gu/web/src/routes/App.jsx:19:7&#10;17 |  import StudentNotes from '../screens/StudentNotes'&#10;18 |  import StudentDocuments from '../screens/StudentDocuments'&#10;19 |  import StudentChat from '../screens/StudentChat'&#10;   |         ^&#10;20 |  import StudentNotifications from '../screens/StudentNotifications'&#10;21 |  import StudentCalendar from '../screens/StudentCalendar'">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761056294959" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="rien du tout change le dashbord de http://localhost:5173/ pour que j'entre partout">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761052940229" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="salut">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761065175415" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="salut ecrit moi en francais et tu lu le cahier de charge tu peut faire ce site de l'université? de A à Z? et la base de donnée django? &#10;&#10;tu prefere commencer par ou ?&#10;&#10;ecrit moi avant de coder si c'est bon je te dirai tu peux coder &#10;&#10;donc je prefere que ca soit un site ultra moderne et plus professionnel donc montre moi de quoi t'es capable de faire ok?&#10;&#10;ecrit en francais">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761047547719" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="supprime toute la base de donnée de django et recommence ca a zero en suivant le frontend tu comprends?&#10;&#10;fait ca">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761067165197" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="suprimer la toute le backend et organise ca tu met App a l'interieur tu ajoute toutes les applications et autres en suivant le front">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761067527314" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
