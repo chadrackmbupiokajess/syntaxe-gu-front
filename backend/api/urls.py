@@ -51,6 +51,4 @@ urlpatterns = [
 
 
     path("", include("accounts.urls")),
-    path("", include("roles.urls")),
-    path("", include("courses.urls")),
 ]
