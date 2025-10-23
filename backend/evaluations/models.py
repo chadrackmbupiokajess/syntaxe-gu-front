@@ -6,7 +6,14 @@ from accounts.models import StudentProfile, AcademicProfile
 
 class Assignment(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='assignments')
-    assistant = models.ForeignKey(AcademicProfile, on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={'role__role': 'assistant'})
+    # Correction du chemin pour limit_choices_to
+    assistant = models.ForeignKey(
+        AcademicProfile, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        limit_choices_to={'user__role__role': 'assistant'}
+    )
     title = models.CharField(max_length=255)
     questionnaire = models.TextField()
     deadline = models.DateTimeField()
@@ -30,7 +37,14 @@ class Submission(models.Model):
 
 class Quiz(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='quizzes')
-    assistant = models.ForeignKey(AcademicProfile, on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={'role__role': 'assistant'})
+    # Correction du chemin pour limit_choices_to
+    assistant = models.ForeignKey(
+        AcademicProfile, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        limit_choices_to={'user__role__role': 'assistant'}
+    )
     title = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
