@@ -1,5 +1,4 @@
 from django.db import models
-from django.contrib.auth.models import User
 
 class Section(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -22,11 +21,46 @@ class Auditoire(models.Model):
         return f"{self.name} - {self.departement.name}"
 
 class Course(models.Model):
+    SESSION_CHOICES = (
+        ('mi-session', 'Mi-Session'),
+        ('session', 'Session'),
+    )
     name = models.CharField(max_length=200)
     auditoire = models.ForeignKey(Auditoire, on_delete=models.CASCADE, related_name='courses')
+    session_type = models.CharField(max_length=20, choices=SESSION_CHOICES, default='session')
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.get_session_type_display()})"
+
+class MiSessionCourseManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(session_type='mi-session')
+
+class MiSessionCourse(Course):
+    objects = MiSessionCourseManager()
+    class Meta:
+        proxy = True
+        verbose_name = 'Cours de Mi-Session'
+        verbose_name_plural = 'Cours de Mi-Session'
+
+    def save(self, *args, **kwargs):
+        self.session_type = 'mi-session'
+        super().save(*args, **kwargs)
+
+class SessionCourseManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(session_type='session')
+
+class SessionCourse(Course):
+    objects = SessionCourseManager()
+    class Meta:
+        proxy = True
+        verbose_name = 'Cours de Session'
+        verbose_name_plural = 'Cours de Session'
+
+    def save(self, *args, **kwargs):
+        self.session_type = 'session'
+        super().save(*args, **kwargs)
 
 class Calendrier(models.Model):
     title = models.CharField(max_length=200)
@@ -37,26 +71,3 @@ class Calendrier(models.Model):
 
     def __str__(self):
         return self.title
-
-class Role(models.Model):
-    ROLE_CHOICES = (
-        ('etudiant', 'Étudiant'),
-        ('assistant', 'Assistant'),
-        ('professeur', 'Professeur'),
-        ('admin', 'Administrateur'),
-    )
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
-    auditoire = models.ForeignKey(Auditoire, on_delete=models.SET_NULL, null=True, blank=True)
-
-    def __str__(self):
-        return f"{self.user.username} - {self.get_role_display()}"
-
-class Paiement(models.Model):
-    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payments')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    date_paid = models.DateTimeField(auto_now_add=True)
-    academic_year = models.CharField(max_length=9) # e.g., "2023-2024"
-
-    def __str__(self):
-        return f"Payment of {self.amount} by {self.student.username} for {self.academic_year}"

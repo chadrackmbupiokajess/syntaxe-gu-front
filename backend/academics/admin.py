@@ -1,11 +1,32 @@
 from django.contrib import admin
 from django.urls import reverse
 from django.http import HttpResponseRedirect
-from django.utils.html import format_html
-from .models import Section, Departement, Auditoire, Course, Calendrier, Role, Paiement
+from .models import (
+    Section, Departement, Auditoire, 
+    Course, MiSessionCourse, SessionCourse, 
+    Calendrier
+)
 
 
-# --- Inlines (pour l'ajout rapide) --- #
+# --- Inlines --- #
+
+class CourseInline(admin.TabularInline):
+    model = Course
+    extra = 1
+    verbose_name_plural = "Ajouter des cours à cet auditoire"
+    fields = ('name', 'session_type')
+
+class MiSessionCourseInline(admin.TabularInline):
+    model = MiSessionCourse
+    extra = 1
+    verbose_name_plural = "Cours de Mi-Session"
+    fields = ('name',)
+
+class SessionCourseInline(admin.TabularInline):
+    model = SessionCourse
+    extra = 1
+    verbose_name_plural = "Cours de Session"
+    fields = ('name',)
 
 class AuditoireInline(admin.TabularInline):
     model = Auditoire
@@ -18,58 +39,39 @@ class DepartementInline(admin.TabularInline):
     verbose_name_plural = "Ajouter des départements à cette section"
 
 
-# --- Configurations de l'Admin avec la nouvelle navigation --- #
+# --- Configurations de l'Admin --- #
 
 @admin.register(Section)
 class SectionAdmin(admin.ModelAdmin):
-    list_display = ('name', 'view_departments_link')
+    list_display = ('name',)
     search_fields = ['name']
     inlines = [DepartementInline]
 
-    def view_departments_link(self, obj):
-        count = obj.departements.count()
-        url = (
-            reverse("admin:academics_departement_changelist")
-            + f"?section__id__exact={obj.id}"
-        )
-        return format_html('<a href="{}">Voir les {} départements</a>', url, count)
-
-    view_departments_link.short_description = "Départements associés"
-
-
 @admin.register(Departement)
 class DepartementAdmin(admin.ModelAdmin):
-    list_display = ('name', 'section', 'view_auditoires_link')
+    list_display = ('name', 'section')
     list_filter = ('section',)
     search_fields = ['name', 'section__name']
     inlines = [AuditoireInline]
 
-    def view_auditoires_link(self, obj):
-        count = obj.auditoires.count()
-        url = (
-            reverse("admin:academics_auditoire_changelist")
-            + f"?departement__id__exact={obj.id}"
-        )
-        return format_html('<a href="{}">Voir les {} auditoires</a>', url, count)
-
-    view_auditoires_link.short_description = "Auditoires associés"
-
     def response_change(self, request, obj):
-        # Redirige vers la liste des départements, filtrée par la section du département modifié.
-        if '_continue' in request.POST or '_addanother' in request.POST:
-            return super().response_change(request, obj)
-        return HttpResponseRedirect(reverse("admin:academics_departement_changelist") + f"?section__id__exact={obj.section.id}")
-
+        return HttpResponseRedirect(reverse("admin:academics_departement_changelist"))
 
 @admin.register(Auditoire)
 class AuditoireAdmin(admin.ModelAdmin):
-    list_display = ('name', 'departement')
+    list_display = ('departement', 'name')
     list_filter = ('departement__section', 'departement')
+    ordering = ('departement', 'name')
     search_fields = ['name', 'departement__name']
+    inlines = [MiSessionCourseInline, SessionCourseInline]
+
+@admin.register(Course)
+class CourseAdmin(admin.ModelAdmin):
+    list_display = ('name', 'auditoire', 'session_type')
+    list_filter = ('auditoire__departement__section', 'auditoire__departement', 'session_type')
+    ordering = ('auditoire__departement', 'auditoire', 'name')
+    search_fields = ['name', 'auditoire__name']
 
 
 # --- Enregistrement des autres modèles --- #
-admin.site.register(Course)
 admin.site.register(Calendrier)
-admin.site.register(Role)
-admin.site.register(Paiement)
