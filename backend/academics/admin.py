@@ -1,39 +1,74 @@
 from django.contrib import admin
+from django.urls import reverse
+from django.http import HttpResponseRedirect
+from django.utils.html import format_html
 from .models import Section, Departement, Auditoire, Course, Calendrier, Role, Paiement
 
 
-# 1. Inline pour les Auditoires
+# --- Inlines (pour l'ajout rapide) --- #
+
 class AuditoireInline(admin.TabularInline):
     model = Auditoire
-    extra = 3
-    verbose_name_plural = "Ajouter des auditoires à ce département (ex: Licence 1, Licence 2...)"
+    extra = 1
+    verbose_name_plural = "Ajouter des auditoires à ce département"
+
+class DepartementInline(admin.TabularInline):
+    model = Departement
+    extra = 1
+    verbose_name_plural = "Ajouter des départements à cette section"
 
 
-# 2. Admin pour les Départements avec la nouvelle logique
-class DepartementAdmin(admin.ModelAdmin):
-    list_display = ('name', 'section')
-    search_fields = ['name', 'section__name']
+# --- Configurations de l'Admin avec la nouvelle navigation --- #
 
-    # Cette fonction est la clé : elle contrôle quand afficher les inlines.
-    def get_inlines(self, request, obj=None):
-        # Si "obj" est None, cela signifie que nous sommes sur la page d'AJOUT.
-        # Dans ce cas, on ne montre PAS les champs pour les auditoires.
-        if obj is None:
-            return []
-        # Si "obj" existe, nous sommes sur la page de MODIFICATION.
-        # C'est ici qu'on montre les champs pour ajouter les auditoires.
-        return [AuditoireInline]
-
-
-# 3. Admin pour les Sections
+@admin.register(Section)
 class SectionAdmin(admin.ModelAdmin):
+    list_display = ('name', 'view_departments_link')
     search_fields = ['name']
+    inlines = [DepartementInline]
+
+    def view_departments_link(self, obj):
+        count = obj.departements.count()
+        url = (
+            reverse("admin:academics_departement_changelist")
+            + f"?section__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">Voir les {} départements</a>', url, count)
+
+    view_departments_link.short_description = "Départements associés"
 
 
-# --- Enregistrement des modèles --- #
-admin.site.register(Section, SectionAdmin)
-admin.site.register(Departement, DepartementAdmin)
-# Le modèle Auditoire n'est pas enregistré seul, il est géré via les Départements.
+@admin.register(Departement)
+class DepartementAdmin(admin.ModelAdmin):
+    list_display = ('name', 'section', 'view_auditoires_link')
+    list_filter = ('section',)
+    search_fields = ['name', 'section__name']
+    inlines = [AuditoireInline]
+
+    def view_auditoires_link(self, obj):
+        count = obj.auditoires.count()
+        url = (
+            reverse("admin:academics_auditoire_changelist")
+            + f"?departement__id__exact={obj.id}"
+        )
+        return format_html('<a href="{}">Voir les {} auditoires</a>', url, count)
+
+    view_auditoires_link.short_description = "Auditoires associés"
+
+    def response_change(self, request, obj):
+        # Redirige vers la liste des départements, filtrée par la section du département modifié.
+        if '_continue' in request.POST or '_addanother' in request.POST:
+            return super().response_change(request, obj)
+        return HttpResponseRedirect(reverse("admin:academics_departement_changelist") + f"?section__id__exact={obj.section.id}")
+
+
+@admin.register(Auditoire)
+class AuditoireAdmin(admin.ModelAdmin):
+    list_display = ('name', 'departement')
+    list_filter = ('departement__section', 'departement')
+    search_fields = ['name', 'departement__name']
+
+
+# --- Enregistrement des autres modèles --- #
 admin.site.register(Course)
 admin.site.register(Calendrier)
 admin.site.register(Role)
