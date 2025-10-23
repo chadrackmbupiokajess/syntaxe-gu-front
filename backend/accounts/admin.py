@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.auth.models import User
 from .models import StudentProfile, AcademicProfile, Paiement, Role
 from academics.models import CourseAssignment
@@ -10,67 +10,95 @@ class CourseAssignmentInline(admin.TabularInline):
     model = CourseAssignment
     extra = 1
     verbose_name_plural = 'Assignations de cours'
-    # Affiche le cours avec l'auditoire et le département
-    readonly_fields = ('course_details',)
-    fields = ('course', 'course_details')
-
-    def course_details(self, instance):
-        if instance.pk:
-            return f"{instance.course.auditoire.name} - {instance.course.auditoire.departement.name}"
-        return "-"
-    course_details.short_description = "Détails (Auditoire - Département)"
 
 
-@admin.register(StudentProfile)
-class StudentProfileAdmin(admin.ModelAdmin):
-    list_display = ('nom', 'postnom', 'prenom', 'matricule', 'current_auditoire', 'academic_status', 'status')
-    list_filter = ('status', 'academic_status', 'current_auditoire')
-    search_fields = ('nom', 'postnom', 'prenom', 'matricule', 'user__username')
-    readonly_fields = ('matricule',)
-    exclude = ('user',)
+# --- Formulaires personnalisés avec champ de mot de passe ---
+class StudentProfileForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput, required=False, help_text="Laissez vide pour ne pas changer. Remplir pour créer ou mettre à jour le mot de passe.")
 
-    def save_model(self, request, obj, form, change):
-        if not hasattr(obj, 'user'):
-            username = f"{obj.nom.lower()}.{obj.prenom.lower()}".replace(' ', '')
-            user, created = User.objects.get_or_create(username=username)
-            if created:
-                user.set_password('password123')
-                user.save()
-            obj.user = user
-            Role.objects.create(user=user, role='etudiant')
-        super().save_model(request, obj, form, change)
-
+    class Meta:
+        model = StudentProfile
+        exclude = ('user',)
 
 class AcademicProfileForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput, required=False, help_text="Laissez vide pour ne pas changer. Remplir pour créer ou mettre à jour le mot de passe.")
     role = forms.ChoiceField(choices=[
         choice for choice in Role.ROLE_CHOICES if choice[0] != 'etudiant'
     ])
 
     class Meta:
         model = AcademicProfile
-        fields = '__all__'
         exclude = ('user',)
+
+
+# --- Configurations de l'Admin ---
+@admin.register(StudentProfile)
+class StudentProfileAdmin(admin.ModelAdmin):
+    form = StudentProfileForm
+    list_display = ('nom', 'postnom', 'prenom', 'matricule', 'current_auditoire', 'academic_status', 'status')
+    readonly_fields = ('matricule',)
+    search_fields = ('nom', 'postnom', 'prenom', 'matricule')
+
+    def save_model(self, request, obj, form, change):
+        password = form.cleaned_data.get('password')
+
+        if not change: # Création d'un nouvel étudiant
+            base_username = f"{obj.prenom.lower()}{obj.nom.lower()}".replace(' ', '')
+            username = base_username
+            counter = 1
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+            
+            if not password:
+                password = User.objects.make_random_password()
+                self.message_user(request, f"L'utilisateur '{username}' a été créé avec le mot de passe : {password}", messages.SUCCESS)
+
+            user = User.objects.create_user(username=username, password=password)
+            obj.user = user
+            Role.objects.create(user=user, role='etudiant')
+        else: # Mise à jour
+            if password:
+                obj.user.set_password(password)
+                obj.user.save()
+                self.message_user(request, "Le mot de passe a été mis à jour.", messages.SUCCESS)
+
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(AcademicProfile)
 class AcademicProfileAdmin(admin.ModelAdmin):
     form = AcademicProfileForm
     list_display = ('nom', 'postnom', 'prenom', 'matricule', 'status')
-    list_filter = ('status',)
-    search_fields = ('nom', 'postnom', 'prenom', 'matricule', 'user__username')
     readonly_fields = ('matricule',)
+    search_fields = ('nom', 'postnom', 'prenom', 'matricule')
     inlines = [CourseAssignmentInline]
 
     def save_model(self, request, obj, form, change):
-        if not hasattr(obj, 'user'):
-            username = f"{obj.nom.lower()}.{obj.prenom.lower()}".replace(' ', '')
-            user, created = User.objects.get_or_create(username=username)
-            if created:
-                user.set_password('password123')
-                user.save()
+        password = form.cleaned_data.get('password')
+
+        if not change: # Création
+            base_username = f"{obj.prenom.lower()}{obj.nom.lower()}".replace(' ', '')
+            username = base_username
+            counter = 1
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+
+            if not password:
+                password = User.objects.make_random_password()
+                self.message_user(request, f"L'utilisateur '{username}' a été créé avec le mot de passe : {password}", messages.SUCCESS)
+
+            user = User.objects.create_user(username=username, password=password)
             obj.user = user
             selected_role = form.cleaned_data.get('role')
             Role.objects.create(user=user, role=selected_role)
+        else: # Mise à jour
+            if password:
+                obj.user.set_password(password)
+                obj.user.save()
+                self.message_user(request, "Le mot de passe a été mis à jour.", messages.SUCCESS)
+
         super().save_model(request, obj, form, change)
 
 
@@ -79,7 +107,3 @@ class PaiementAdmin(admin.ModelAdmin):
     list_display = ('student', 'amount', 'tranche_number', 'date_paid', 'academic_year')
     list_filter = ('tranche_number', 'academic_year', 'student')
     search_fields = ('student__nom', 'student__matricule')
-
-
-# On n'enregistre plus le modèle Role seul, il est géré via les profils
-# admin.site.register(Role)

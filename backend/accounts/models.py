@@ -66,7 +66,7 @@ class AcademicProfile(models.Model):
     def save(self, *args, **kwargs):
         if not self.matricule:
             year = datetime.date.today().year
-            random_part = str(uuid.uuid4.hex)[:4].upper()
+            random_part = str(uuid.uuid4().hex)[:4].upper()
             self.matricule = f"MAT-{year}-{random_part}"
         super().save(*args, **kwargs)
 
