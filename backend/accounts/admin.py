@@ -9,6 +9,8 @@ class StudentProfileAdmin(admin.ModelAdmin):
     list_display = ('nom', 'postnom', 'prenom', 'matricule', 'current_auditoire', 'academic_status', 'status')
     list_filter = ('status', 'academic_status', 'current_auditoire')
     search_fields = ('nom', 'postnom', 'prenom', 'matricule', 'user__username')
+    # Le matricule est maintenant en lecture seule
+    readonly_fields = ('matricule',)
     exclude = ('user',)
 
     def save_model(self, request, obj, form, change):
@@ -25,7 +27,6 @@ class StudentProfileAdmin(admin.ModelAdmin):
 
 # --- Formulaire personnalisé pour le personnel académique ---
 class AcademicProfileForm(forms.ModelForm):
-    # On définit les choix de rôle en excluant 'etudiant'
     role = forms.ChoiceField(choices=[
         choice for choice in Role.ROLE_CHOICES if choice[0] != 'etudiant'
     ])
@@ -42,6 +43,8 @@ class AcademicProfileAdmin(admin.ModelAdmin):
     list_display = ('nom', 'postnom', 'prenom', 'matricule', 'status')
     list_filter = ('status',)
     search_fields = ('nom', 'postnom', 'prenom', 'matricule', 'user__username')
+    # Le matricule est maintenant en lecture seule
+    readonly_fields = ('matricule',)
 
     def save_model(self, request, obj, form, change):
         if not hasattr(obj, 'user'):
@@ -51,7 +54,6 @@ class AcademicProfileAdmin(admin.ModelAdmin):
                 user.set_password('password123')
                 user.save()
             obj.user = user
-            # On assigne le rôle choisi dans le formulaire
             selected_role = form.cleaned_data.get('role')
             Role.objects.create(user=user, role=selected_role)
         super().save_model(request, obj, form, change)
