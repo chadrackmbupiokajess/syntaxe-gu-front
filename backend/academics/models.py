@@ -30,7 +30,8 @@ class Course(models.Model):
     session_type = models.CharField(max_length=20, choices=SESSION_CHOICES, default='session')
 
     def __str__(self):
-        return f"{self.name} ({self.get_session_type_display()})"
+        # Affichage amélioré pour plus de contexte dans les menus déroulants
+        return f"{self.name} ({self.auditoire.name} - {self.auditoire.departement.name})"
 
 class MiSessionCourseManager(models.Manager):
     def get_queryset(self):
@@ -71,3 +72,15 @@ class Calendrier(models.Model):
 
     def __str__(self):
         return self.title
+
+class CourseAssignment(models.Model):
+    assistant = models.ForeignKey('accounts.AcademicProfile', on_delete=models.CASCADE, related_name='course_assignments', limit_choices_to={'user__role__role': 'assistant'})
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='assignments_by_assistant')
+
+    class Meta:
+        unique_together = ('assistant', 'course')
+        verbose_name = 'Assignation de cours'
+        verbose_name_plural = 'Assignations de cours'
+
+    def __str__(self):
+        return f"{self.assistant.nom} {self.assistant.prenom} - {self.course.name}"

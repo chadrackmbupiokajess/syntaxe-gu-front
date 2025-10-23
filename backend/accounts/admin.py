@@ -2,6 +2,23 @@ from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import User
 from .models import StudentProfile, AcademicProfile, Paiement, Role
+from academics.models import CourseAssignment
+
+
+# --- Inlines ---
+class CourseAssignmentInline(admin.TabularInline):
+    model = CourseAssignment
+    extra = 1
+    verbose_name_plural = 'Assignations de cours'
+    # Affiche le cours avec l'auditoire et le département
+    readonly_fields = ('course_details',)
+    fields = ('course', 'course_details')
+
+    def course_details(self, instance):
+        if instance.pk:
+            return f"{instance.course.auditoire.name} - {instance.course.auditoire.departement.name}"
+        return "-"
+    course_details.short_description = "Détails (Auditoire - Département)"
 
 
 @admin.register(StudentProfile)
@@ -9,7 +26,6 @@ class StudentProfileAdmin(admin.ModelAdmin):
     list_display = ('nom', 'postnom', 'prenom', 'matricule', 'current_auditoire', 'academic_status', 'status')
     list_filter = ('status', 'academic_status', 'current_auditoire')
     search_fields = ('nom', 'postnom', 'prenom', 'matricule', 'user__username')
-    # Le matricule est maintenant en lecture seule
     readonly_fields = ('matricule',)
     exclude = ('user',)
 
@@ -25,7 +41,6 @@ class StudentProfileAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
-# --- Formulaire personnalisé pour le personnel académique ---
 class AcademicProfileForm(forms.ModelForm):
     role = forms.ChoiceField(choices=[
         choice for choice in Role.ROLE_CHOICES if choice[0] != 'etudiant'
@@ -43,8 +58,8 @@ class AcademicProfileAdmin(admin.ModelAdmin):
     list_display = ('nom', 'postnom', 'prenom', 'matricule', 'status')
     list_filter = ('status',)
     search_fields = ('nom', 'postnom', 'prenom', 'matricule', 'user__username')
-    # Le matricule est maintenant en lecture seule
     readonly_fields = ('matricule',)
+    inlines = [CourseAssignmentInline]
 
     def save_model(self, request, obj, form, change):
         if not hasattr(obj, 'user'):

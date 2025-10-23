@@ -16,10 +16,24 @@ class QuestionInline(admin.StackedInline):
 # --- Administration des TP/TD ---
 @admin.register(Assignment)
 class AssignmentAdmin(admin.ModelAdmin):
-    list_display = ('title', 'course', 'assistant', 'deadline', 'created_at')
-    list_filter = ('course__auditoire__departement__section', 'course__auditoire__departement', 'course__auditoire', 'course', 'assistant', 'deadline')
+    list_display = ('title', 'get_departement', 'get_auditoire', 'course', 'assistant', 'deadline', 'created_at')
+    list_filter = ('course__auditoire__departement', 'course__auditoire', 'course', 'assistant', 'deadline')
     search_fields = ('title', 'questionnaire', 'course__name', 'assistant__full_name')
     date_hierarchy = 'created_at'
+    list_select_related = ('course__auditoire__departement', 'assistant')
+
+    @admin.display(description='Département', ordering='course__auditoire__departement__name')
+    def get_departement(self, obj):
+        if obj.course and obj.course.auditoire and obj.course.auditoire.departement:
+            return obj.course.auditoire.departement.name
+        return "N/A"
+
+    @admin.display(description='Auditoire', ordering='course__auditoire__name')
+    def get_auditoire(self, obj):
+        if obj.course and obj.course.auditoire:
+            return obj.course.auditoire.name
+        return "N/A"
+
 
 @admin.register(Submission)
 class SubmissionAdmin(admin.ModelAdmin):
