@@ -6,7 +6,6 @@ from accounts.models import StudentProfile, AcademicProfile
 
 class Assignment(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='assignments')
-    # Correction du chemin pour limit_choices_to
     assistant = models.ForeignKey(
         AcademicProfile, 
         on_delete=models.SET_NULL, 
@@ -37,7 +36,6 @@ class Submission(models.Model):
 
 class Quiz(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='quizzes')
-    # Correction du chemin pour limit_choices_to
     assistant = models.ForeignKey(
         AcademicProfile, 
         on_delete=models.SET_NULL, 
@@ -46,6 +44,7 @@ class Quiz(models.Model):
         limit_choices_to={'user__role__role': 'assistant'}
     )
     title = models.CharField(max_length=255)
+    duration = models.PositiveIntegerField(default=30, help_text="Durée du quiz en minutes")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

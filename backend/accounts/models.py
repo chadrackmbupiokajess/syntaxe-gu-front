@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from academics.models import Auditoire
 import uuid
+import datetime
 
 
 class Role(models.Model):
@@ -43,7 +44,9 @@ class StudentProfile(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.matricule:
-            self.matricule = str(uuid.uuid4().hex)[:10].upper()
+            year = datetime.date.today().year
+            random_part = str(uuid.uuid4().hex)[:4].upper()
+            self.matricule = f"MAT-{year}-{random_part}"
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -62,7 +65,9 @@ class AcademicProfile(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.matricule:
-            self.matricule = str(uuid.uuid4().hex)[:10].upper()
+            year = datetime.date.today().year
+            random_part = str(uuid.uuid4.hex)[:4].upper()
+            self.matricule = f"MAT-{year}-{random_part}"
         super().save(*args, **kwargs)
 
     def __str__(self):
