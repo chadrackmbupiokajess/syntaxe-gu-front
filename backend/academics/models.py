@@ -31,7 +31,7 @@ class Course(models.Model):
 
     def __str__(self):
         # Affichage amélioré pour plus de contexte dans les menus déroulants
-        return f"{self.name} ({self.auditoire.name} - {self.auditoire.departement.name})"
+        return f"{self.name} ({self.get_session_type_display()}) - ({self.auditoire.name} - {self.auditoire.departement.name})"
 
 class MiSessionCourseManager(models.Manager):
     def get_queryset(self):
