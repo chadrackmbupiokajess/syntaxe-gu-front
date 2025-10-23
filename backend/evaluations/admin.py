@@ -1,0 +1,56 @@
+from django.contrib import admin
+from .models import Assignment, Submission, Quiz, Question, Choice, Answer
+
+
+# --- Inlines pour les Quiz ---
+class ChoiceInline(admin.TabularInline):
+    model = Choice
+    extra = 3 # 3 choix par défaut pour une question
+
+class QuestionInline(admin.StackedInline):
+    model = Question
+    extra = 1 # 1 question par défaut pour un quiz
+    inlines = [ChoiceInline] # Les choix sont gérés sous les questions
+
+
+# --- Administration des TP/TD ---
+@admin.register(Assignment)
+class AssignmentAdmin(admin.ModelAdmin):
+    list_display = ('title', 'course', 'assistant', 'deadline', 'created_at')
+    list_filter = ('course__auditoire__departement__section', 'course__auditoire__departement', 'course__auditoire', 'course', 'assistant', 'deadline')
+    search_fields = ('title', 'questionnaire', 'course__name', 'assistant__full_name')
+    date_hierarchy = 'created_at'
+
+@admin.register(Submission)
+class SubmissionAdmin(admin.ModelAdmin):
+    list_display = ('assignment', 'student', 'status', 'grade', 'submitted_at')
+    list_filter = ('status', 'assignment__course__auditoire__departement__section', 'assignment__course__auditoire__departement', 'assignment__course__auditoire', 'assignment__course', 'student')
+    search_fields = ('assignment__title', 'student__full_name')
+    date_hierarchy = 'submitted_at'
+
+
+# --- Administration des Quiz ---
+@admin.register(Quiz)
+class QuizAdmin(admin.ModelAdmin):
+    list_display = ('title', 'course', 'assistant', 'created_at')
+    list_filter = ('course__auditoire__departement__section', 'course__auditoire__departement', 'course__auditoire', 'course', 'assistant')
+    search_fields = ('title', 'course__name', 'assistant__full_name')
+    date_hierarchy = 'created_at'
+    inlines = [QuestionInline] # Les questions sont gérées sous le quiz
+
+@admin.register(Question)
+class QuestionAdmin(admin.ModelAdmin):
+    list_display = ('question_text', 'quiz', 'question_type')
+    list_filter = ('question_type', 'quiz__course__auditoire__departement__section', 'quiz__course__auditoire__departement', 'quiz__course__auditoire', 'quiz__course')
+    search_fields = ('question_text', 'quiz__title')
+    inlines = [ChoiceInline] # Les choix sont gérés sous la question
+
+@admin.register(Answer)
+class AnswerAdmin(admin.ModelAdmin):
+    list_display = ('student', 'question', 'points_obtained', 'submitted_at')
+    list_filter = ('student', 'question__quiz__course__auditoire__departement__section', 'question__quiz__course__auditoire__departement', 'question__quiz__course__auditoire', 'question__quiz__course')
+    search_fields = ('student__full_name', 'question__question_text')
+    date_hierarchy = 'submitted_at'
+
+# Choice n'est pas enregistré directement car il est géré via QuestionInline
+# admin.site.register(Choice)

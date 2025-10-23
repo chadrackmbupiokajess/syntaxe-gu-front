@@ -1,0 +1,70 @@
+from django.db import models
+from academics.models import Course, Auditoire
+from accounts.models import StudentProfile, AcademicProfile
+
+# --- TP/TD Models ---
+
+class Assignment(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='assignments')
+    assistant = models.ForeignKey(AcademicProfile, on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={'role__role': 'assistant'})
+    title = models.CharField(max_length=255)
+    questionnaire = models.TextField()
+    deadline = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+class Submission(models.Model):
+    assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='submissions')
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='submissions')
+    status = models.CharField(max_length=20, choices=[('soumis', 'Soumis'), ('non_soumis', 'Non soumis')], default='non_soumis')
+    grade = models.FloatField(null=True, blank=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    graded_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Submission by {self.student} for {self.assignment.title}"
+
+# --- Quiz Models ---
+
+class Quiz(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='quizzes')
+    assistant = models.ForeignKey(AcademicProfile, on_delete=models.SET_NULL, null=True, blank=True, limit_choices_to={'role__role': 'assistant'})
+    title = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+class Question(models.Model):
+    QUESTION_TYPES = (
+        ('text', 'Texte libre'),
+        ('single', 'Choix unique'),
+        ('multiple', 'Choix multiple'),
+    )
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='questions')
+    question_text = models.TextField()
+    question_type = models.CharField(max_length=10, choices=QUESTION_TYPES)
+
+    def __str__(self):
+        return self.question_text
+
+class Choice(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='choices')
+    choice_text = models.CharField(max_length=255)
+    is_correct = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.choice_text
+
+class Answer(models.Model):
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='quiz_answers')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
+    selected_choices = models.ManyToManyField(Choice, blank=True)
+    answer_text = models.TextField(blank=True) # For free text questions
+    points_obtained = models.FloatField(default=0)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Answer by {self.student} to {self.question.question_text[:50]}..."
