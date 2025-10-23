@@ -1,16 +1,29 @@
-import React, { useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { loginThunk, fetchMe } from '../store/authSlice'
-import { Navigate, useLocation } from 'react-router-dom'
+import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginThunk } from '../store/authSlice';
+import { Navigate, useLocation } from 'react-router-dom';
 
 export default function Login() {
-  const dispatch = useDispatch()
-  const { access, status } = useSelector(s => s.auth)
-  const location = useLocation()
-  const [username, setUsername] = useState('admin')
-  const [password, setPassword] = useState('admin1234')
+  const dispatch = useDispatch();
+  const { access, status } = useSelector(s => s.auth);
+  const location = useLocation();
+  const [username, setUsername] = useState('admin');
+  const [password, setPassword] = useState('admin1234');
 
-  if (access) return <Navigate to={location.state?.from?.pathname || "/"} replace />
+  const handleLogin = () => {
+    dispatch(loginThunk({ username, password }))
+      .unwrap()
+      .catch((error) => {
+        console.error("Échec de la connexion:", error);
+        alert("Échec de la connexion. Veuillez vérifier vos identifiants.");
+      });
+  };
+
+  // Une fois connecté, on redirige vers la page d'accueil protégée (`/`)
+  // C'est le composant RoleLanding qui s'occupera de la redirection finale.
+  if (access) {
+    return <Navigate to={location.state?.from?.pathname || "/"} replace />;
+  }
 
   return (
     <div className="min-h-screen grid place-items-center bg-gradient-to-b from-slate-950 to-slate-900 text-slate-100">
@@ -31,7 +44,7 @@ export default function Login() {
           </label>
           <button
             className="btn w-full justify-center"
-            onClick={() => dispatch(loginThunk({ username, password })).then(()=>dispatch(fetchMe()))}
+            onClick={handleLogin}
             disabled={status === 'loading'}
           >
             {status === 'loading' ? 'Connexion...' : 'Se connecter'}
@@ -39,5 +52,5 @@ export default function Login() {
         </div>
       </div>
     </div>
-  )
+  );
 }

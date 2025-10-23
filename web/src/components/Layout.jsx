@@ -1,12 +1,13 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import ThemeToggle from './ThemeToggle'
-import { useDispatch, useSelector } from 'react-redux'
-import { logout } from '../store/authSlice'
+import React from 'react';
+import { Link, Outlet } from 'react-router-dom'; // Importer Outlet
+import ThemeToggle from './ThemeToggle';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../store/authSlice';
 
-export default function Layout({ children }) {
-  const dispatch = useDispatch()
-  const { me } = useSelector(s => s.auth)
+export default function Layout() { // On retire la prop {children}
+  const dispatch = useDispatch();
+  const { me } = useSelector(s => s.auth);
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <header className="sticky top-0 z-10 border-b border-slate-200/60 dark:border-slate-800/60 bg-white/70 dark:bg-slate-900/60 backdrop-blur">
@@ -29,8 +30,9 @@ export default function Layout({ children }) {
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-6">
-        {children}
+        {/* On remplace {children} par <Outlet /> */}
+        <Outlet />
       </main>
     </div>
-  )
+  );
 }

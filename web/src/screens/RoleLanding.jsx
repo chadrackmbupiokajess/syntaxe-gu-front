@@ -1,70 +1,67 @@
-import React, { useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { fetchMe } from '../store/authSlice'
-import { Navigate } from 'react-router-dom'
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { jwtDecode } from 'jwt-decode';
+import { fetchMe } from '../store/authSlice';
 
-export default function RoleLanding() {
-  const dispatch = useDispatch()
-  const { access, me } = useSelector(s => s.auth)
+const RoleLanding = () => {
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const { access, me, status } = useSelector(state => state.auth);
 
-  useEffect(() => {
-    if (access && !me) dispatch(fetchMe())
-  }, [access, me, dispatch])
+    useEffect(() => {
+        // Si on a un token mais pas les infos utilisateur, on les charge
+        if (access && !me) {
+            dispatch(fetchMe());
+            return; // On attend que les infos soient chargées
+        }
 
-  if (!access) return <Navigate to="/login" replace />
-  if (!me) return <p>Chargement...</p>
+        // Si on a les infos utilisateur, on redirige
+        if (me && me.role) {
+            const userRole = me.role;
+            switch (userRole) {
+                case 'etudiant':
+                    navigate('/etudiant', { replace: true });
+                    break;
+                case 'assistant':
+                case 'enseignant':
+                    navigate('/assistant', { replace: true });
+                    break;
+                // Ajoutez tous les autres cas ici...
+                case 'pdg': navigate('/pdg', { replace: true }); break;
+                case 'directeur_general': navigate('/dg', { replace: true }); break;
+                case 'sga': navigate('/sga', { replace: true }); break;
+                case 'sgad': navigate('/sgad', { replace: true }); break;
+                case 'chef_section': navigate('/section', { replace: true }); break;
+                case 'chef_departement': navigate('/departement', { replace: true }); break;
+                case 'jury': navigate('/jury', { replace: true }); break;
+                case 'apparitorat': navigate('/apparitorat', { replace: true }); break;
+                case 'caisse': navigate('/caisse', { replace: true }); break;
+                case 'service_it': navigate('/it', { replace: true }); break;
+                case 'bibliothecaire': navigate('/bibliotheque', { replace: true }); break;
+                default:
+                    // Si le rôle n'est pas géré, on ne fait rien pour l'instant
+                    break;
+            }
+        }
+    }, [access, me, dispatch, navigate]);
 
-  // Redirection en fonction du premier rôle prioritaire
-  const roles = (me.roles || []).map(r => (r || '').toLowerCase())
-  // aliases pour uniformiser les rôles venant du backend
-  const aliases = {
-    student: 'etudiant',
-    etudiant: 'etudiant',
-    teacher: 'assistant',
-    enseignant: 'assistant',
-    assistant: 'assistant',
-    librarian: 'bibliothecaire',
-    bibliothecaire: 'bibliothecaire',
-    it: 'service_it',
-    service_it: 'service_it',
-    cashier: 'caisse',
-    caisse: 'caisse',
-    dg: 'directeur_general',
-    directeur_general: 'directeur_general',
-    sga: 'sga',
-    sgad: 'sgad',
-    chef_section: 'chef_section',
-    chef_departement: 'chef_departement',
-    jury: 'jury',
-    apparitorat: 'apparitorat',
-    pdg: 'pdg',
-  }
-  const norm = Array.from(new Set(roles.map(r => aliases[r] || r)))
-  const priority = [
-    // On privilégie l'espace étudiant si présent
-    'etudiant',
-    'assistant', 'enseignant',
-    'bibliothecaire', 'service_it', 'caisse',
-    'jury', 'apparitorat',
-    'chef_section', 'chef_departement',
-    'sga', 'sgad', 'directeur_general', 'pdg',
-  ]
-  const target = priority.find(r => norm.includes(r)) || 'etudiant'
-  const map = {
-    pdg: '/pdg',
-    directeur_general: '/dg',
-    sga: '/sga',
-    sgad: '/sgad',
-    chef_section: '/section',
-    chef_departement: '/departement',
-    jury: '/jury',
-    apparitorat: '/apparitorat',
-    caisse: '/caisse',
-    service_it: '/it',
-    bibliothecaire: '/bibliotheque',
-    assistant: '/assistant',
-    enseignant: '/assistant',
-    etudiant: '/etudiant',
-  }
-  return <Navigate to={map[target]} replace />
-}
+    // Pendant le chargement, on affiche un loader
+    if (status === 'loading' || (access && !me)) {
+        return (
+            <div className="min-h-screen grid place-items-center">
+                <p>Vérification de l'authentification...</p>
+            </div>
+        );
+    }
+
+    // Si on arrive ici, c'est qu'il y a un problème (pas de rôle, etc.)
+    // On peut afficher un message d'erreur ou rediriger
+    return (
+        <div className="min-h-screen grid place-items-center">
+            <p>Impossible de déterminer votre rôle. Veuillez contacter l'administrateur.</p>
+        </div>
+    );
+};
+
+export default RoleLanding;

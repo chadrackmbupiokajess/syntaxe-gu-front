@@ -4,11 +4,10 @@ import axios from 'axios'
 const accessKey = 'access_token'
 const refreshKey = 'refresh_token'
 
-// Hypothèse endpoints Django (ajustez si nécessaire)
-// POST /api/auth/token/ -> {access, refresh, user}
+// Correction de l'endpoint de connexion
 export const loginThunk = createAsyncThunk('auth/login', async ({ username, password }, { rejectWithValue }) => {
   try {
-    const { data } = await axios.post('/api/auth/token/', { username, password })
+    const { data } = await axios.post('http://127.0.0.1:8000/api/auth/login/', { username, password })
     return data
   } catch (e) {
     return rejectWithValue(e.response?.data || { detail: 'Erreur de connexion' })
@@ -17,7 +16,7 @@ export const loginThunk = createAsyncThunk('auth/login', async ({ username, pass
 
 export const fetchMe = createAsyncThunk('auth/me', async (_, { rejectWithValue }) => {
   try {
-    const { data } = await axios.get('/api/auth/me/')
+    const { data } = await axios.get('http://127.0.0.1:8000/api/auth/me/')
     return data
   } catch (e) {
     return rejectWithValue(e.response?.data || { detail: 'Erreur profil' })

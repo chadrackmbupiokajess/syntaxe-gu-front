@@ -1,14 +1,22 @@
-import React from 'react'
-import { useSelector } from 'react-redux'
-import { Navigate } from 'react-router-dom'
+import React from 'react';
+import { Navigate, Outlet } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
-export default function RoleRoute({ roles = [], children }) {
-  const { access, me } = useSelector(s => s.auth)
-  if (!access) return <Navigate to="/login" replace />
-  // Tant que le profil n'est pas charge, on attend pour eviter les boucles de redirection
-  if (!me) return <p>Chargement...</p>
-  const userRoles = new Set((me?.roles || []).map(r => (r || '').toLowerCase()))
-  const allowed = roles.length === 0 || roles.some(r => userRoles.has((r || '').toLowerCase()))
-  if (!allowed) return <Navigate to="/" replace />
-  return children
-}
+const RoleRoute = ({ allowedRoles }) => {
+    const { me } = useSelector(state => state.auth);
+
+    // Si les infos utilisateur ne sont pas encore chargées, on attend
+    if (!me) {
+        return <div>Chargement des permissions...</div>;
+    }
+
+    // On vérifie si le rôle de l'utilisateur est dans la liste des rôles autorisés
+    if (allowedRoles.includes(me.role)) {
+        return <Outlet />;
+    } else {
+        // Si l'utilisateur n'a pas le bon rôle, on le redirige
+        return <Navigate to="/unauthorized" replace />;
+    }
+};
+
+export default RoleRoute;
