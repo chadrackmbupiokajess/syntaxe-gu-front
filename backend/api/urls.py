@@ -27,7 +27,7 @@ from .views import (
     # Assistant student details
     assistant_student_detail, assistant_student_grades, assistant_student_submissions,
     # Assistant messages
-    assistant_my_courses, assistant_course_messages,
+    assistant_my_courses,
 )
 
 urlpatterns = [
@@ -60,7 +60,6 @@ urlpatterns = [
     re_path(r"^assistant/summary/?$", assistant_summary, name="assistant_summary"),
     re_path(r"^auditoriums/assistant/my/?$", auditoriums_assistant_my, name="auditoriums_assistant_my"),
     re_path(r"^assistant/courses/?$", assistant_my_courses, name="assistant_my_courses"),
-    re_path(r"^assistant/courses/(?P<course_id>\d+)/messages/?$", assistant_course_messages, name="assistant_course_messages"),
     re_path(r"^assistant/auditoriums/(?P<code>.+)/courses/?$", assistant_auditorium_courses, name="assistant_auditorium_courses"),
     re_path(r"^assistant/auditoriums/(?P<code>.+)/students/?$", assistant_auditorium_students, name="assistant_auditorium_students"),
     re_path(r"^assistant/auditoriums/(?P<code>.+)/activities/?$", assistant_auditorium_activities, name="assistant_auditorium_activities"),

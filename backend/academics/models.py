@@ -1,4 +1,5 @@
 from django.db import models
+import uuid
 
 class Section(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -30,11 +31,17 @@ class Course(models.Model):
         ('session', 'Session'),
     )
     name = models.CharField(max_length=200)
+    code = models.CharField(max_length=20, unique=True, blank=True)
     auditoire = models.ForeignKey(Auditoire, on_delete=models.CASCADE, related_name='courses')
     session_type = models.CharField(max_length=20, choices=SESSION_CHOICES, default='session')
 
     def __str__(self):
         return f"{self.name} ({self.get_session_type_display()}) - ({self.auditoire.name} - {self.auditoire.departement.name})"
+
+    def save(self, *args, **kwargs):
+        if not self.code:
+            self.code = str(uuid.uuid4())[:8].upper()
+        super().save(*args, **kwargs)
 
 class MiSessionCourseManager(models.Manager):
     def get_queryset(self):

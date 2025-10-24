@@ -64,6 +64,7 @@ def assistant_my_courses(request):
             departement = getattr(auditoire, "departement", None) if auditoire else None
             items.append({
                 "id": course.id,
+                "code": course.code,
                 "title": course.name,
                 "auditorium": getattr(auditoire, "name", ""),
                 "department": getattr(departement, "name", "") if departement else "",
@@ -71,53 +72,6 @@ def assistant_my_courses(request):
     except Exception:
         pass
     return Response(items)
-
-
-@api_view(["GET", "POST"])
-@permission_classes(DEV_PERMS)
-def assistant_course_messages(request, course_id: int):
-    try:
-        course = Course.objects.get(id=course_id)
-        ap = AcademicProfile.objects.get(user=request.user)
-        
-        if not CourseAssignment.objects.filter(course=course, assistant=ap).exists():
-            return Response({"detail": "Accès non autorisé à ce cours."}, status=403)
-
-        if request.method == "GET":
-            msgs = CourseMessage.objects.select_related("sender").filter(course=course).order_by("created_at")
-            out = []
-            for m in msgs:
-                sender_profile = AcademicProfile.objects.filter(id=m.sender_id).first()
-                sender_name = f"{sender_profile.prenom} {sender_profile.nom}".strip() if sender_profile else "Utilisateur inconnu"
-                out.append({
-                    "id": m.id,
-                    "body": m.body,
-                    "sender": sender_name,
-                    "is_self": m.sender == ap,
-                    "created_at": m.created_at.isoformat(),
-                })
-            return Response(out)
-
-        body = request.data.get("body", "").strip()
-        if not body:
-            return Response({"detail": "Le corps du message ne peut pas être vide."}, status=400)
-        
-        msg = CourseMessage.objects.create(course=course, sender=ap, title="Message de discussion", body=body)
-        
-        return Response({
-            "id": msg.id,
-            "body": msg.body,
-            "sender": f"{ap.prenom} {ap.nom}".strip(),
-            "is_self": True,
-            "created_at": msg.created_at.isoformat(),
-        }, status=201)
-
-    except Course.DoesNotExist:
-        return Response({"detail": "Cours introuvable."}, status=404)
-    except AcademicProfile.DoesNotExist:
-        return Response({"detail": "Profil académique non trouvé."}, status=404)
-    except Exception as e:
-        return Response({"detail": f"Erreur de traitement: {e}"}, status=400)
 
 
 # ... (le reste des vues)
