@@ -2,6 +2,36 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 
+// --- Helper Functions ---
+
+function formatDateSeparator(dateStr) {
+  const date = new Date(dateStr);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) {
+    return "Aujourd'hui";
+  }
+  if (date.toDateString() === yesterday.toDateString()) {
+    return "Hier";
+  }
+  
+  // Format for "Lun, 20/02/2026"
+  const weekday = date.toLocaleDateString('fr-FR', { weekday: 'short' }); // e.g., "lun."
+  const day = date.toLocaleDateString('fr-FR', { day: '2-digit' }); // e.g., "20"
+  const month = date.toLocaleDateString('fr-FR', { month: '2-digit' }); // e.g., "02"
+  const year = date.toLocaleDateString('fr-FR', { year: 'numeric' }); // e.g., "2026"
+
+  // Capitalize the first letter of the weekday and remove the dot
+  const formattedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1).replace('.', '');
+
+  return `${formattedWeekday}, ${day}/${month}/${year}`;
+}
+
+
+// --- Components ---
+
 function CourseSidebar({ courses, onSelectCourse, selectedCourse }) {
   return (
     <div className="flex flex-col bg-slate-800 text-white w-1/4 min-h-screen p-4">
@@ -84,6 +114,45 @@ function ChatArea({ course }) {
     return <div className="flex-1 p-8 text-center text-white/70">Chargement des messages...</div>;
   }
 
+  const chatElements = [];
+  let lastDate = null;
+
+  messages.forEach((msg, index) => {
+    const msgDate = new Date(msg.at).toDateString();
+    if (msgDate !== lastDate) {
+      chatElements.push(
+        <div key={`date-${msgDate}`} className="text-center text-sm text-slate-400 my-4">
+          {formatDateSeparator(msg.at)}
+        </div>
+      );
+      lastDate = msgDate;
+    }
+
+    const isSelf = msg.user === 'Vous';
+    const avatar = (
+      <div className={`w-8 h-8 rounded-full ${isSelf ? 'bg-blue-500' : 'bg-slate-600'} flex-shrink-0 flex items-center justify-center font-bold text-white`}>
+        {isSelf ? 'V' : msg.user.charAt(0).toUpperCase()}
+      </div>
+    );
+    const messageBubble = (
+      <div className={`max-w-lg px-3 pt-2 pb-1 rounded-2xl ${isSelf ? 'bg-blue-700 rounded-tr-none' : 'bg-slate-700 rounded-tl-none'}`}>
+        {!isSelf && <p className="text-sm font-semibold text-white/80 mb-1">{msg.user}</p>}
+        <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+        <div className="text-right text-xs text-white/60 mt-1">
+          {new Date(msg.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </div>
+      </div>
+    );
+
+    chatElements.push(
+      <div key={msg.id} className={`flex items-start gap-3 ${isSelf ? 'justify-end' : 'justify-start'}`}>
+        {!isSelf && avatar}
+        {messageBubble}
+        {isSelf && avatar}
+      </div>
+    );
+  });
+
   return (
     <div className="flex-1 flex flex-col bg-slate-900">
       <div className="p-4 bg-slate-800 border-b border-slate-700">
@@ -92,28 +161,7 @@ function ChatArea({ course }) {
       </div>
       <div className="flex-1 p-6 overflow-y-auto">
         <div className="flex flex-col gap-4">
-          {messages.map(msg => {
-            const isSelf = msg.user === 'Vous';
-            const avatar = (
-              <div className={`w-8 h-8 rounded-full ${isSelf ? 'bg-blue-500' : 'bg-slate-600'} flex-shrink-0 flex items-center justify-center font-bold text-white`}>
-                {isSelf ? 'V' : msg.user.charAt(0).toUpperCase()}
-              </div>
-            );
-            const messageBubble = (
-              <div className={`max-w-lg p-3 rounded-lg ${isSelf ? 'bg-blue-700 rounded-br-none' : 'bg-slate-700 rounded-bl-none'}`}>
-                {!isSelf && <p className="text-sm font-semibold text-white/80 mb-1">{msg.user}</p>}
-                <p className="whitespace-pre-wrap break-words">{msg.text}</p>
-              </div>
-            );
-
-            return (
-              <div key={msg.id} className={`flex items-start gap-3 ${isSelf ? 'justify-end' : 'justify-start'}`}>
-                {isSelf ? null : avatar}
-                {messageBubble}
-                {isSelf ? avatar : null}
-              </div>
-            );
-          })}
+          {chatElements}
           <div ref={messagesEndRef} />
         </div>
       </div>
