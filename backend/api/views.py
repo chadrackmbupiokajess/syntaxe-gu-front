@@ -188,10 +188,147 @@ def auditoriums_assistant_my(request):
         aud_ids = CourseAssignment.objects.filter(assistant=ap).values_list("course__auditoire", flat=True).distinct()
         for a in Auditoire.objects.filter(id__in=aud_ids):
             students = StudentProfile.objects.filter(current_auditoire=a).count()
-            items.append({"code": a.name, "students": students})
+            dept = getattr(a.departement, "name", "")
+            items.append({"code": a.name, "name": a.name, "department": dept, "students": students})
     except Exception:
         pass
     return Response(items)
+
+
+# ---- Assistant: student detail endpoints ----
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def assistant_student_detail(request, id: int):
+    try:
+        sp = StudentProfile.objects.select_related("user", "current_auditoire").get(id=id)
+        return Response({
+            "id": sp.id,
+            "name": f"{sp.nom} {sp.postnom} {sp.prenom}".strip(),
+            "email": getattr(getattr(sp, "user", None), "email", ""),
+            "auditorium": getattr(getattr(sp, "current_auditoire", None), "name", ""),
+        })
+    except StudentProfile.DoesNotExist:
+        return Response({}, status=404)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def assistant_student_grades(request, id: int):
+    rows = []
+    try:
+        sp = StudentProfile.objects.get(id=id)
+        # Regrouper par cours: moyenne des notes par cours
+        subs = Submission.objects.select_related("assignment__course").filter(student=sp, grade__isnull=False)
+        by_course = {}
+        for s in subs:
+            cname = getattr(getattr(s.assignment, "course", None), "name", "")
+            if not cname:
+                continue
+            by_course.setdefault(cname, []).append(s.grade)
+        for cname, grades in by_course.items():
+            if grades:
+                rows.append({"name": cname, "grade": round(sum(grades) / len(grades), 2)})
+    except Exception:
+        pass
+    return Response(rows)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def assistant_student_submissions(request, id: int):
+    rows = []
+    try:
+        sp = StudentProfile.objects.get(id=id)
+        subs = Submission.objects.select_related("assignment").filter(student=sp).order_by("-submitted_at")[:50]
+        for s in subs:
+            rows.append({
+                "title": getattr(s.assignment, "title", ""),
+                "status": s.status,
+                "grade": s.grade,
+                "submitted_at": s.submitted_at,
+            })
+    except Exception:
+        pass
+    return Response(rows)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def assistant_auditorium_courses(request, code: str):
+    rows = []
+    try:
+        # code correspond au champ Auditoire.name
+        aud = Auditoire.objects.filter(name=code).first()
+        if aud:
+            for c in Course.objects.filter(auditoire=aud):
+                rows.append({
+                    "code": f"{c.name[:3].upper()}-{c.id}",
+                    "title": c.name,
+                })
+    except Exception:
+        pass
+    return Response(rows)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def assistant_auditorium_students(request, code: str):
+    rows = []
+    try:
+        aud = Auditoire.objects.filter(name=code).first()
+        if aud:
+            qs = StudentProfile.objects.select_related("user").filter(current_auditoire=aud)
+            for s in qs:
+                rows.append({
+                    "id": s.id,
+                    "name": f"{s.nom} {s.postnom} {s.prenom}".strip(),
+                    "email": getattr(getattr(s, "user", None), "email", ""),
+                })
+    except Exception:
+        pass
+    return Response(rows)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def assistant_auditorium_activities(request, code: str):
+    rows = []
+    try:
+        aud = Auditoire.objects.filter(name=code).first()
+        if aud:
+            events = Calendrier.objects.filter(auditoire=aud).order_by("-start_date")[:20]
+            for e in events:
+                rows.append({
+                    "title": e.title,
+                    "type": "Calendrier",
+                    "date": e.start_date.strftime("%Y-%m-%d"),
+                })
+    except Exception:
+        pass
+    return Response(rows)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def assistant_auditorium_stats(request, code: str):
+    data = {"averageGrade": None, "totalStudents": 0, "passRate": None}
+    try:
+        aud = Auditoire.objects.filter(name=code).first()
+        if aud:
+            students_qs = StudentProfile.objects.filter(current_auditoire=aud)
+            data["totalStudents"] = students_qs.count()
+            # Notes via submissions associées aux assignments des cours de cet auditoire
+            subs = Submission.objects.filter(assignment__course__auditoire=aud, grade__isnull=False)
+            grades = list(subs.values_list("grade", flat=True))
+            if grades:
+                avg = sum(grades) / len(grades)
+                data["averageGrade"] = round(avg, 2)
+                passed = len([g for g in grades if g >= 10])
+                data["passRate"] = round(100 * passed / len(grades), 1)
+    except Exception:
+        pass
+    return Response(data)
 
 
 @api_view(["GET"])

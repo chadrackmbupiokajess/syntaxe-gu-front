@@ -40,11 +40,13 @@ import StudentProfile from '../screens/StudentProfile';
 // Pages Assistant/Enseignant
 import AssistantDashboard from '../screens/AssistantDashboard';
 import AssistantAuditoriums from '../screens/AssistantAuditoriums';
+import AssistantAuditoriumDetails from '../screens/AssistantAuditoriumDetails';
 import AssistantGrades from '../screens/AssistantGrades';
 import AssistantTPTD from '../screens/AssistantTPTD';
 import AssistantQuizzes from '../screens/AssistantQuizzes';
 import AssistantToGrade from '../screens/AssistantToGrade';
 import AssistantProfile from '../screens/AssistantProfile';
+import AssistantStudentProfile from '../screens/AssistantStudentProfile'; // New import
 
 export default function App() {
   return (
@@ -80,6 +82,8 @@ export default function App() {
             <Route element={<AssistantLayout />}>
               <Route index element={<AssistantDashboard />} />
               <Route path="auditoires" element={<AssistantAuditoriums />} />
+              <Route path="auditoires/:code" element={<AssistantAuditoriumDetails />} />
+              <Route path="students/:studentId" element={<AssistantStudentProfile />} /> {/* New dynamic route */}
               <Route path="notes" element={<AssistantGrades />} />
               <Route path="tptd" element={<AssistantTPTD />} />
               <Route path="quizzes" element={<AssistantQuizzes />} />

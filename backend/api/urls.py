@@ -4,6 +4,7 @@ from .views import (
     health, student_summary, student_meta, student_grades_recent, student_profile,
     # Vues ajoutées
     assistant_summary, auditoriums_assistant_my, tptd_my, quizzes_my, assistant_tograde,
+    assistant_auditorium_courses, assistant_auditorium_students, assistant_auditorium_activities, assistant_auditorium_stats,
     student_notifications, teacher_profile,
     # Endpoints manquants (student/library/payments)
     quizzes_student_available, tptd_student_available, quizzes_student_my_attempts, tptd_student_my_submissions,
@@ -22,6 +23,8 @@ from .views import (
     library_summary, library_gestion_reservations,
     # Student actions
     quizzes_student_start, quizzes_student_attempt_submit, tptd_student_submit,
+    # Assistant student details
+    assistant_student_detail, assistant_student_grades, assistant_student_submissions,
 )
 
 urlpatterns = [
@@ -60,6 +63,14 @@ urlpatterns = [
     # Assistant endpoints
     re_path(r"^assistant/summary/?$", assistant_summary, name="assistant_summary"),
     re_path(r"^auditoriums/assistant/my/?$", auditoriums_assistant_my, name="auditoriums_assistant_my"),
+    re_path(r"^assistant/auditoriums/(?P<code>.+)/courses/?$", assistant_auditorium_courses, name="assistant_auditorium_courses"),
+    re_path(r"^assistant/auditoriums/(?P<code>.+)/students/?$", assistant_auditorium_students, name="assistant_auditorium_students"),
+    re_path(r"^assistant/auditoriums/(?P<code>.+)/activities/?$", assistant_auditorium_activities, name="assistant_auditorium_activities"),
+    re_path(r"^assistant/auditoriums/(?P<code>.+)/stats/?$", assistant_auditorium_stats, name="assistant_auditorium_stats"),
+    # Assistant student details
+    re_path(r"^assistant/students/(?P<id>\d+)/?$", assistant_student_detail, name="assistant_student_detail"),
+    re_path(r"^assistant/students/(?P<id>\d+)/grades/?$", assistant_student_grades, name="assistant_student_grades"),
+    re_path(r"^assistant/students/(?P<id>\d+)/submissions/?$", assistant_student_submissions, name="assistant_student_submissions"),
     re_path(r"^tptd/my/?$", tptd_my, name="tptd_my"),
     re_path(r"^quizzes/my/?$", quizzes_my, name="quizzes_my"),
     re_path(r"^assistant/tograde/?$", assistant_tograde, name="assistant_tograde"),

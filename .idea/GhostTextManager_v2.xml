@@ -15,6 +15,30 @@
             </GhostTextMetaData>
           </value>
         </entry>
+        <entry key="Actions rapides&#10;Envoyer un message&#10;Ajouter un TP/TD&#10;Créer un quiz&#10;Voir l'historique des activités&#10;&#10;quand on clique redirige dans un vrai lien specifique &#10;&#10;et quand je clique sur un etudiant j'ai ca Chargement du profil étudiant...&#10;&#10;faut que ca charge bien&#10; quand les auditoires s'affiche,  met aussi le departement pour plus de precision de l'auditoire et en suite Détails de l'auditoire : Licence 1 donc toute la page dans le mode noir que le texte soit de couleur blanche">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761282468969" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="Certaines données n'ont pas pu être chargées. Veuillez vérifier votre connexion ou réessayer. &#10;[24/Oct/2025 05:54:30] &quot;GET /api/auditoriums/assistant/my/ HTTP/1.1&quot; 200 69&#10;Not Found: /api/assistant/auditoriums/Licence 1/courses&#10;[24/Oct/2025 05:54:31] &quot;GET /api/assistant/auditoriums/Licence%201/courses HTTP/1.1&quot; 404 17831&#10;Not Found: /api/assistant/auditoriums/Licence 1/activities&#10;[24/Oct/2025 05:56:59] &quot;GET /api/assistant/auditoriums/Licence%201/activities HTTP/1.1&quot; 404 17840">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761281860485" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
         <entry key="PDG&#10;chunk-NUMECXU6.js?v=c5396adf:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools&#10;:8000/api/pdg/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/pdg/activities:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/pdg/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/pdg/activities:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/pdg/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/pdg/activities:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/pdg/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/pdg/activities:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;&#10;DG&#10;chunk-NUMECXU6.js?v=c5396adf:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools&#10;:8000/api/dg/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;DgDashboard.jsx:25 Uncaught (in promise) AxiosError&#10;:8000/api/dg/actions:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/dg/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;DgDashboard.jsx:25 Uncaught (in promise) AxiosError&#10;:8000/api/dg/actions:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;&#10;sga &#10;&#10;chunk-NUMECXU6.js?v=c5396adf:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools&#10;:8000/api/sga/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;SgaDashboard.jsx:21 Uncaught (in promise) AxiosError&#10;:8000/api/sga/demandes:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/sga/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;SgaDashboard.jsx:21 Uncaught (in promise) AxiosError&#10;:8000/api/sga/demandes:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/sga/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;SgaDashboard.jsx:21 Uncaught (in promise) AxiosError&#10;:8000/api/sga/demandes:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;&#10;&#10;et verifier les autres et corrigent">
           <value>
             <GhostTextMetaData>
