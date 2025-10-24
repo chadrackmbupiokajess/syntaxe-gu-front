@@ -74,8 +74,8 @@ export default function AssistantAuditoriumDetails() {
           <h3 className="text-xl font-bold mb-4">Actions rapides</h3>
           <div className="flex flex-col gap-3">
             <Link to={`/assistant/auditoires/${code}/message`} className="btn">Envoyer un message</Link>
-            <Link to={`/assistant/auditoires/${code}/tptd/new`} className="btn">Ajouter un TP/TD</Link>
-            <Link to={`/assistant/auditoires/${code}/quizzes/new`} className="btn">Créer un quiz</Link>
+            <Link to={`/assistant/tptd`} className="btn">Ajouter un TP/TD</Link>
+            <Link to={`/assistant/quizzes`} className="btn">Créer un quiz</Link>
             <button onClick={() => scrollToRef(activitiesRef)} className="btn">Voir l'historique des activités</button>
           </div>
         </div>
