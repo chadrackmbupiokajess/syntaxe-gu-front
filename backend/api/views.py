@@ -285,7 +285,7 @@ def auditoriums_assistant_my(request):
         for a in Auditoire.objects.filter(id__in=aud_ids):
             students = StudentProfile.objects.filter(current_auditoire=a).count()
             dept = getattr(a.departement, "name", "")
-            items.append({"code": a.name, "name": a.name, "department": dept, "students": students})
+            items.append({"id": a.id, "name": a.name, "department": dept, "students": students})
     except Exception:
         pass
     return Response(items)
@@ -351,11 +351,11 @@ def assistant_student_submissions(request, id: int):
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
-def assistant_auditorium_courses(request, code: str):
+def assistant_auditorium_courses(request, auditoire_id: int):
     rows = []
     try:
         ap = AcademicProfile.objects.get(user=request.user)
-        aud = Auditoire.objects.filter(name=code).first()
+        aud = Auditoire.objects.filter(id=auditoire_id).first()
         if aud:
             # Filtrer les cours pour ne retourner que ceux assignés à l'assistant
             assigned_courses = Course.objects.filter(auditoire=aud, assignments_by_assistant__assistant=ap)

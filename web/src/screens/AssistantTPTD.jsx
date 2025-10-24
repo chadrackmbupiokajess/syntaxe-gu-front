@@ -11,10 +11,17 @@ const formatDate = (dateString) => {
   return formattedDate.replace(/\//g, '-');
 };
 
+const abbreviateAuditorium = (auditoriumName) => {
+  const match = auditoriumName.match(/Licence (\d)/);
+  if (match && match[1]) return `L${match[1]}`;
+  if (auditoriumName.startsWith('G') && !isNaN(auditoriumName.charAt(1))) return auditoriumName.split(' ')[0];
+  return auditoriumName;
+};
+
 export default function AssistantTPTD() {
   const toast = useToast()
   const [rows, setRows] = useState([])
-  const [form, setForm] = useState({ title: '', type: 'TP', course_code: '', auditorium: '', deadlineLocal: '', description: '' })
+  const [form, setForm] = useState({ title: '', type: 'TP', course_code: '', auditorium_id: '', deadlineLocal: '', description: '' })
   const [auditoriums, setAuditoriums] = useState([])
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(false)
@@ -28,20 +35,20 @@ export default function AssistantTPTD() {
     const fetchAud = async () => {
       const { data } = await axios.get('/api/auditoriums/assistant/my/')
       setAuditoriums(data)
-      if (data[0] && !form.auditorium) setForm(f => ({ ...f, auditorium: data[0].code }))
+      if (data[0] && !form.auditorium_id) setForm(f => ({ ...f, auditorium_id: data[0].id }))
     }
     fetchAud()
   }, [])
 
   useEffect(() => {
     const fetchCourses = async () => {
-      if (!form.auditorium) { setCourses([]); return }
-      const { data } = await axios.get(`/api/assistant/auditoriums/${encodeURIComponent(form.auditorium)}/courses`)
+      if (!form.auditorium_id) { setCourses([]); return }
+      const { data } = await axios.get(`/api/assistant/auditoriums/${form.auditorium_id}/courses`)
       setCourses(data)
       if (data[0] && !form.course_code) setForm(f => ({ ...f, course_code: data[0].code }))
     }
     fetchCourses()
-  }, [form.auditorium])
+  }, [form.auditorium_id])
 
   const groupedData = useMemo(() => {
     return rows.reduce((acc, row) => {
@@ -67,7 +74,7 @@ export default function AssistantTPTD() {
   };
 
   const createItem = async () => {
-    if (!form.title || !form.course_code || !form.auditorium) {
+    if (!form.title || !form.course_code || !form.auditorium_id) {
       toast.push({ kind: 'error', title: 'Champs requis', message: 'Titre, Auditoire et Code du cours sont requis.' })
       return
     }
@@ -75,14 +82,14 @@ export default function AssistantTPTD() {
       title: form.title,
       type: form.type,
       course_code: form.course_code,
-      auditorium: form.auditorium,
+      auditorium_id: form.auditorium_id,
       description: form.description,
       deadline: form.deadlineLocal ? new Date(form.deadlineLocal).toISOString() : ''
     }
     setLoading(true)
     const { data } = await axios.post('/api/tptd/my/', payload)
     setNewlyCreatedIds(prev => new Set(prev).add(data.id));
-    setForm({ title: '', type: 'TP', course_code: '', auditorium: '', deadlineLocal: '', description: '' })
+    setForm({ title: '', type: 'TP', course_code: '', auditorium_id: '', deadlineLocal: '', description: '' })
     await load()
     setLoading(false)
     toast.push({ title: 'TP/TD créé' })
@@ -107,9 +114,11 @@ export default function AssistantTPTD() {
             </select>
           </label>
           <label className="text-sm">Auditoire
-            <select className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" value={form.auditorium} onChange={e=>setForm({...form,auditorium:e.target.value, course_code: ''})}>
+            <select className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" value={form.auditorium_id} onChange={e=>setForm({...form,auditorium_id:e.target.value, course_code: ''})}>
               {auditoriums.map(a => (
-                <option key={a.code} value={a.code}>{a.code} • {a.name}</option>
+                <option key={a.id} value={a.id}>
+                  {`${abbreviateAuditorium(a.name)} ° ${a.department}`}
+                </option>
               ))}
             </select>
           </label>
