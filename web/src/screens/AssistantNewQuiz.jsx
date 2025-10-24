@@ -109,18 +109,18 @@ export default function AssistantNewQuiz() {
             <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Paramètres du Quiz</h2>
             <div className="space-y-4">
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">Titre du Quiz
-                    <input className="input mt-1 w-full" placeholder="Ex: Introduction à l'IA" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
+                    <input className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" placeholder="Ex: Introduction à l'IA" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
                 </label>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">Durée (minutes)
-                    <input type="number" min="5" className="input mt-1 w-full" value={form.duration} onChange={e => setForm({ ...form, duration: Number(e.target.value) })} />
+                    <input type="number" min="5" className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" value={form.duration} onChange={e => setForm({ ...form, duration: Number(e.target.value) })} />
                 </label>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">Auditoire
-                    <select className="input mt-1 w-full" value={form.auditorium_id} onChange={e => setForm({ ...form, auditorium_id: e.target.value, course_code: '' })}>
+                    <select className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" value={form.auditorium_id} onChange={e => setForm({ ...form, auditorium_id: e.target.value, course_code: '' })}>
                     {auditoriums.map(a => <option key={a.id} value={a.id}>{a.name} - {a.department}</option>)}
                     </select>
                 </label>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">Cours
-                    <select className="input mt-1 w-full" value={form.course_code} onChange={e => setForm({ ...form, course_code: e.target.value })}>
+                    <select className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" value={form.course_code} onChange={e => setForm({ ...form, course_code: e.target.value })}>
                     {courses.map(c => <option key={c.code} value={c.code}>{c.code} • {c.title}</option>)}
                     </select>
                 </label>
@@ -145,8 +145,8 @@ export default function AssistantNewQuiz() {
                     <p className="font-semibold text-slate-800 dark:text-white">Question {q_index + 1}</p>
                     <button className="text-red-500 hover:text-red-400" onClick={() => removeQuestion(q_index)}><TrashIcon /></button>
                 </div>
-                <textarea className="input w-full" placeholder="Texte de la question..." value={q.text} onChange={e => handleQuestionChange(q_index, 'text', e.target.value)} />
-                <select className="input w-full" value={q.type} onChange={e => handleQuestionChange(q_index, 'type', e.target.value)}>
+                <textarea className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" placeholder="Texte de la question..." value={q.text} onChange={e => handleQuestionChange(q_index, 'text', e.target.value)} />
+                <select className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" value={q.type} onChange={e => handleQuestionChange(q_index, 'type', e.target.value)}>
                     <option value="single">Choix unique</option>
                     <option value="multiple">Choix multiple</option>
                     <option value="text">Texte libre</option>
@@ -164,7 +164,7 @@ export default function AssistantNewQuiz() {
                                     onChange={e => handleChoiceChange(q_index, c_index, 'is_correct', e.target.checked)} 
                                     className={`${q.type === 'single' ? 'radio' : 'checkbox'} radio-primary checkbox-primary`}
                                 />
-                                <input className="input flex-1" placeholder={`Choix ${c_index + 1}`} value={c.text} onChange={e => handleChoiceChange(q_index, c_index, 'text', e.target.value)} />
+                                <input className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" placeholder={`Choix ${c_index + 1}`} value={c.text} onChange={e => handleChoiceChange(q_index, c_index, 'text', e.target.value)} />
                                 <button className="text-slate-400 hover:text-red-500" onClick={() => removeChoice(q_index, c_index)}><TrashIcon /></button>
                             </div>
                         ))}
