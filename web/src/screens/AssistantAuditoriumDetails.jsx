@@ -65,8 +65,8 @@ export default function AssistantAuditoriumDetails() {
 
   return (
     <div className="grid gap-4 min-h-screen bg-slate-900 text-white p-4">
-      <h1 className="text-3xl font-bold mb-8">Détails de l'auditoire : {code}</h1>
-      <div style={{ border: '1px solid red' }}>Département: {auditoriumStats?.department}</div>
+      <h1 className="text-3xl font-bold mb-2">Détails de l'auditoire : {code}</h1>
+      <p className="text-lg text-white/80 mb-6">Département - {auditoriumStats?.department}</p>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Actions rapides */}
