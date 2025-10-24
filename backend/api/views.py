@@ -51,21 +51,22 @@ def auth_me(request):
         "roles": roles,
     })
 
-# ... (toutes les autres vues restent inchangées)
-
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def assistant_my_courses(request):
     items = []
     try:
         ap = AcademicProfile.objects.get(user=request.user)
-        assignments = CourseAssignment.objects.select_related("course__auditoire").filter(assistant=ap)
+        assignments = CourseAssignment.objects.select_related("course__auditoire__departement").filter(assistant=ap)
         for assign in assignments:
             course = assign.course
+            auditoire = course.auditoire
+            departement = getattr(auditoire, "departement", None) if auditoire else None
             items.append({
                 "id": course.id,
                 "title": course.name,
-                "auditorium": getattr(course.auditoire, "name", ""),
+                "auditorium": getattr(auditoire, "name", ""),
+                "department": getattr(departement, "name", "") if departement else "",
             })
     except Exception:
         pass
@@ -79,7 +80,6 @@ def assistant_course_messages(request, course_id: int):
         course = Course.objects.get(id=course_id)
         ap = AcademicProfile.objects.get(user=request.user)
         
-        # Vérifier si l'assistant est bien assigné à ce cours
         if not CourseAssignment.objects.filter(course=course, assistant=ap).exists():
             return Response({"detail": "Accès non autorisé à ce cours."}, status=403)
 
@@ -98,7 +98,6 @@ def assistant_course_messages(request, course_id: int):
                 })
             return Response(out)
 
-        # POST
         body = request.data.get("body", "").strip()
         if not body:
             return Response({"detail": "Le corps du message ne peut pas être vide."}, status=400)

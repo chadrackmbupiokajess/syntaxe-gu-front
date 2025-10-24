@@ -12,7 +12,7 @@ function CourseSidebar({ courses, onSelectCourse, selectedCourseId }) {
         {courses.map(course => (
           <button
             key={course.id}
-            onClick={() => onSelectCourse(course.id)}
+            onClick={() => onSelectCourse(course)}
             className={`text-left p-2 rounded-md transition-colors duration-200 ${
               selectedCourseId === course.id
                 ? 'bg-blue-600 font-semibold'
@@ -21,6 +21,7 @@ function CourseSidebar({ courses, onSelectCourse, selectedCourseId }) {
           >
             <p className="font-medium">{course.title}</p>
             <p className="text-sm text-white/60">{course.auditorium}</p>
+            <p className="text-xs text-white/50">{course.department}</p>
           </button>
         ))}
       </nav>
@@ -28,7 +29,7 @@ function CourseSidebar({ courses, onSelectCourse, selectedCourseId }) {
   );
 }
 
-function ChatArea({ courseId }) {
+function ChatArea({ course }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -39,11 +40,11 @@ function ChatArea({ courseId }) {
   }
 
   useEffect(() => {
-    if (!courseId) return;
+    if (!course) return;
     const fetchMessages = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`/api/assistant/courses/${courseId}/messages`);
+        const response = await axios.get(`/api/assistant/courses/${course.id}/messages`);
         setMessages(response.data);
         scrollToBottom();
       } catch (error) {
@@ -52,15 +53,15 @@ function ChatArea({ courseId }) {
       setLoading(false);
     };
     fetchMessages();
-  }, [courseId]);
+  }, [course]);
 
   useEffect(scrollToBottom, [messages]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !course) return;
     try {
-      const response = await axios.post(`/api/assistant/courses/${courseId}/messages`, { body: newMessage });
+      const response = await axios.post(`/api/assistant/courses/${course.id}/messages`, { body: newMessage });
       setMessages(prev => [...prev, response.data]);
       setNewMessage('');
     } catch (error) {
@@ -68,7 +69,7 @@ function ChatArea({ courseId }) {
     }
   };
 
-  if (!courseId) {
+  if (!course) {
     return <div className="flex-1 p-8 text-center text-white/70">Sélectionnez un cours pour voir les messages.</div>;
   }
 
@@ -78,6 +79,10 @@ function ChatArea({ courseId }) {
 
   return (
     <div className="flex-1 flex flex-col bg-slate-900">
+      <div className="p-4 bg-slate-800 border-b border-slate-700">
+        <h3 className="text-xl font-bold">{course.title}</h3>
+        <p className="text-sm text-white/60">{course.auditorium} - {course.department}</p>
+      </div>
       <div className="flex-1 p-6 overflow-y-auto">
         <div className="flex flex-col gap-4">
           {messages.map(msg => (
@@ -109,7 +114,7 @@ function ChatArea({ courseId }) {
 
 export default function AssistantMessages() {
   const [courses, setCourses] = useState([]);
-  const [selectedCourseId, setSelectedCourseId] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState(null);
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
@@ -123,7 +128,7 @@ export default function AssistantMessages() {
         if (auditoriumCode) {
           const courseToSelect = fetchedCourses.find(c => c.auditorium === auditoriumCode);
           if (courseToSelect) {
-            setSelectedCourseId(courseToSelect.id);
+            setSelectedCourse(courseToSelect);
           }
         }
       } catch (error) {
@@ -137,10 +142,10 @@ export default function AssistantMessages() {
     <div className="flex min-h-screen bg-slate-900 text-white">
       <CourseSidebar 
         courses={courses} 
-        onSelectCourse={setSelectedCourseId}
-        selectedCourseId={selectedCourseId}
+        onSelectCourse={setSelectedCourse}
+        selectedCourseId={selectedCourse?.id}
       />
-      <ChatArea courseId={selectedCourseId} />
+      <ChatArea course={selectedCourse} />
     </div>
   );
 }
