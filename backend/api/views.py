@@ -40,7 +40,6 @@ DEV_PERMS = [permissions.AllowAny] if getattr(settings, "DEBUG", False) else [pe
 @permission_classes(DEV_PERMS)
 def auth_me(request):
     user = request.user
-    # Roles utilisateur (via related_name user_roles)
     try:
         roles = list(user.user_roles.select_related("role").values_list("role__name", flat=True))
     except Exception:
@@ -52,7 +51,77 @@ def auth_me(request):
         "roles": roles,
     })
 
+# ... (toutes les autres vues restent inchangées)
 
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def assistant_my_courses(request):
+    items = []
+    try:
+        ap = AcademicProfile.objects.get(user=request.user)
+        assignments = CourseAssignment.objects.select_related("course__auditoire").filter(assistant=ap)
+        for assign in assignments:
+            course = assign.course
+            items.append({
+                "id": course.id,
+                "title": course.name,
+                "auditorium": getattr(course.auditoire, "name", ""),
+            })
+    except Exception:
+        pass
+    return Response(items)
+
+
+@api_view(["GET", "POST"])
+@permission_classes(DEV_PERMS)
+def assistant_course_messages(request, course_id: int):
+    try:
+        course = Course.objects.get(id=course_id)
+        ap = AcademicProfile.objects.get(user=request.user)
+        
+        # Vérifier si l'assistant est bien assigné à ce cours
+        if not CourseAssignment.objects.filter(course=course, assistant=ap).exists():
+            return Response({"detail": "Accès non autorisé à ce cours."}, status=403)
+
+        if request.method == "GET":
+            msgs = CourseMessage.objects.select_related("sender").filter(course=course).order_by("created_at")
+            out = []
+            for m in msgs:
+                sender_profile = AcademicProfile.objects.filter(id=m.sender_id).first()
+                sender_name = f"{sender_profile.prenom} {sender_profile.nom}".strip() if sender_profile else "Utilisateur inconnu"
+                out.append({
+                    "id": m.id,
+                    "body": m.body,
+                    "sender": sender_name,
+                    "is_self": m.sender == ap,
+                    "created_at": m.created_at.isoformat(),
+                })
+            return Response(out)
+
+        # POST
+        body = request.data.get("body", "").strip()
+        if not body:
+            return Response({"detail": "Le corps du message ne peut pas être vide."}, status=400)
+        
+        msg = CourseMessage.objects.create(course=course, sender=ap, title="Message de discussion", body=body)
+        
+        return Response({
+            "id": msg.id,
+            "body": msg.body,
+            "sender": f"{ap.prenom} {ap.nom}".strip(),
+            "is_self": True,
+            "created_at": msg.created_at.isoformat(),
+        }, status=201)
+
+    except Course.DoesNotExist:
+        return Response({"detail": "Cours introuvable."}, status=404)
+    except AcademicProfile.DoesNotExist:
+        return Response({"detail": "Profil académique non trouvé."}, status=404)
+    except Exception as e:
+        return Response({"detail": f"Erreur de traitement: {e}"}, status=400)
+
+
+# ... (le reste des vues)
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def student_summary(request):

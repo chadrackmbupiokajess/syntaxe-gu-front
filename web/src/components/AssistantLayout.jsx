@@ -5,6 +5,7 @@ export default function AssistantLayout() {
   const nav = [
     { to: '/assistant', label: 'Tableau de bord' },
     { to: '/assistant/auditoires', label: 'Mes auditoires' },
+    { to: '/assistant/messages', label: 'Discussions' },
     { to: '/assistant/notes', label: 'Notes par auditoire' },
     { to: '/assistant/tptd', label: 'TP/TD' },
     { to: '/assistant/quizzes', label: 'Quiz' },

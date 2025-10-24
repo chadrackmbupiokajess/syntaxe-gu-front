@@ -42,6 +42,7 @@ import AssistantDashboard from '../screens/AssistantDashboard';
 import AssistantAuditoriums from '../screens/AssistantAuditoriums';
 import AssistantAuditoriumDetails from '../screens/AssistantAuditoriumDetails';
 import AssistantAuditoriumMessage from '../screens/AssistantAuditoriumMessage';
+import AssistantMessages from '../screens/AssistantMessages'; // New import
 import AssistantNewTPTD from '../screens/AssistantNewTPTD';
 import AssistantNewQuiz from '../screens/AssistantNewQuiz';
 import AssistantGrades from '../screens/AssistantGrades';
@@ -87,6 +88,7 @@ export default function App() {
               <Route path="auditoires" element={<AssistantAuditoriums />} />
               <Route path="auditoires/:code" element={<AssistantAuditoriumDetails />} />
               <Route path="auditoires/:code/message" element={<AssistantAuditoriumMessage />} />
+              <Route path="messages" element={<AssistantMessages />} /> {/* New route */}
               <Route path="auditoires/:code/tptd/new" element={<AssistantNewTPTD />} />
               <Route path="auditoires/:code/quizzes/new" element={<AssistantNewQuiz />} />
               <Route path="students/:studentId" element={<AssistantStudentProfile />} /> {/* New dynamic route */}

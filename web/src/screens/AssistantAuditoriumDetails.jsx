@@ -25,7 +25,6 @@ export default function AssistantAuditoriumDetails() {
         } catch (err) {
           console.error("Error fetching students:", err);
           setError(true);
-          // Removed mock data for students
         }
 
         // Fetch statistics
@@ -35,7 +34,6 @@ export default function AssistantAuditoriumDetails() {
         } catch (err) {
           console.error("Error fetching auditorium stats:", err);
           setError(true);
-          // Removed mock data for stats
         }
 
         // Fetch activities
@@ -45,7 +43,6 @@ export default function AssistantAuditoriumDetails() {
         } catch (err) {
           console.error("Error fetching auditorium activities:", err);
           setError(true);
-          // Removed mock data for activities
         }
 
       } finally {
@@ -73,7 +70,7 @@ export default function AssistantAuditoriumDetails() {
         <div className="card p-4 lg:col-span-1 bg-slate-800 text-white">
           <h3 className="text-xl font-bold mb-4">Actions rapides</h3>
           <div className="flex flex-col gap-3">
-            <Link to={`/assistant/auditoires/${code}/message`} className="btn">Envoyer un message</Link>
+            <Link to={`/assistant/messages?auditorium=${code}`} className="btn">Envoyer un message</Link>
             <Link to={`/assistant/tptd`} className="btn">Ajouter un TP/TD</Link>
             <Link to={`/assistant/quizzes`} className="btn">Créer un quiz</Link>
             <button onClick={() => scrollToRef(activitiesRef)} className="btn">Voir l'historique des activités</button>
@@ -144,7 +141,6 @@ export default function AssistantAuditoriumDetails() {
                     <span className="font-medium">{student.name}</span>
                     <p className="text-xs text-white/70">{student.email}</p>
                   </div>
-                  {/* Vous pouvez ajouter plus de détails sur l'étudiant ici */}
                 </li>
               </Link>
             ))}
