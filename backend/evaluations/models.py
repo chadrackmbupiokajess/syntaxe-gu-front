@@ -19,7 +19,8 @@ class Assignment(models.Model):
     )
     title = models.CharField(max_length=255)
     type = models.CharField(max_length=2, choices=ASSIGNMENT_TYPES, default='TP')
-    questionnaire = models.TextField()
+    questionnaire = models.JSONField(default=list, help_text="Liste de questions pour le devoir")
+    total_points = models.PositiveSmallIntegerField(default=20, help_text="La note maximale pour ce devoir")
     deadline = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 

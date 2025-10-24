@@ -84,6 +84,8 @@ def tptd_my(request):
         title = request.data.get("title", "").strip()
         deadline_s = request.data.get("deadline")
         assignment_type = request.data.get("type", "TP")
+        questionnaire = request.data.get("questionnaire", [])
+        total_points = request.data.get("total_points", 20)
 
         if not (course_code and title and deadline_s):
             return Response({"detail": "Code du cours, titre et deadline requis."}, status=400)
@@ -102,7 +104,8 @@ def tptd_my(request):
             assistant=ap,
             title=title,
             type=assignment_type,
-            questionnaire=request.data.get("description", ""),
+            questionnaire=questionnaire,
+            total_points=total_points,
             deadline=deadline
         )
         return Response({
@@ -145,7 +148,8 @@ def tptd_my_detail(request, id):
                 "course_name": assignment.course.name,
                 "auditorium": assignment.course.auditoire.name,
                 "department": assignment.course.auditoire.departement.name,
-                "description": assignment.questionnaire,
+                "questionnaire": assignment.questionnaire,
+                "total_points": assignment.total_points,
                 "deadline": assignment.deadline,
                 "created_at": assignment.created_at,
             }

@@ -53,12 +53,28 @@ export default function AssistantTPTDDetails() {
       <div className="card p-6 grid gap-4 md:grid-cols-3">
         <div className="md:col-span-2 space-y-4">
           <h2 className="text-xl font-semibold">{assignment.title}</h2>
-          <p className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{assignment.description || "Aucune description."}</p>
+          <div className="space-y-4">
+            <h3 className="font-semibold">Questionnaire</h3>
+            {assignment.questionnaire && assignment.questionnaire.length > 0 ? (
+              <ul className="list-decimal pl-5 space-y-3">
+                {assignment.questionnaire.map((q, index) => (
+                  <li key={index}>
+                    <p className="whitespace-pre-wrap">{q.question}</p>
+                    <p className="text-sm text-slate-500">({q.points} points)</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>Aucune question définie pour ce travail.</p>
+            )}
+          </div>
         </div>
         <div className="space-y-3 text-sm">
             <p><strong>Cours:</strong> {assignment.course_name}</p>
             <p><strong>Auditoire:</strong> {assignment.auditorium}</p>
             <p><strong>Département:</strong> {assignment.department}</p>
+            <hr className="border-slate-200 dark:border-slate-700"/>
+            <p><strong>Cote totale:</strong> <span className="font-bold">/ {assignment.total_points}</span></p>
             <hr className="border-slate-200 dark:border-slate-700"/>
             <p><strong>Créé le:</strong> {formatDate(assignment.created_at)}</p>
             <p><strong>Date de remise:</strong> <span className="font-semibold text-red-500">{formatDate(assignment.deadline)}</span></p>

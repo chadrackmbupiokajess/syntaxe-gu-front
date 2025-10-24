@@ -22,7 +22,7 @@ const abbreviateAuditorium = (auditoriumName) => {
 export default function AssistantTPTD() {
   const toast = useToast()
   const [rows, setRows] = useState([])
-  const [form, setForm] = useState({ title: '', type: 'TP', course_code: '', auditorium_id: '', deadlineLocal: '', description: '' })
+  const [form, setForm] = useState({ title: '', type: 'TP', course_code: '', auditorium_id: '', deadlineLocal: '', questionnaire: [], total_points: 20 })
   const [auditoriums, setAuditoriums] = useState([])
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(false)
@@ -74,6 +74,22 @@ export default function AssistantTPTD() {
     }
   };
 
+  const handleQuestionChange = (index, field, value) => {
+    const newQuestionnaire = [...form.questionnaire];
+    newQuestionnaire[index][field] = value;
+    setForm({ ...form, questionnaire: newQuestionnaire });
+  };
+
+  const addQuestion = () => {
+    setForm({ ...form, questionnaire: [...form.questionnaire, { type: 'text', question: '', points: 10 }] });
+  };
+
+  const removeQuestion = (index) => {
+    const newQuestionnaire = [...form.questionnaire];
+    newQuestionnaire.splice(index, 1);
+    setForm({ ...form, questionnaire: newQuestionnaire });
+  };
+
   const createItem = async () => {
     if (!form.title || !form.course_code || !form.auditorium_id) {
       toast.push({ kind: 'error', title: 'Champs requis', message: 'Titre, Auditoire et Code du cours sont requis.' })
@@ -84,13 +100,14 @@ export default function AssistantTPTD() {
       type: form.type,
       course_code: form.course_code,
       auditorium_id: form.auditorium_id,
-      description: form.description,
+      questionnaire: form.questionnaire,
+      total_points: form.total_points,
       deadline: form.deadlineLocal ? new Date(form.deadlineLocal).toISOString() : ''
     }
     setLoading(true)
     const { data } = await axios.post('/api/tptd/my/', payload)
     setNewlyCreatedIds(prev => new Set(prev).add(data.id));
-    setForm({ title: '', type: 'TP', course_code: '', auditorium_id: '', deadlineLocal: '', description: '' })
+    setForm({ title: '', type: 'TP', course_code: '', auditorium_id: '', deadlineLocal: '', questionnaire: [], total_points: 20 })
     await load()
     setLoading(false)
     toast.push({ title: 'TP/TD créé' })
@@ -133,9 +150,30 @@ export default function AssistantTPTD() {
           <label className="text-sm">Date de remise
             <input type="datetime-local" className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" value={form.deadlineLocal} onChange={e=>setForm({...form,deadlineLocal:e.target.value})} />
           </label>
-          <label className="text-sm md:col-span-2">Description
-            <input className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" placeholder="Consignes, ressources, etc." value={form.description} onChange={e=>setForm({...form,description:e.target.value})} />
+          <label className="text-sm">Cote
+            <input type="number" className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" value={form.total_points} onChange={e=>setForm({...form,total_points:e.target.value})} />
           </label>
+        </div>
+        <div className="mt-4">
+          <h4 className="font-semibold">Questions</h4>
+          {form.questionnaire.map((q, index) => (
+            <div key={index} className="grid grid-cols-[1fr_auto_auto] gap-2 items-center mt-2">
+              <textarea 
+                className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" 
+                placeholder={`Question ${index + 1}`}
+                value={q.question}
+                onChange={e => handleQuestionChange(index, 'question', e.target.value)}
+              />
+              <input 
+                type="number"
+                className="w-20 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800"
+                value={q.points}
+                onChange={e => handleQuestionChange(index, 'points', e.target.value)}
+              />
+              <button className="btn !bg-red-600" onClick={() => removeQuestion(index)}>X</button>
+            </div>
+          ))}
+          <button className="btn mt-2" onClick={addQuestion}>Ajouter une question</button>
         </div>
         <div>
           <button className="btn" onClick={createItem} disabled={loading}>{loading ? 'Création...' : 'Créer'}</button>
