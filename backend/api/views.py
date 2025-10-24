@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from datetime import timedelta
 from django.apps import apps
+from django.contrib.auth.hashers import make_password
 
 StudentProfile = apps.get_model('accounts', 'StudentProfile')
 AcademicProfile = apps.get_model('accounts', 'AcademicProfile')
@@ -245,6 +246,155 @@ def quizzes_my_detail(request, id):
     except (AcademicProfile.DoesNotExist, Quiz.DoesNotExist):
         return Response({"detail": "Quiz non trouvé ou accès non autorisé."}, status=404)
 
+# --- Vues pour les notes --- 
+
+@api_view(['GET', 'PATCH'])
+@permission_classes(DEV_PERMS)
+def assistant_grades(request, auditorium_code, course_code):
+    try:
+        ap = AcademicProfile.objects.get(user=request.user)
+        auditorium = Auditoire.objects.get(name=auditorium_code)
+        course = Course.objects.get(code=course_code, auditoire=auditorium)
+
+        # Vérifier si l'assistant est assigné à ce cours
+        if not CourseAssignment.objects.filter(course=course, assistant=ap).exists():
+            return Response({"detail": "Accès non autorisé à ce cours."}, status=403)
+
+        if request.method == 'GET':
+            # Récupérer toutes les soumissions pour ce cours
+            submissions = Submission.objects.select_related('student__user', 'assignment').filter(
+                assignment__course=course
+            ).order_by('student__user__last_name', 'student__user__first_name')
+
+            grades_data = []
+            for sub in submissions:
+                grades_data.append({
+                    "student_id": sub.student.id,
+                    "student_name": f"{sub.student.nom} {sub.student.prenom}".strip(),
+                    "assignment_title": sub.assignment.title,
+                    "grade": sub.grade,
+                    "submission_id": sub.id,
+                })
+            return Response(grades_data)
+
+        elif request.method == 'PATCH':
+            student_id = request.data.get("student_id")
+            grade = request.data.get("grade")
+
+            if student_id is None or grade is None:
+                return Response({"detail": "student_id et grade sont requis pour la mise à jour."}, status=400)
+            
+            # Trouver la soumission la plus récente pour cet étudiant et ce cours
+            submission = Submission.objects.filter(
+                student__id=student_id,
+                assignment__course=course
+            ).order_by('-submitted_at').first()
+
+            if not submission:
+                return Response({"detail": "Soumission non trouvée pour cet étudiant et ce cours."}, status=404)
+            
+            submission.grade = grade
+            submission.graded_at = timezone.now()
+            submission.save()
+
+            return Response({"detail": "Note mise à jour avec succès.", "grade": grade}, status=200)
+
+    except AcademicProfile.DoesNotExist:
+        return Response({"detail": "Profil académique non trouvé."}, status=404)
+    except Auditoire.DoesNotExist:
+        return Response({"detail": "Auditoire non trouvé."}, status=404)
+    except Course.DoesNotExist:
+        return Response({"detail": "Cours non trouvé."}, status=404)
+    except Exception as e:
+        print(f"Error in assistant_grades: {e}")
+        return Response({"detail": f"Une erreur inattendue est survenue: {e}"}, status=500)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def assistant_tograde(request):
+    items = []
+    try:
+        ap = AcademicProfile.objects.get(user=request.user)
+        # Récupérer les soumissions de TP/TD
+        submissions_tptd = Submission.objects.select_related(
+            "assignment__course__auditoire__departement", 
+            "student__user"
+        ).filter(assignment__assistant=ap, grade__isnull=True, status='soumis')
+
+        for s in submissions_tptd:
+            items.append({
+                "id": s.id,
+                "type": s.assignment.type, # Type de l'assignment (TP/TD)
+                "title": s.assignment.title,
+                "student_name": f"{s.student.nom} {s.student.prenom}".strip(),
+                "course_name": s.assignment.course.name,
+                "auditorium": s.assignment.course.auditoire.name,
+                "department": s.assignment.course.auditoire.departement.name,
+                "submitted_at": s.submitted_at,
+                "assignment_id": s.assignment.id,
+            })
+        
+        # TODO: Ajouter la logique pour les soumissions de Quiz si nécessaire
+
+    except Exception as e:
+        # Log the exception for debugging
+        print(f"Error in assistant_tograde: {e}")
+        pass
+    return Response(items)
+
+
+@api_view(['GET', 'PATCH'])
+@permission_classes(DEV_PERMS)
+def assistant_profile(request):
+    try:
+        ap = AcademicProfile.objects.get(user=request.user)
+        user = ap.user
+
+        if request.method == 'PATCH':
+            # Update user info
+            user.first_name = request.data.get('prenom', user.first_name)
+            user.last_name = request.data.get('nom', user.last_name)
+            user.email = request.data.get('email', user.email)
+            user.save()
+
+            # Update academic profile
+            ap.phone = request.data.get('phone', ap.phone)
+            ap.office = request.data.get('office', ap.office)
+            ap.save()
+
+            # Password change
+            current_password = request.data.get('current_password')
+            new_password = request.data.get('new_password')
+            if current_password and new_password:
+                if not user.check_password(current_password):
+                    return Response({"detail": "Mot de passe actuel incorrect."}, status=400)
+                user.password = make_password(new_password)
+                user.save()
+
+            return Response({"detail": "Profil mis à jour avec succès."}, status=200)
+
+        # GET request
+        data = {
+            "prenom": user.first_name,
+            "nom": user.last_name,
+            "email": user.email,
+            "phone": ap.phone,
+            "office": ap.office,
+            "department": "",
+            "faculty": "",
+            "avatar": f"https://i.pravatar.cc/128?u={user.id}",
+        }
+        latest_assignment = CourseAssignment.objects.filter(assistant=ap).select_related('course__auditoire__departement__section').first()
+        if latest_assignment:
+            data["department"] = latest_assignment.course.auditoire.departement.name
+            data["faculty"] = latest_assignment.course.auditoire.departement.section.name
+        return Response(data)
+
+    except AcademicProfile.DoesNotExist:
+        return Response({"detail": "Profil non trouvé."}, status=404)
+
+
 # --- Vues Placeholder --- 
 
 @api_view(["GET"])
@@ -439,7 +589,7 @@ def assistant_student_grades(request, id: int):
 def assistant_student_submissions(request, id: int):
     rows = []
     try:
-        sp = StudentProfile.objects.get(id=id)
+        sp = StudentProfile.objects.get(user=request.user)
         subs = Submission.objects.select_related("assignment").filter(student=sp).order_by("-submitted_at")[:50]
         for s in subs:
             rows.append({
@@ -624,40 +774,6 @@ def assistant_auditorium_create_quiz(request, code: str):
         return Response({"id": q.id, "title": q.title, "duration": q.duration}, status=201)
     except Exception:
         return Response({"detail": "Erreur de cr\u00e9ation du quiz"}, status=400)
-
-
-@api_view(["GET"])
-@permission_classes(DEV_PERMS)
-def assistant_tograde(request):
-    items = []
-    try:
-        ap = AcademicProfile.objects.get(user=request.user)
-        # Récupérer les soumissions de TP/TD
-        submissions_tptd = Submission.objects.select_related(
-            "assignment__course__auditoire__departement", 
-            "student__user"
-        ).filter(assignment__assistant=ap, grade__isnull=True, status='soumis')
-
-        for s in submissions_tptd:
-            items.append({
-                "id": s.id,
-                "type": s.assignment.type, # Type de l'assignment (TP/TD)
-                "title": s.assignment.title,
-                "student_name": f"{s.student.nom} {s.student.prenom}".strip(),
-                "course_name": s.assignment.course.name,
-                "auditorium": s.assignment.course.auditoire.name,
-                "department": s.assignment.course.auditoire.departement.name,
-                "submitted_at": s.submitted_at,
-                "assignment_id": s.assignment.id,
-            })
-        
-        # TODO: Ajouter la logique pour les soumissions de Quiz si nécessaire
-
-    except Exception as e:
-        # Log the exception for debugging
-        print(f"Error in assistant_tograde: {e}")
-        pass
-    return Response(items)
 
 
 @api_view(["GET"])
@@ -1004,8 +1120,6 @@ def jury_defenses(request):
     return Response(rows)
 
 
-# ---- Endpoints Apparitorat (placeholders)
-
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def apparitorat_summary(request):
@@ -1025,8 +1139,6 @@ def apparitorat_presences(request):
     ]
     return Response(rows)
 
-
-# ---- Endpoints Finance/Caisse (placeholders)
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
@@ -1051,8 +1163,6 @@ def finance_operations(request):
     return Response(rows)
 
 
-# ---- Endpoints IT (placeholders)
-
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def it_summary(request):
@@ -1073,8 +1183,6 @@ def it_incidents(request):
     ]
     return Response(rows)
 
-
-# ---- Endpoints Bibliothèque (placeholders)
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)

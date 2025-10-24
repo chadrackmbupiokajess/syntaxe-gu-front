@@ -62,6 +62,8 @@ class AcademicProfile(models.Model):
     status = models.CharField(max_length=20, choices=[('active', 'Active'), ('inactive', 'Inactive')], default='active')
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
     description = models.TextField(blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    office = models.CharField(max_length=100, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.matricule:

@@ -6,7 +6,7 @@ from .views import (
     assistant_summary, auditoriums_assistant_my, tptd_my, quizzes_my, assistant_tograde,
     assistant_auditorium_courses, assistant_auditorium_students, assistant_auditorium_activities, assistant_auditorium_stats, assistant_auditorium_messages,
     assistant_auditorium_create_tptd, assistant_auditorium_create_quiz,
-    student_notifications, teacher_profile,
+    student_notifications, 
     # Endpoints manquants (student/library/payments)
     quizzes_student_available, tptd_student_available, quizzes_student_my_attempts, tptd_student_my_submissions,
     student_courses, student_calendar, library_catalog, library_myloans, student_grades_all,
@@ -30,6 +30,7 @@ from .views import (
     assistant_my_courses,
     tptd_my_detail,
     quizzes_my_detail,
+    assistant_profile,
 )
 
 urlpatterns = [
@@ -60,6 +61,7 @@ urlpatterns = [
 
     # Assistant endpoints
     re_path(r"^assistant/summary/?$", assistant_summary, name="assistant_summary"),
+    re_path(r"^assistant/profile/?$", assistant_profile, name="assistant_profile"),
     re_path(r"^auditoriums/assistant/my/?$", auditoriums_assistant_my, name="auditoriums_assistant_my"),
     re_path(r"^assistant/courses/?$", assistant_my_courses, name="assistant_my_courses"),
     re_path(r"^assistant/auditoriums/(?P<auditoire_id>\d+)/courses/?$", assistant_auditorium_courses, name="assistant_auditorium_courses"),
@@ -77,9 +79,6 @@ urlpatterns = [
     re_path(r"^quizzes/my/?$", quizzes_my, name="quizzes_my"),
     re_path(r"^quizzes/my/(?P<id>\d+)/?$", quizzes_my_detail, name="quizzes_my_detail"),
     re_path(r"^assistant/tograde/?$", assistant_tograde, name="assistant_tograde"),
-
-    # Teacher endpoints
-    re_path(r"^teacher/profile/?$", teacher_profile, name="teacher_profile"),
 
     # Admin & other roles endpoints
     re_path(r"^pdg/summary/?$", pdg_summary, name="pdg_summary"),
