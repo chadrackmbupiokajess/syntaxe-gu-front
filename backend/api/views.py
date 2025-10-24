@@ -239,3 +239,263 @@ def student_documents(request):
 def payments_mine(request):
     # Paiements de l'utilisateur
     return Response([])
+
+
+# ---- Endpoints PDG (placeholders) ----
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def pdg_summary(request):
+    data = {
+        "students": 3250,
+        "staff": 420,
+        "revenueYTD": 1245000,
+        "satisfaction": 87,
+    }
+    return Response(data)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def pdg_activities(request):
+    rows = [
+        {"date": "2025-10-10", "type": "Conseil", "intitule": "Conseil d'administration", "statut": "terminé"},
+        {"date": "2025-10-20", "type": "Budget", "intitule": "Arbitrage budget 2026", "statut": "en cours"},
+        {"date": "2025-11-02", "type": "Partenariat", "intitule": "Signature MOU avec Entreprise X", "statut": "planifié"},
+    ]
+    return Response(rows)
+
+
+# ---- Endpoints DG (placeholders) ----
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def dg_summary(request):
+    data = {
+        "decisionsPending": 6,
+        "projects": 14,
+        "budgetUsed": 62,
+        "satisfaction": 82,
+    }
+    return Response(data)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def dg_actions(request):
+    rows = [
+        {"id": 1, "date": "2025-10-12", "domaine": "Infrastructures", "action": "Validation chantier Bât. C", "statut": "en cours"},
+        {"id": 2, "date": "2025-10-18", "domaine": "RH", "action": "Lancement recrutement assistants", "statut": "planifié"},
+        {"id": 3, "date": "2025-10-25", "domaine": "Finances", "action": "Ajustement budget Q4", "statut": "terminé"},
+    ]
+    return Response(rows)
+
+
+# ---- Endpoints SGA (placeholders) ----
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def sga_summary(request):
+    data = {
+        "enrollmentsPending": 23,
+        "auditoriumsManaged": 18,
+    }
+    return Response(data)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def sga_demandes(request):
+    rows = [
+        {"id": 101, "type": "Attestation", "etudiant": "STU-00023", "statut": "en attente"},
+        {"id": 102, "type": "Changement auditoire", "etudiant": "STU-00452", "statut": "validé"},
+        {"id": 103, "type": "Duplicata carte", "etudiant": "STU-01234", "statut": "en attente"},
+    ]
+    return Response(rows)
+
+
+# ---- Endpoints SGAD (placeholders)
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def sgad_summary(request):
+    data = {
+        "payrollActions": 5,
+        "financeReports": 12,
+    }
+    return Response(data)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def sgad_paie(request):
+    rows = [
+        {"id": 1, "agent": "AG-001", "mois": "09/2025", "statut": "en cours"},
+        {"id": 2, "agent": "AG-021", "mois": "09/2025", "statut": "validé"},
+        {"id": 3, "agent": "AG-034", "mois": "09/2025", "statut": "en attente"},
+    ]
+    return Response(rows)
+
+
+# ---- Endpoints Section (placeholders)
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def section_summary(request):
+    data = {
+        "sections": 6,
+        "heads": 6,
+        "kpis": {"fillRate": 78},
+    }
+    return Response(data)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def section_list(request):
+    rows = [
+        {"code": "G1 INFO", "intitule": "Informatique 1", "effectif": 210},
+        {"code": "G2 INFO", "intitule": "Informatique 2", "effectif": 190},
+        {"code": "G3 INFO", "intitule": "Informatique 3", "effectif": 160},
+    ]
+    return Response(rows)
+
+
+# ---- Endpoints Département (placeholders)
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def department_summary(request):
+    data = {
+        "departments": 4,
+        "courses": 52,
+        "auditoriums": 18,
+    }
+    return Response(data)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def department_list(request):
+    rows = [
+        {"code": "INFO", "intitule": "Informatique", "chefs": 1},
+        {"code": "MATH", "intitule": "Mathématiques", "chefs": 1},
+        {"code": "PHY", "intitule": "Physique", "chefs": 1},
+    ]
+    return Response(rows)
+
+
+# ---- Endpoints Jury (placeholders)
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def jury_summary(request):
+    data = {
+        "defensesUpcoming": 8,
+        "reportsPending": 12,
+    }
+    return Response(data)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def jury_defenses(request):
+    rows = [
+        {"id": 11, "etudiant": "STU-00231", "sujet": "IA et éducation", "date": "2025-11-04", "jury": "A"},
+        {"id": 12, "etudiant": "STU-00411", "sujet": "Sécurité réseaux", "date": "2025-11-10", "jury": "B"},
+    ]
+    return Response(rows)
+
+
+# ---- Endpoints Apparitorat (placeholders)
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def apparitorat_summary(request):
+    data = {
+        "attendanceToday": 93,
+        "incidents": 2,
+    }
+    return Response(data)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def apparitorat_presences(request):
+    rows = [
+        {"id": 1, "date": "2025-10-24", "auditoire": "G2 INFO", "present": 120, "total": 130},
+        {"id": 2, "date": "2025-10-24", "auditoire": "G3 INFO", "present": 88, "total": 95},
+    ]
+    return Response(rows)
+
+
+# ---- Endpoints Finance/Caisse (placeholders)
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def finance_summary(request):
+    data = {
+        "paymentsToday": 42,
+        "totalToday": 1250000,
+        "pendingInvoices": 7,
+        "refunds": 1,
+    }
+    return Response(data)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def finance_operations(request):
+    rows = [
+        {"id": 1, "date": "2025-10-24", "type": "Paiement", "montant": 25000, "statut": "ok"},
+        {"id": 2, "date": "2025-10-24", "type": "Paiement", "montant": 40000, "statut": "ok"},
+        {"id": 3, "date": "2025-10-24", "type": "Remboursement", "montant": 5000, "statut": "ok"},
+    ]
+    return Response(rows)
+
+
+# ---- Endpoints IT (placeholders)
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def it_summary(request):
+    data = {
+        "incidentsOpen": 5,
+        "deployments": 2,
+        "uptime": 99.3,
+    }
+    return Response(data)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def it_incidents(request):
+    rows = [
+        {"id": 101, "date": "2025-10-21", "service": "Réseau", "priorite": "haute", "statut": "en cours"},
+        {"id": 102, "date": "2025-10-22", "service": "Email", "priorite": "moyenne", "statut": "ouvert"},
+    ]
+    return Response(rows)
+
+
+# ---- Endpoints Bibliothèque (placeholders)
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def library_summary(request):
+    data = {
+        "loansActive": 142,
+        "overdue": 17,
+        "catalog": 3200,
+        "reservations": 28,
+    }
+    return Response(data)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def library_gestion_reservations(request):
+    rows = [
+        {"id": 701, "titre": "Algorithmes avancés", "lecteur": "STU-00012", "statut": "en attente"},
+        {"id": 702, "titre": "Réseaux informatiques", "lecteur": "STU-00089", "statut": "en attente"},
+    ]
+    return Response(rows)

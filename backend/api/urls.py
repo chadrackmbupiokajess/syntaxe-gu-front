@@ -8,7 +8,18 @@ from .views import (
     # Endpoints manquants (student/library/payments)
     quizzes_student_available, tptd_student_available, quizzes_student_my_attempts, tptd_student_my_submissions,
     student_courses, student_calendar, library_catalog, library_myloans, student_grades_all,
-    student_documents, payments_mine
+    student_documents, payments_mine,
+    # PDG / DG / SGA
+    pdg_summary, pdg_activities, dg_summary, dg_actions, sga_summary, sga_demandes,
+    # SGAD / Section / Departement / Jury / Apparitorat / Finance / IT / Library
+    sgad_summary, sgad_paie,
+    section_summary, section_list,
+    department_summary, department_list,
+    jury_summary, jury_defenses,
+    apparitorat_summary, apparitorat_presences,
+    finance_summary, finance_operations,
+    it_summary, it_incidents,
+    library_summary, library_gestion_reservations,
 )
 
 urlpatterns = [
@@ -49,6 +60,46 @@ urlpatterns = [
 
     # Teacher endpoints
     re_path(r"^teacher/profile/?$", teacher_profile, name="teacher_profile"),
+
+    # PDG / DG / SGA endpoints (placeholders)
+    re_path(r"^pdg/summary/?$", pdg_summary, name="pdg_summary"),
+    re_path(r"^pdg/activities/?$", pdg_activities, name="pdg_activities"),
+    re_path(r"^dg/summary/?$", dg_summary, name="dg_summary"),
+    re_path(r"^dg/actions/?$", dg_actions, name="dg_actions"),
+    re_path(r"^sga/summary/?$", sga_summary, name="sga_summary"),
+    re_path(r"^sga/demandes/?$", sga_demandes, name="sga_demandes"),
+
+    # SGAD
+    re_path(r"^sgad/summary/?$", sgad_summary, name="sgad_summary"),
+    re_path(r"^sgad/paie/?$", sgad_paie, name="sgad_paie"),
+
+    # Section
+    re_path(r"^section/summary/?$", section_summary, name="section_summary"),
+    re_path(r"^section/list/?$", section_list, name="section_list"),
+
+    # Department
+    re_path(r"^department/summary/?$", department_summary, name="department_summary"),
+    re_path(r"^department/list/?$", department_list, name="department_list"),
+
+    # Jury
+    re_path(r"^jury/summary/?$", jury_summary, name="jury_summary"),
+    re_path(r"^jury/defenses/?$", jury_defenses, name="jury_defenses"),
+
+    # Apparitorat
+    re_path(r"^apparitorat/summary/?$", apparitorat_summary, name="apparitorat_summary"),
+    re_path(r"^apparitorat/presences/?$", apparitorat_presences, name="apparitorat_presences"),
+
+    # Finance/Caisse
+    re_path(r"^finance/summary/?$", finance_summary, name="finance_summary"),
+    re_path(r"^finance/operations/?$", finance_operations, name="finance_operations"),
+
+    # IT
+    re_path(r"^it/summary/?$", it_summary, name="it_summary"),
+    re_path(r"^it/incidents/?$", it_incidents, name="it_incidents"),
+
+    # Library
+    re_path(r"^library/summary/?$", library_summary, name="library_summary"),
+    re_path(r"^library/gestion/reservations/?$", library_gestion_reservations, name="library_gestion_reservations"),
 
 
     path("", include("accounts.urls")),

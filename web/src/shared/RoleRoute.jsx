@@ -13,10 +13,9 @@ const RoleRoute = ({ allowedRoles }) => {
     // On vérifie si le rôle de l'utilisateur est dans la liste des rôles autorisés
     if (allowedRoles.includes(me.role)) {
         return <Outlet />;
-    } else {
-        // Si l'utilisateur n'a pas le bon rôle, on le redirige
-        return <Navigate to="/unauthorized" replace />;
     }
+    // Rôle non autorisé: au lieu d'afficher "Accès refusé", on renvoie vers l'accueil (RoleLanding)
+    return <Navigate to="/" replace />;
 };
 
 export default RoleRoute;

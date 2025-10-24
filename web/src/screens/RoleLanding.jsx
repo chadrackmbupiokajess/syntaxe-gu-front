@@ -29,15 +29,15 @@ const RoleLanding = () => {
                 case 'apparitorat': navigate('/apparitorat', { replace: true }); break;
                 case 'caisse': navigate('/caisse', { replace: true }); break;
                 case 'service_it': navigate('/it', { replace: true }); break;
-                case 'bibliothecaire': navigate('/bibliothecaire', { replace: true }); break;
+                case 'bibliothecaire': navigate('/bibliotheque', { replace: true }); break;
                 default:
-                    // Si le rôle n'est pas géré, on peut rediriger vers une page par défaut ou d'erreur
-                    navigate('/unauthorized', { replace: true });
+                    // Si un rôle inconnu arrive, on renvoie vers l'accueil plutôt que d'afficher une erreur
+                    navigate('/', { replace: true });
                     break;
             }
         } else if (me && !me.role) {
-            // Si l'utilisateur est connecté mais n'a pas de rôle (ce qui ne devrait pas arriver avec notre logique)
-            navigate('/unauthorized', { replace: true });
+            // Si l'utilisateur est connecté mais sans rôle, on revient à l'accueil
+            navigate('/', { replace: true });
         }
     }, [me, navigate]);
 

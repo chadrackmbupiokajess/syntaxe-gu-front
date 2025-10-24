@@ -7,6 +7,7 @@ import StudentLayout from '../components/StudentLayout';
 import AssistantLayout from '../components/AssistantLayout';
 import ProtectedRoute from '../shared/ProtectedRoute';
 import RoleRoute from '../shared/RoleRoute';
+import Unauthorized from '../shared/Unauthorized';
 
 // Pages
 import Login from '../screens/Login';
@@ -89,22 +90,45 @@ export default function App() {
           </Route>
 
           {/* Routes pour les autres rôles (Admin, etc.) */}
-          <Route path="/pdg" element={<RoleRoute allowedRoles={['pdg']}><PDGDashboard /></RoleRoute>} />
-          <Route path="/dg" element={<RoleRoute allowedRoles={['directeur_general']}><DgDashboard /></RoleRoute>} />
-          <Route path="/sga" element={<RoleRoute allowedRoles={['sga']}><SgaDashboard /></RoleRoute>} />
-          <Route path="/sgad" element={<RoleRoute allowedRoles={['sgad']}><SgadDashboard /></RoleRoute>} />
-          <Route path="/section" element={<RoleRoute allowedRoles={['chef_section']}><SectionDashboard /></RoleRoute>} />
-          <Route path="/departement" element={<RoleRoute allowedRoles={['chef_departement']}><DepartementDashboard /></RoleRoute>} />
-          <Route path="/jury" element={<RoleRoute allowedRoles={['jury']}><JuryDashboard /></RoleRoute>} />
-          <Route path="/apparitorat" element={<RoleRoute allowedRoles={['apparitorat']}><ApparitoratDashboard /></RoleRoute>} />
-          <Route path="/caisse" element={<RoleRoute allowedRoles={['caisse']}><CaisseDashboard /></RoleRoute>} />
-          <Route path="/it" element={<RoleRoute allowedRoles={['service_it']}><ITDashboard /></RoleRoute>} />
-          <Route path="/bibliotheque" element={<RoleRoute allowedRoles={['bibliothecaire']}><BibliothequeDashboard /></RoleRoute>} />
+          <Route path="/pdg" element={<RoleRoute allowedRoles={['pdg']} />}> 
+            <Route index element={<PDGDashboard />} />
+          </Route>
+          <Route path="/dg" element={<RoleRoute allowedRoles={['directeur_general']} />}> 
+            <Route index element={<DgDashboard />} />
+          </Route>
+          <Route path="/sga" element={<RoleRoute allowedRoles={['sga']} />}> 
+            <Route index element={<SgaDashboard />} />
+          </Route>
+          <Route path="/sgad" element={<RoleRoute allowedRoles={['sgad']} />}> 
+            <Route index element={<SgadDashboard />} />
+          </Route>
+          <Route path="/section" element={<RoleRoute allowedRoles={['chef_section']} />}> 
+            <Route index element={<SectionDashboard />} />
+          </Route>
+          <Route path="/departement" element={<RoleRoute allowedRoles={['chef_departement']} />}> 
+            <Route index element={<DepartementDashboard />} />
+          </Route>
+          <Route path="/jury" element={<RoleRoute allowedRoles={['jury']} />}> 
+            <Route index element={<JuryDashboard />} />
+          </Route>
+          <Route path="/apparitorat" element={<RoleRoute allowedRoles={['apparitorat']} />}> 
+            <Route index element={<ApparitoratDashboard />} />
+          </Route>
+          <Route path="/caisse" element={<RoleRoute allowedRoles={['caisse']} />}> 
+            <Route index element={<CaisseDashboard />} />
+          </Route>
+          <Route path="/it" element={<RoleRoute allowedRoles={['service_it']} />}> 
+            <Route index element={<ITDashboard />} />
+          </Route>
+          <Route path="/bibliotheque" element={<RoleRoute allowedRoles={['bibliothecaire']} />}> 
+            <Route index element={<BibliothequeDashboard />} />
+          </Route>
 
         </Route>
       </Route>
 
       {/* Redirection pour toute autre URL non trouvée */}
+      <Route path="/unauthorized" element={<Unauthorized />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

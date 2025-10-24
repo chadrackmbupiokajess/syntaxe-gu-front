@@ -15,6 +15,18 @@
             </GhostTextMetaData>
           </value>
         </entry>
+        <entry key="PDG&#10;chunk-NUMECXU6.js?v=c5396adf:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools&#10;:8000/api/pdg/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/pdg/activities:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/pdg/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/pdg/activities:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/pdg/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/pdg/activities:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/pdg/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/pdg/activities:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;&#10;DG&#10;chunk-NUMECXU6.js?v=c5396adf:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools&#10;:8000/api/dg/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;DgDashboard.jsx:25 Uncaught (in promise) AxiosError&#10;:8000/api/dg/actions:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/dg/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;DgDashboard.jsx:25 Uncaught (in promise) AxiosError&#10;:8000/api/dg/actions:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;&#10;sga &#10;&#10;chunk-NUMECXU6.js?v=c5396adf:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools&#10;:8000/api/sga/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;SgaDashboard.jsx:21 Uncaught (in promise) AxiosError&#10;:8000/api/sga/demandes:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/sga/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;SgaDashboard.jsx:21 Uncaught (in promise) AxiosError&#10;:8000/api/sga/demandes:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;:8000/api/sga/summary:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;SgaDashboard.jsx:21 Uncaught (in promise) AxiosError&#10;:8000/api/sga/demandes:1  Failed to load resource: the server responded with a status of 404 (Not Found)&#10;&#10;&#10;et verifier les autres et corrigent">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761274277870" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
         <entry key="[plugin:vite:import-analysis] Failed to resolve import &quot;../screens/AssistantToGrade&quot; from &quot;src/routes/App.jsx&quot;. Does the file exist?&#10;C:/Users/Administrateur/Videos/Syntaxe/syntaxe-gu/web/src/routes/App.jsx:30:29&#10;40 |  import AssistantTPTD from &quot;../screens/AssistantTPTD&quot;;&#10;41 |  import AssistantQuizzes from &quot;../screens/AssistantQuizzes&quot;;&#10;42 |  import AssistantToGrade from &quot;../screens/AssistantToGrade&quot;;&#10;   |                                ^&#10;43 |  import AssistantProfile from &quot;../screens/AssistantProfile&quot;;&#10;44 |  export default function App() {">
           <value>
             <GhostTextMetaData>
@@ -46,6 +58,18 @@
               <option name="timestamps">
                 <list>
                   <option value="1761050840765" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="c'est devenu embetant&#10;&#10;Accès refusé&#10;Vous n'avez pas les permissions nécessaires pour accéder à cette page.&#10;&#10;Aller à l'accueilSe connecter&#10;&#10;&#10;je ne veux plus voir ca">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761274772490" />
                 </list>
               </option>
             </GhostTextMetaData>
@@ -197,6 +221,18 @@
               <option name="timestamps">
                 <list>
                   <option value="1761068064822" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="dans le frontend j'ai deja la page de toute les roles ou si ca manque tu ajoutes que tout soit fonctionnel comme ceux qui fonctionnent deja c'est assistant,enseignant et etudiant">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761273744628" />
                 </list>
               </option>
             </GhostTextMetaData>
