@@ -92,7 +92,12 @@ export default function AssistantNewQuiz() {
     }
     setLoading(true);
     try {
-      await axios.post('/api/quizzes/my/', form);
+      const response = await axios.post('/api/quizzes/my/', form);
+      // Store the ID of the newly created quiz in sessionStorage
+      const newQuizIds = JSON.parse(sessionStorage.getItem('newQuizIds') || '[]');
+      newQuizIds.push(response.data.id);
+      sessionStorage.setItem('newQuizIds', JSON.stringify(newQuizIds));
+
       toast.push({ title: 'Quiz créé avec succès' });
       navigate('/assistant/quizzes');
     } catch (error) {

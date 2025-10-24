@@ -210,6 +210,41 @@ def quizzes_my(request):
         })
     return Response(items)
 
+@api_view(['GET', 'DELETE'])
+@permission_classes(DEV_PERMS)
+def quizzes_my_detail(request, id):
+    try:
+        ap = AcademicProfile.objects.get(user=request.user)
+        quiz = Quiz.objects.select_related('course__auditoire__departement').get(id=id, assistant=ap)
+
+        if request.method == 'GET':
+            questions = []
+            for q in quiz.questions.all():
+                choices = []
+                if q.question_type in ['single', 'multiple']:
+                    for c in q.choices.all():
+                        choices.append({"text": c.choice_text, "is_correct": c.is_correct})
+                questions.append({"text": q.question_text, "type": q.question_type, "choices": choices})
+
+            data = {
+                "id": quiz.id,
+                "title": quiz.title,
+                "course_name": quiz.course.name,
+                "auditorium": quiz.course.auditoire.name,
+                "department": quiz.course.auditoire.departement.name,
+                "duration": quiz.duration,
+                "created_at": quiz.created_at,
+                "questions": questions,
+            }
+            return Response(data)
+
+        elif request.method == 'DELETE':
+            quiz.delete()
+            return Response(status=204)
+
+    except (AcademicProfile.DoesNotExist, Quiz.DoesNotExist):
+        return Response({"detail": "Quiz non trouvé ou accès non autorisé."}, status=404)
+
 # --- Vues Placeholder --- 
 
 @api_view(["GET"])
