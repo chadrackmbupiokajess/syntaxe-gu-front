@@ -32,6 +32,7 @@ function ChatArea({ course }) {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const textareaRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -62,9 +63,17 @@ function ChatArea({ course }) {
       const response = await axios.post(`/api/messaging/chat/${course.code}/messages`, { text: newMessage });
       setMessages(prev => [...prev, response.data]);
       setNewMessage('');
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+      }
     } catch (error) {
       console.error("Erreur lors de l'envoi du message:", error);
     }
+  };
+
+  const handleTextareaInput = (e) => {
+    e.target.style.height = 'auto';
+    e.target.style.height = `${e.target.scrollHeight}px`;
   };
 
   if (!course) {
@@ -83,27 +92,49 @@ function ChatArea({ course }) {
       </div>
       <div className="flex-1 p-6 overflow-y-auto">
         <div className="flex flex-col gap-4">
-          {messages.map(msg => (
-            <div key={msg.id} className={`flex ${msg.user === 'Vous' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-lg p-3 rounded-lg ${msg.user === 'Vous' ? 'bg-blue-700' : 'bg-slate-700'}`}>
-                {msg.user !== 'Vous' && <p className="text-sm font-semibold text-white/80 mb-1">{msg.user}</p>}
-                <p>{msg.text}</p>
+          {messages.map(msg => {
+            const isSelf = msg.user === 'Vous';
+            const avatar = (
+              <div className={`w-8 h-8 rounded-full ${isSelf ? 'bg-blue-500' : 'bg-slate-600'} flex-shrink-0 flex items-center justify-center font-bold text-white`}>
+                {isSelf ? 'V' : msg.user.charAt(0).toUpperCase()}
               </div>
-            </div>
-          ))}
+            );
+            const messageBubble = (
+              <div className={`max-w-lg p-3 rounded-lg ${isSelf ? 'bg-blue-700 rounded-br-none' : 'bg-slate-700 rounded-bl-none'}`}>
+                {!isSelf && <p className="text-sm font-semibold text-white/80 mb-1">{msg.user}</p>}
+                <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+              </div>
+            );
+
+            return (
+              <div key={msg.id} className={`flex items-start gap-3 ${isSelf ? 'justify-end' : 'justify-start'}`}>
+                {isSelf ? null : avatar}
+                {messageBubble}
+                {isSelf ? avatar : null}
+              </div>
+            );
+          })}
           <div ref={messagesEndRef} />
         </div>
       </div>
-      <div className="p-4 bg-slate-800">
-        <form onSubmit={handleSendMessage} className="flex gap-3">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Écrivez votre message..."
-            className="input flex-1"
-          />
-          <button type="submit" className="btn">Envoyer</button>
+      <div className="p-4 bg-slate-800 border-t border-slate-700">
+        <form onSubmit={handleSendMessage} className="flex items-end gap-3">
+          <div className="flex-1 bg-slate-700 rounded-2xl flex items-end p-1">
+            <textarea
+              ref={textareaRef}
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onInput={handleTextareaInput}
+              placeholder="Écrivez votre message..."
+              className="flex-1 bg-transparent text-white placeholder-slate-400 resize-none overflow-hidden focus:outline-none px-3 py-2"
+              rows="1"
+            />
+          </div>
+          <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white rounded-full w-12 h-12 flex-shrink-0 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+              <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+            </svg>
+          </button>
         </form>
       </div>
     </div>
