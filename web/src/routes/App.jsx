@@ -49,6 +49,7 @@ import AssistantGrades from '../screens/AssistantGrades';
 import AssistantTPTD from '../screens/AssistantTPTD';
 import AssistantTPTDDetails from '../screens/AssistantTPTDDetails';
 import AssistantQuizzes from '../screens/AssistantQuizzes';
+import AssistantQuizDetails from '../screens/AssistantQuizDetails';
 import AssistantToGrade from '../screens/AssistantToGrade';
 import AssistantProfile from '../screens/AssistantProfile';
 import AssistantStudentProfile from '../screens/AssistantStudentProfile';
@@ -91,6 +92,8 @@ export default function App() {
               <Route path="tptd" element={<AssistantTPTD />} />
               <Route path="tptd/:id" element={<AssistantTPTDDetails />} />
               <Route path="quizzes" element={<AssistantQuizzes />} />
+              <Route path="quizzes/new" element={<AssistantNewQuiz />} />
+              <Route path="quizzes/:id" element={<AssistantQuizDetails />} />
               <Route path="notifications" element={<StudentNotifications />} />
               <Route path="a-corriger" element={<AssistantToGrade />} />
               <Route path="profil" element={<AssistantProfile />} />

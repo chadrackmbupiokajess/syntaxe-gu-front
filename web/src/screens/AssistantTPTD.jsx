@@ -221,8 +221,9 @@ export default function AssistantTPTD() {
                               <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">Titre</th><th className="py-2 pr-4">Type</th><th className="py-2 pr-4">Cours</th><th className="py-2 pr-4">Date de remise</th><th className="py-2 pr-4"></th></tr></thead>
                               <tbody>
                                 {tptdList.map(r => (
-                                  <tr key={r.id} className={`border-t border-slate-200/60 dark:border-slate-800/60 ${newlyCreatedIds.has(r.id) ? 'bg-green-200 dark:bg-green-800/40' : ''}`}>
-                                    <td className="py-2 pr-4 font-medium"><Link to={`/assistant/tptd/${r.id}`} className="hover:underline">{r.title}</Link></td>
+                                  <tr key={r.id} className={`border-t border-slate-200/60 dark:border-slate-800/60 relative`}>
+                                    {newlyCreatedIds.has(r.id) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>}
+                                    <td className="py-2 pl-4 pr-4 font-medium"><Link to={`/assistant/tptd/${r.id}`} className="hover:underline">{r.title}</Link></td>
                                     <td className="py-2 pr-4">{r.type}</td>
                                     <td className="py-2 pr-4">{r.course_name}</td>
                                     <td className="py-2 pr-4">{formatDate(r.deadline)}</td>

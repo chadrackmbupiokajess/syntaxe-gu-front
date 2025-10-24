@@ -18,6 +18,8 @@ CourseMessage = apps.get_model('academics', 'CourseMessage')
 Assignment = apps.get_model('evaluations', 'Assignment')
 Submission = apps.get_model('evaluations', 'Submission')
 Quiz = apps.get_model('evaluations', 'Quiz')
+Question = apps.get_model('evaluations', 'Question')
+Choice = apps.get_model('evaluations', 'Choice')
 
 
 def _safe_user_id(u) -> int:
@@ -163,7 +165,53 @@ def tptd_my_detail(request, id):
         return Response({"detail": "TP/TD non trouvé ou accès non autorisé."}, status=404)
 
 
-# ... (le reste des vues)
+@api_view(['GET', 'POST'])
+@permission_classes(DEV_PERMS)
+def quizzes_my(request):
+    ap = AcademicProfile.objects.get(user=request.user)
+
+    if request.method == 'POST':
+        course_code = request.data.get("course_code")
+        title = request.data.get("title", "").strip()
+        duration = request.data.get("duration", 20)
+        questions = request.data.get("questions", [])
+
+        if not (course_code and title and questions):
+            return Response({"detail": "Code du cours, titre et questions requis."}, status=400)
+
+        course = Course.objects.filter(code=course_code).first()
+        if not course:
+            return Response({"detail": f"Cours avec le code {course_code} introuvable."}, status=404)
+
+        if not CourseAssignment.objects.filter(course=course, assistant=ap).exists():
+            return Response({"detail": "Vous n'êtes pas assigné à ce cours."}, status=403)
+
+        quiz = Quiz.objects.create(course=course, assistant=ap, title=title, duration=duration)
+
+        for q_data in questions:
+            question = Question.objects.create(quiz=quiz, question_text=q_data['text'], question_type=q_data['type'])
+            if q_data['type'] in ['single', 'multiple']:
+                for choice_data in q_data['choices']:
+                    Choice.objects.create(question=question, choice_text=choice_data['text'], is_correct=choice_data['is_correct'])
+        
+        return Response({"id": quiz.id, "title": quiz.title}, status=201)
+
+    # GET request
+    items = []
+    quizzes = Quiz.objects.select_related("course__auditoire__departement").filter(assistant=ap)
+    for q in quizzes:
+        items.append({
+            "id": q.id,
+            "title": q.title,
+            "course_name": q.course.name,
+            "department": q.course.auditoire.departement.name,
+            "auditorium": q.course.auditoire.name,
+            "duration": q.duration,
+        })
+    return Response(items)
+
+# --- Vues Placeholder --- 
+
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def student_summary(request):
@@ -541,24 +589,6 @@ def assistant_auditorium_create_quiz(request, code: str):
         return Response({"id": q.id, "title": q.title, "duration": q.duration}, status=201)
     except Exception:
         return Response({"detail": "Erreur de cr\u00e9ation du quiz"}, status=400)
-
-
-@api_view(["GET"])
-@permission_classes(DEV_PERMS)
-def quizzes_my(request):
-    items = []
-    try:
-        ap = AcademicProfile.objects.get(user=request.user)
-        for q in Quiz.objects.select_related("course").filter(assistant=ap):
-            items.append({
-                "id": q.id,
-                "title": q.title,
-                "duration": q.duration,
-                "course": getattr(q.course, "name", ""),
-            })
-    except Exception:
-        pass
-    return Response(items)
 
 
 @api_view(["GET"])
