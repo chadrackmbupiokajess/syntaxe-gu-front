@@ -4,7 +4,8 @@ from .views import (
     health, student_summary, student_meta, student_grades_recent, student_profile,
     # Vues ajoutées
     assistant_summary, auditoriums_assistant_my, tptd_my, quizzes_my, assistant_tograde,
-    assistant_auditorium_courses, assistant_auditorium_students, assistant_auditorium_activities, assistant_auditorium_stats,
+    assistant_auditorium_courses, assistant_auditorium_students, assistant_auditorium_activities, assistant_auditorium_stats, assistant_auditorium_messages,
+    assistant_auditorium_create_tptd, assistant_auditorium_create_quiz,
     student_notifications, teacher_profile,
     # Endpoints manquants (student/library/payments)
     quizzes_student_available, tptd_student_available, quizzes_student_my_attempts, tptd_student_my_submissions,
@@ -67,6 +68,9 @@ urlpatterns = [
     re_path(r"^assistant/auditoriums/(?P<code>.+)/students/?$", assistant_auditorium_students, name="assistant_auditorium_students"),
     re_path(r"^assistant/auditoriums/(?P<code>.+)/activities/?$", assistant_auditorium_activities, name="assistant_auditorium_activities"),
     re_path(r"^assistant/auditoriums/(?P<code>.+)/stats/?$", assistant_auditorium_stats, name="assistant_auditorium_stats"),
+    re_path(r"^assistant/auditoriums/(?P<code>.+)/messages/?$", assistant_auditorium_messages, name="assistant_auditorium_messages"),
+    re_path(r"^assistant/auditoriums/(?P<code>.+)/tptd/new/?$", assistant_auditorium_create_tptd, name="assistant_auditorium_create_tptd"),
+    re_path(r"^assistant/auditoriums/(?P<code>.+)/quizzes/new/?$", assistant_auditorium_create_quiz, name="assistant_auditorium_create_quiz"),
     # Assistant student details
     re_path(r"^assistant/students/(?P<id>\d+)/?$", assistant_student_detail, name="assistant_student_detail"),
     re_path(r"^assistant/students/(?P<id>\d+)/grades/?$", assistant_student_grades, name="assistant_student_grades"),

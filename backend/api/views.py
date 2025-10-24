@@ -4,6 +4,7 @@ from rest_framework import permissions
 from rest_framework.response import Response
 from django.conf import settings
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from datetime import timedelta
 from django.apps import apps
 StudentProfile = apps.get_model('accounts', 'StudentProfile')
@@ -12,6 +13,7 @@ Course = apps.get_model('academics', 'Course')
 Auditoire = apps.get_model('academics', 'Auditoire')
 Calendrier = apps.get_model('academics', 'Calendrier')
 CourseAssignment = apps.get_model('academics', 'CourseAssignment')
+CourseMessage = apps.get_model('academics', 'CourseMessage')
 Assignment = apps.get_model('evaluations', 'Assignment')
 Submission = apps.get_model('evaluations', 'Submission')
 Quiz = apps.get_model('evaluations', 'Quiz')
@@ -329,6 +331,98 @@ def assistant_auditorium_stats(request, code: str):
     except Exception:
         pass
     return Response(data)
+
+
+# ---- Assistant: auditorium messages (GET list, POST create) ----
+
+@api_view(["GET", "POST"])
+@permission_classes(DEV_PERMS)
+def assistant_auditorium_messages(request, code: str):
+    try:
+        aud = Auditoire.objects.filter(name=code).first()
+        if not aud:
+            return Response([], status=404)
+        if request.method == "GET":
+            msgs = CourseMessage.objects.select_related("course", "sender").filter(course__auditoire=aud).order_by("-created_at")[:100]
+            out = []
+            for m in msgs:
+                out.append({
+                    "id": m.id,
+                    "courseId": m.course_id,
+                    "course": getattr(m.course, "name", ""),
+                    "title": m.title,
+                    "body": m.body,
+                    "created_at": m.created_at.isoformat(),
+                    "sender": (f"{getattr(m.sender, 'prenom', '')} {getattr(m.sender, 'nom', '')}".strip() if m.sender else ""),
+                })
+            return Response(out)
+        # POST
+        ap = AcademicProfile.objects.get(user=request.user)
+        course_id = request.data.get("course_id")
+        title = request.data.get("title", "").strip()
+        body = request.data.get("body", "").strip()
+        if not (course_id and title and body):
+            return Response({"detail": "course_id, title, body requis"}, status=400)
+        course = Course.objects.filter(id=course_id, auditoire=aud).first()
+        if not course:
+            return Response({"detail": "Cours introuvable dans cet auditoire"}, status=404)
+        msg = CourseMessage.objects.create(course=course, sender=ap, title=title, body=body)
+        return Response({
+            "id": msg.id,
+            "courseId": msg.course_id,
+            "course": getattr(msg.course, "name", ""),
+            "title": msg.title,
+            "body": msg.body,
+            "created_at": msg.created_at.isoformat(),
+            "sender": (f"{getattr(ap, 'prenom', '')} {getattr(ap, 'nom', '')}".strip()),
+        }, status=201)
+    except Exception:
+        return Response({"detail": "Erreur de traitement des messages"}, status=400)
+
+
+@api_view(["POST"])
+@permission_classes(DEV_PERMS)
+def assistant_auditorium_create_tptd(request, code: str):
+    try:
+        aud = Auditoire.objects.filter(name=code).first()
+        if not aud:
+            return Response({"detail": "Auditoire introuvable"}, status=404)
+        ap = AcademicProfile.objects.get(user=request.user)
+        course_id = request.data.get("course_id")
+        title = (request.data.get("title") or "").strip()
+        deadline_s = request.data.get("deadline")
+        if not (course_id and title and deadline_s):
+            return Response({"detail": "course_id, title, deadline requis"}, status=400)
+        course = Course.objects.filter(id=course_id, auditoire=aud).first()
+        if not course:
+            return Response({"detail": "Cours introuvable dans cet auditoire"}, status=404)
+        deadline = parse_datetime(deadline_s) or timezone.now() + timedelta(days=7)
+        a = Assignment.objects.create(course=course, assistant=ap, title=title, questionnaire="", deadline=deadline)
+        return Response({"id": a.id, "title": a.title, "deadline": a.deadline.isoformat()}, status=201)
+    except Exception:
+        return Response({"detail": "Erreur de cr\u00e9ation TP/TD"}, status=400)
+
+
+@api_view(["POST"])
+@permission_classes(DEV_PERMS)
+def assistant_auditorium_create_quiz(request, code: str):
+    try:
+        aud = Auditoire.objects.filter(name=code).first()
+        if not aud:
+            return Response({"detail": "Auditoire introuvable"}, status=404)
+        ap = AcademicProfile.objects.get(user=request.user)
+        course_id = request.data.get("course_id")
+        title = (request.data.get("title") or "").strip()
+        duration = int(request.data.get("duration") or 0)
+        if not (course_id and title and duration):
+            return Response({"detail": "course_id, title, duration requis"}, status=400)
+        course = Course.objects.filter(id=course_id, auditoire=aud).first()
+        if not course:
+            return Response({"detail": "Cours introuvable dans cet auditoire"}, status=404)
+        q = Quiz.objects.create(course=course, assistant=ap, title=title, duration=duration)
+        return Response({"id": q.id, "title": q.title, "duration": q.duration}, status=201)
+    except Exception:
+        return Response({"detail": "Erreur de cr\u00e9ation du quiz"}, status=400)
 
 
 @api_view(["GET"])

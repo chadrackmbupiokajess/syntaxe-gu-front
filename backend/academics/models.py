@@ -87,3 +87,17 @@ class CourseAssignment(models.Model):
 
     def __str__(self):
         return f"{self.assistant.nom} {self.assistant.prenom} - {self.course.name}"
+
+
+class CourseMessage(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey('accounts.AcademicProfile', on_delete=models.SET_NULL, null=True, blank=True, related_name='sent_course_messages')
+    title = models.CharField(max_length=255)
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.course.name}] {self.title}"

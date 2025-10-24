@@ -65,10 +65,15 @@ export default function AssistantAuditoriums() {
       {rows.map(a => (
         <div key={a.code} className="card p-4">
           <div className="flex items-center justify-between mb-3">
-            <Link to={`/assistant/auditoires/${a.code}`} className="font-semibold">
-              {a.code} - {a.name}
-            </Link>
-            <div className="text-sm text-slate-500">{a.students} étudiants</div>
+            <div>
+              <Link to={`/assistant/auditoires/${a.code}`} className="font-semibold">
+                {a.code} - {a.name}
+              </Link>
+              {a.department && (
+                <div className="text-xs text-slate-500 dark:text-white/70">Département: {a.department}</div>
+              )}
+            </div>
+            <div className="text-sm text-slate-500 dark:text-white/70">{a.students} étudiants</div>
           </div>
           <div className="flex gap-2 mb-2">
             <button className="btn" onClick={() => loadCourses(a.code)}>Voir cours</button>

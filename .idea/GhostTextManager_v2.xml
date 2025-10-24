@@ -138,9 +138,10 @@
         <entry key="continuer">
           <value>
             <GhostTextMetaData>
-              <option name="count" value="8.0" />
+              <option name="count" value="9.0" />
               <option name="timestamps">
                 <list>
+                  <option value="1761284150010" />
                   <option value="1761065218739" />
                   <option value="1761064920661" />
                   <option value="1761064838984" />
@@ -197,6 +198,18 @@
               <option name="timestamps">
                 <list>
                   <option value="1761050542328" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="corrige l'erreur et ajoute aussi les pages frontend pour ces formulaires (message/tptd/quizzes) avec sélection de cours et envoi vers ces endpoints">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761283920149" />
                 </list>
               </option>
             </GhostTextMetaData>
@@ -478,6 +491,18 @@
             </GhostTextMetaData>
           </value>
         </entry>
+        <entry key="oui ajoute et corrige ca">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761283697276" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
         <entry key="oui et puis tu doit mettre tout le role aussi comme Rôles et permissions&#10;Références (src/store/slices/authSlice.js):&#10;&#10;pdg, directeur_general, sga, sgad, chef_section, chef_departement, enseignant, assistant, apparitorat, caisse, service_it, etudiant, bibliothecaire, jury&#10;&#10;donc tu lis seulement le cahier de charge tu comprends?">
           <value>
             <GhostTextMetaData>
@@ -552,6 +577,19 @@
             </GhostTextMetaData>
           </value>
         </entry>
+        <entry key="oui oui &#10;et le style noir existe deja donc noir et clair seulement dans le noir sur la page Détails de l'auditoire : Licence 1 que tous les textes soit blanche vraiment">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="2.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761282821751" />
+                  <option value="1761282789258" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
         <entry key="oui oui donc tous ce qui sera bien pour assistant et professionnel pour une université">
           <value>
             <GhostTextMetaData>
@@ -583,6 +621,18 @@
               <option name="timestamps">
                 <list>
                   <option value="1761057582551" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="oui oui et dans la base de donnée y a pas le message par cours &#10;&#10;fait ca complet et vite">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761283415277" />
                 </list>
               </option>
             </GhostTextMetaData>
