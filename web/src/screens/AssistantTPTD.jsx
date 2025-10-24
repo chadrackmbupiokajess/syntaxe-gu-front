@@ -108,13 +108,18 @@ export default function AssistantTPTD() {
       deadline: form.deadlineLocal ? new Date(form.deadlineLocal).toISOString() : ''
     }
     setLoading(true)
-    const { data } = await axios.post('/api/tptd/my/', payload)
-    setNewlyCreatedIds(prev => new Set(prev).add(data.id));
-    setForm({ title: '', type: 'TP', course_code: '', auditorium_id: '', deadlineLocal: '', questionnaire: [], total_points: 20 })
-    await load()
+    try {
+        const { data: newAssignment } = await axios.post('/api/tptd/my/', payload);
+        setRows(prevRows => [...prevRows, newAssignment]);
+        setNewlyCreatedIds(prev => new Set(prev).add(newAssignment.id));
+        setForm({ title: '', type: 'TP', course_code: '', auditorium_id: form.auditorium_id, deadlineLocal: '', questionnaire: [], total_points: 20 });
+        toast.push({ title: 'TP/TD créé avec succès' });
+    } catch (error) {
+        toast.push({ kind: 'error', title: 'Erreur de création', message: error?.response?.data?.detail || 'Une erreur est survenue.' })
+    }
     setLoading(false)
-    toast.push({ title: 'TP/TD créé' })
   }
+  
   const del = async (id) => {
     await axios.delete(`/api/tptd/my/${id}/`)
     await load()
@@ -216,7 +221,7 @@ export default function AssistantTPTD() {
                               <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">Titre</th><th className="py-2 pr-4">Type</th><th className="py-2 pr-4">Cours</th><th className="py-2 pr-4">Date de remise</th><th className="py-2 pr-4"></th></tr></thead>
                               <tbody>
                                 {tptdList.map(r => (
-                                  <tr key={r.id} className={`border-t border-slate-200/60 dark:border-slate-800/60 ${newlyCreatedIds.has(r.id) ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>
+                                  <tr key={r.id} className={`border-t border-slate-200/60 dark:border-slate-800/60 ${newlyCreatedIds.has(r.id) ? 'bg-green-200 dark:bg-green-800/40' : ''}`}>
                                     <td className="py-2 pr-4 font-medium"><Link to={`/assistant/tptd/${r.id}`} className="hover:underline">{r.title}</Link></td>
                                     <td className="py-2 pr-4">{r.type}</td>
                                     <td className="py-2 pr-4">{r.course_name}</td>
