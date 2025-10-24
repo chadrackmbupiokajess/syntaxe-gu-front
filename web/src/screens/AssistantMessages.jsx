@@ -17,13 +17,11 @@ function formatDateSeparator(dateStr) {
     return "Hier";
   }
   
-  // Format for "Lun, 20/02/2026"
-  const weekday = date.toLocaleDateString('fr-FR', { weekday: 'short' }); // e.g., "lun."
-  const day = date.toLocaleDateString('fr-FR', { day: '2-digit' }); // e.g., "20"
-  const month = date.toLocaleDateString('fr-FR', { month: '2-digit' }); // e.g., "02"
-  const year = date.toLocaleDateString('fr-FR', { year: 'numeric' }); // e.g., "2026"
+  const weekday = date.toLocaleDateString('fr-FR', { weekday: 'short' });
+  const day = date.toLocaleDateString('fr-FR', { day: '2-digit' });
+  const month = date.toLocaleDateString('fr-FR', { month: '2-digit' });
+  const year = date.toLocaleDateString('fr-FR', { year: 'numeric' });
 
-  // Capitalize the first letter of the weekday and remove the dot
   const formattedWeekday = weekday.charAt(0).toUpperCase() + weekday.slice(1).replace('.', '');
 
   return `${formattedWeekday}, ${day}/${month}/${year}`;
@@ -222,7 +220,7 @@ export default function AssistantMessages() {
         onSelectCourse={setSelectedCourse}
         selectedCourse={selectedCourse}
       />
-      <ChatArea course={selectedCourse} />
+      <ChatArea key={selectedCourse?.code} course={selectedCourse} />
     </div>
   );
 }
