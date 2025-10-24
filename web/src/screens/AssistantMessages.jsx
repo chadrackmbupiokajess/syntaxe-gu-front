@@ -2,19 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 
-// --- Composants de la page ---
-
-function CourseSidebar({ courses, onSelectCourse, selectedCourseId }) {
+function CourseSidebar({ courses, onSelectCourse, selectedCourse }) {
   return (
     <div className="flex flex-col bg-slate-800 text-white w-1/4 min-h-screen p-4">
       <h2 className="text-xl font-bold mb-4">Mes Cours</h2>
       <nav className="flex flex-col gap-2">
         {courses.map(course => (
           <button
-            key={course.id}
+            key={course.code}
             onClick={() => onSelectCourse(course)}
             className={`text-left p-2 rounded-md transition-colors duration-200 ${
-              selectedCourseId === course.id
+              selectedCourse?.code === course.code
                 ? 'bg-blue-600 font-semibold'
                 : 'hover:bg-slate-700'
             }`}
@@ -44,7 +42,7 @@ function ChatArea({ course }) {
     const fetchMessages = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`/api/assistant/courses/${course.id}/messages`);
+        const response = await axios.get(`/api/messaging/chat/${course.code}/messages`);
         setMessages(response.data);
         scrollToBottom();
       } catch (error) {
@@ -61,7 +59,7 @@ function ChatArea({ course }) {
     e.preventDefault();
     if (!newMessage.trim() || !course) return;
     try {
-      const response = await axios.post(`/api/assistant/courses/${course.id}/messages`, { body: newMessage });
+      const response = await axios.post(`/api/messaging/chat/${course.code}/messages`, { text: newMessage });
       setMessages(prev => [...prev, response.data]);
       setNewMessage('');
     } catch (error) {
@@ -86,10 +84,10 @@ function ChatArea({ course }) {
       <div className="flex-1 p-6 overflow-y-auto">
         <div className="flex flex-col gap-4">
           {messages.map(msg => (
-            <div key={msg.id} className={`flex ${msg.is_self ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-lg p-3 rounded-lg ${msg.is_self ? 'bg-blue-700' : 'bg-slate-700'}`}>
-                {!msg.is_self && <p className="text-sm font-semibold text-white/80 mb-1">{msg.sender}</p>}
-                <p>{msg.body}</p>
+            <div key={msg.id} className={`flex ${msg.user === 'Vous' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-lg p-3 rounded-lg ${msg.user === 'Vous' ? 'bg-blue-700' : 'bg-slate-700'}`}>
+                {msg.user !== 'Vous' && <p className="text-sm font-semibold text-white/80 mb-1">{msg.user}</p>}
+                <p>{msg.text}</p>
               </div>
             </div>
           ))}
@@ -143,7 +141,7 @@ export default function AssistantMessages() {
       <CourseSidebar 
         courses={courses} 
         onSelectCourse={setSelectedCourse}
-        selectedCourseId={selectedCourse?.id}
+        selectedCourse={selectedCourse}
       />
       <ChatArea course={selectedCourse} />
     </div>

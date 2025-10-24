@@ -103,4 +103,5 @@ urlpatterns = [
     re_path(r"^library/gestion/reservations/?$", library_gestion_reservations, name="library_gestion_reservations"),
 
     path("", include("accounts.urls")),
+    path("messaging/", include("messaging.urls")),
 ]
