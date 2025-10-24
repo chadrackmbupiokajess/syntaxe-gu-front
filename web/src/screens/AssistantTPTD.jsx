@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import axios from 'axios'
 import { useToast } from '../shared/ToastProvider'
 
@@ -7,7 +7,6 @@ const formatDate = (dateString) => {
   const date = new Date(dateString);
   const options = { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' };
   let formattedDate = new Intl.DateTimeFormat('fr-FR', options).format(date);
-  // Capitalize and remove dot
   formattedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1).replace('.', '');
   return formattedDate.replace(/\//g, '-');
 };
@@ -19,11 +18,11 @@ export default function AssistantTPTD() {
   const [auditoriums, setAuditoriums] = useState([])
   const [courses, setCourses] = useState([])
   const [loading, setLoading] = useState(false)
+  const [openSections, setOpenSections] = useState({});
 
   const load = async () => { const { data } = await axios.get('/api/tptd/my/'); setRows(data) }
   useEffect(() => { load() }, [])
 
-  // charger auditoires au montage
   useEffect(() => {
     const fetchAud = async () => {
       const { data } = await axios.get('/api/auditoriums/assistant/my/')
@@ -33,7 +32,6 @@ export default function AssistantTPTD() {
     fetchAud()
   }, [])
 
-  // charger cours quand auditoire change
   useEffect(() => {
     const fetchCourses = async () => {
       if (!form.auditorium) { setCourses([]); return }
@@ -43,6 +41,24 @@ export default function AssistantTPTD() {
     }
     fetchCourses()
   }, [form.auditorium])
+
+  const groupedData = useMemo(() => {
+    return rows.reduce((acc, row) => {
+      const { department, auditorium } = row;
+      if (!acc[department]) {
+        acc[department] = {};
+      }
+      if (!acc[department][auditorium]) {
+        acc[department][auditorium] = [];
+      }
+      acc[department][auditorium].push(row);
+      return acc;
+    }, {});
+  }, [rows]);
+
+  const toggleSection = (key) => {
+    setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const createItem = async () => {
     if (!form.title || !form.course_code || !form.auditorium) {
@@ -109,23 +125,46 @@ export default function AssistantTPTD() {
         </div>
       </div>
 
-      <div className="card p-4 overflow-auto">
+      <div className="card p-4 grid gap-2">
         <h3 className="text-lg font-semibold mb-2">Mes TP/TD</h3>
-        <table className="min-w-full text-sm">
-          <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">Titre</th><th className="py-2 pr-4">Type</th><th className="py-2 pr-4">Cours</th><th className="py-2 pr-4">Auditoire</th><th className="py-2 pr-4">Date de remise</th><th className="py-2 pr-4"></th></tr></thead>
-          <tbody>
-            {rows.map(r => (
-              <tr key={r.id} className="border-t border-slate-200/60 dark:border-slate-800/60">
-                <td className="py-2 pr-4 font-medium">{r.title}</td>
-                <td className="py-2 pr-4">{r.type}</td>
-                <td className="py-2 pr-4">{r.course_name} - {r.department}</td>
-                <td className="py-2 pr-4">{r.auditorium}</td>
-                <td className="py-2 pr-4">{formatDate(r.deadline)}</td>
-                <td className="py-2 pr-4 text-right"><button className="btn !bg-red-600" onClick={()=>del(r.id)}>Supprimer</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {Object.entries(groupedData).map(([department, auditoriums]) => (
+          <div key={department} className="border-b border-slate-200 dark:border-slate-700 last:border-b-0 py-2">
+            <button onClick={() => toggleSection(department)} className="w-full text-left font-semibold text-lg flex justify-between items-center">
+              <span>{department}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" className={`w-5 h-5 transition-transform ${openSections[department] ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+            </button>
+            {openSections[department] && (
+              <div className="pl-4 mt-2 grid gap-2">
+                {Object.entries(auditoriums).map(([auditorium, tptdList]) => (
+                  <div key={auditorium}>
+                    <button onClick={() => toggleSection(auditorium)} className="w-full text-left font-medium text-md flex justify-between items-center">
+                      <span>{auditorium}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" className={`w-5 h-5 transition-transform ${openSections[auditorium] ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                    </button>
+                    {openSections[auditorium] && (
+                      <div className="overflow-auto mt-2">
+                        <table className="min-w-full text-sm">
+                          <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">Titre</th><th className="py-2 pr-4">Type</th><th className="py-2 pr-4">Cours</th><th className="py-2 pr-4">Date de remise</th><th className="py-2 pr-4"></th></tr></thead>
+                          <tbody>
+                            {tptdList.map(r => (
+                              <tr key={r.id} className="border-t border-slate-200/60 dark:border-slate-800/60">
+                                <td className="py-2 pr-4 font-medium">{r.title}</td>
+                                <td className="py-2 pr-4">{r.type}</td>
+                                <td className="py-2 pr-4">{r.course_name}</td>
+                                <td className="py-2 pr-4">{formatDate(r.deadline)}</td>
+                                <td className="py-2 pr-4 text-right"><button className="btn !bg-red-600" onClick={()=>del(r.id)}>Supprimer</button></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </div>
   )
