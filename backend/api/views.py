@@ -83,6 +83,7 @@ def tptd_my(request):
         course_code = request.data.get("course_code")
         title = request.data.get("title", "").strip()
         deadline_s = request.data.get("deadline")
+        assignment_type = request.data.get("type", "TP")
 
         if not (course_code and title and deadline_s):
             return Response({"detail": "Code du cours, titre et deadline requis."}, status=400)
@@ -100,27 +101,30 @@ def tptd_my(request):
             course=course,
             assistant=ap,
             title=title,
+            type=assignment_type,
             questionnaire=request.data.get("description", ""),
             deadline=deadline
         )
         return Response({
             "id": a.id,
             "title": a.title,
-            "type": request.data.get("type", "TP"), # Renvoyer le type pour l'UI
-            "course_code": course.code,
+            "type": a.type,
+            "course_name": course.name,
+            "department": course.auditoire.departement.name,
             "auditorium": course.auditoire.name,
             "deadline": a.deadline,
         }, status=201)
 
     # GET request
     items = []
-    assignments = Assignment.objects.select_related("course__auditoire").filter(assistant=ap)
+    assignments = Assignment.objects.select_related("course__auditoire__departement").filter(assistant=ap)
     for a in assignments:
         items.append({
             "id": a.id,
             "title": a.title,
-            "type": "TP/TD", # Placeholder car le modèle ne le stocke pas
-            "course_code": a.course.code,
+            "type": a.type,
+            "course_name": a.course.name,
+            "department": a.course.auditoire.departement.name,
             "auditorium": a.course.auditoire.name,
             "deadline": a.deadline,
         })

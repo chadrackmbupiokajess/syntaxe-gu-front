@@ -2,6 +2,16 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useToast } from '../shared/ToastProvider'
 
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  const options = { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' };
+  let formattedDate = new Intl.DateTimeFormat('fr-FR', options).format(date);
+  // Capitalize and remove dot
+  formattedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1).replace('.', '');
+  return formattedDate.replace(/\//g, '-');
+};
+
 export default function AssistantTPTD() {
   const toast = useToast()
   const [rows, setRows] = useState([])
@@ -87,7 +97,7 @@ export default function AssistantTPTD() {
               ))}
             </select>
           </label>
-          <label className="text-sm">Date de fin (remise)
+          <label className="text-sm">Date de remise
             <input type="datetime-local" className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" value={form.deadlineLocal} onChange={e=>setForm({...form,deadlineLocal:e.target.value})} />
           </label>
           <label className="text-sm md:col-span-2">Description
@@ -102,15 +112,15 @@ export default function AssistantTPTD() {
       <div className="card p-4 overflow-auto">
         <h3 className="text-lg font-semibold mb-2">Mes TP/TD</h3>
         <table className="min-w-full text-sm">
-          <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">Titre</th><th className="py-2 pr-4">Type</th><th className="py-2 pr-4">Cours</th><th className="py-2 pr-4">Auditoire</th><th className="py-2 pr-4">Deadline</th><th className="py-2 pr-4"></th></tr></thead>
+          <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">Titre</th><th className="py-2 pr-4">Type</th><th className="py-2 pr-4">Cours</th><th className="py-2 pr-4">Auditoire</th><th className="py-2 pr-4">Date de remise</th><th className="py-2 pr-4"></th></tr></thead>
           <tbody>
             {rows.map(r => (
               <tr key={r.id} className="border-t border-slate-200/60 dark:border-slate-800/60">
                 <td className="py-2 pr-4 font-medium">{r.title}</td>
                 <td className="py-2 pr-4">{r.type}</td>
-                <td className="py-2 pr-4">{r.course_code}</td>
+                <td className="py-2 pr-4">{r.course_name} - {r.department}</td>
                 <td className="py-2 pr-4">{r.auditorium}</td>
-                <td className="py-2 pr-4">{r.deadline?.replace('T',' ').replace('Z','')}</td>
+                <td className="py-2 pr-4">{formatDate(r.deadline)}</td>
                 <td className="py-2 pr-4 text-right"><button className="btn !bg-red-600" onClick={()=>del(r.id)}>Supprimer</button></td>
               </tr>
             ))}

@@ -5,6 +5,10 @@ from accounts.models import StudentProfile, AcademicProfile
 # --- TP/TD Models ---
 
 class Assignment(models.Model):
+    ASSIGNMENT_TYPES = (
+        ('TP', 'Travail Pratique'),
+        ('TD', 'Travail Dirigé'),
+    )
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='assignments')
     assistant = models.ForeignKey(
         AcademicProfile, 
@@ -14,6 +18,7 @@ class Assignment(models.Model):
         limit_choices_to={'user__role__role': 'assistant'}
     )
     title = models.CharField(max_length=255)
+    type = models.CharField(max_length=2, choices=ASSIGNMENT_TYPES, default='TP')
     questionnaire = models.TextField()
     deadline = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
