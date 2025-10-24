@@ -4,7 +4,6 @@ import axios from 'axios';
 
 export default function AssistantAuditoriumDetails() {
   const { code } = useParams();
-  const [auditoriumDetails, setAuditoriumDetails] = useState(null);
   const [students, setStudents] = useState(null);
   const [auditoriumStats, setAuditoriumStats] = useState(null);
   const [auditoriumActivities, setAuditoriumActivities] = useState(null);
@@ -67,7 +66,7 @@ export default function AssistantAuditoriumDetails() {
   return (
     <div className="grid gap-4 min-h-screen bg-slate-900 text-white p-4">
       <h1 className="text-3xl font-bold mb-8">Détails de l'auditoire : {code}</h1>
-
+      <div style={{ border: '1px solid red' }}>Département: {auditoriumStats?.department}</div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Actions rapides */}
