@@ -1,27 +1,29 @@
-import { createSlice, createAsyncThunk, configureStore } from '@reduxjs/toolkit'
-import axios from 'axios'
+import { createSlice, createAsyncThunk, configureStore } from '@reduxjs/toolkit';
+// On importe notre client Axios configuré, pas l'axios de base
+import apiClient from '../api/axiosConfig';
 
-const accessKey = 'access_token'
-const refreshKey = 'refresh_token'
+const accessKey = 'access_token';
+const refreshKey = 'refresh_token';
 
-// Correction de l'endpoint de connexion
 export const loginThunk = createAsyncThunk('auth/login', async ({ username, password }, { rejectWithValue }) => {
   try {
-    const { data } = await axios.post('http://127.0.0.1:8000/api/auth/login/', { username, password })
-    return data
+    // On utilise apiClient, qui a déjà la bonne baseURL
+    const { data } = await apiClient.post('/auth/login/', { username, password });
+    return data;
   } catch (e) {
-    return rejectWithValue(e.response?.data || { detail: 'Erreur de connexion' })
+    return rejectWithValue(e.response?.data || { detail: 'Erreur de connexion' });
   }
-})
+});
 
 export const fetchMe = createAsyncThunk('auth/me', async (_, { rejectWithValue }) => {
   try {
-    const { data } = await axios.get('http://127.0.0.1:8000/api/auth/me/')
-    return data
+    // On utilise apiClient, qui ajoutera automatiquement le token d'authentification
+    const { data } = await apiClient.get('/auth/me/');
+    return data;
   } catch (e) {
-    return rejectWithValue(e.response?.data || { detail: 'Erreur profil' })
+    return rejectWithValue(e.response?.data || { detail: 'Erreur profil' });
   }
-})
+});
 
 const slice = createSlice({
   name: 'auth',
@@ -34,29 +36,33 @@ const slice = createSlice({
   },
   reducers: {
     logout(state) {
-      state.access = null
-      state.refresh = null
-      state.me = null
-      localStorage.removeItem(accessKey)
-      localStorage.removeItem(refreshKey)
+      state.access = null;
+      state.refresh = null;
+      state.me = null;
+      localStorage.removeItem(accessKey);
+      localStorage.removeItem(refreshKey);
     },
   },
   extraReducers: builder => {
     builder
-      .addCase(loginThunk.pending, state => { state.status = 'loading'; state.error = null })
+      .addCase(loginThunk.pending, state => { state.status = 'loading'; state.error = null; })
       .addCase(loginThunk.fulfilled, (state, action) => {
-        state.status = 'succeeded'
-        state.access = action.payload.access
-        state.refresh = action.payload.refresh
-        localStorage.setItem(accessKey, action.payload.access)
-        localStorage.setItem(refreshKey, action.payload.refresh)
+        state.status = 'succeeded';
+        state.access = action.payload.access;
+        state.refresh = action.payload.refresh;
+        localStorage.setItem(accessKey, action.payload.access);
+        localStorage.setItem(refreshKey, action.payload.refresh);
       })
-      .addCase(loginThunk.rejected, (state, action) => { state.status = 'failed'; state.error = action.payload })
-      .addCase(fetchMe.fulfilled, (state, action) => { state.me = action.payload })
+      .addCase(loginThunk.rejected, (state, action) => { state.status = 'failed'; state.error = action.payload; })
+      .addCase(fetchMe.pending, (state) => { state.status = 'loading'; })
+      .addCase(fetchMe.fulfilled, (state, action) => { state.status = 'succeeded'; state.me = action.payload; })
+      .addCase(fetchMe.rejected, (state, action) => { state.status = 'failed'; state.error = action.payload; });
   }
-})
+});
 
-export const { logout } = slice.actions
+export const { logout } = slice.actions;
 
-const store = configureStore({ reducer: { auth: slice.reducer } })
-export default store
+// Note: La configuration du store est généralement dans un fichier séparé (store.js)
+// mais on la laisse ici si c'est votre structure actuelle.
+const store = configureStore({ reducer: { auth: slice.reducer } });
+export default store;

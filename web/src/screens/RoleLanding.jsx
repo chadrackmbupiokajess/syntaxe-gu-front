@@ -1,22 +1,13 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { jwtDecode } from 'jwt-decode';
-import { fetchMe } from '../store/authSlice';
+import { useSelector } from 'react-redux';
 
 const RoleLanding = () => {
     const navigate = useNavigate();
-    const dispatch = useDispatch();
-    const { access, me, status } = useSelector(state => state.auth);
+    const { me } = useSelector(state => state.auth);
 
     useEffect(() => {
-        // Si on a un token mais pas les infos utilisateur, on les charge
-        if (access && !me) {
-            dispatch(fetchMe());
-            return; // On attend que les infos soient chargées
-        }
-
-        // Si on a les infos utilisateur, on redirige
+        // Si les infos utilisateur sont chargées et qu'un rôle est défini
         if (me && me.role) {
             const userRole = me.role;
             switch (userRole) {
@@ -38,28 +29,22 @@ const RoleLanding = () => {
                 case 'apparitorat': navigate('/apparitorat', { replace: true }); break;
                 case 'caisse': navigate('/caisse', { replace: true }); break;
                 case 'service_it': navigate('/it', { replace: true }); break;
-                case 'bibliothecaire': navigate('/bibliotheque', { replace: true }); break;
+                case 'bibliothecaire': navigate('/bibliothecaire', { replace: true }); break;
                 default:
-                    // Si le rôle n'est pas géré, on ne fait rien pour l'instant
+                    // Si le rôle n'est pas géré, on peut rediriger vers une page par défaut ou d'erreur
+                    navigate('/unauthorized', { replace: true });
                     break;
             }
+        } else if (me && !me.role) {
+            // Si l'utilisateur est connecté mais n'a pas de rôle (ce qui ne devrait pas arriver avec notre logique)
+            navigate('/unauthorized', { replace: true });
         }
-    }, [access, me, dispatch, navigate]);
+    }, [me, navigate]);
 
-    // Pendant le chargement, on affiche un loader
-    if (status === 'loading' || (access && !me)) {
-        return (
-            <div className="min-h-screen grid place-items-center">
-                <p>Vérification de l'authentification...</p>
-            </div>
-        );
-    }
-
-    // Si on arrive ici, c'est qu'il y a un problème (pas de rôle, etc.)
-    // On peut afficher un message d'erreur ou rediriger
+    // On ne devrait pas voir ce message longtemps si tout fonctionne
     return (
         <div className="min-h-screen grid place-items-center">
-            <p>Impossible de déterminer votre rôle. Veuillez contacter l'administrateur.</p>
+            <p>Redirection en cours...</p>
         </div>
     );
 };

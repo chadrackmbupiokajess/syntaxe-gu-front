@@ -75,6 +75,18 @@
             </GhostTextMetaData>
           </value>
         </entry>
+        <entry key="chunk-NUMECXU6.js?v=c5396adf:21551 Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools&#10;Login.jsx:17 Échec de la connexion: Object&#10;(anonymous) @&lt;file_name&gt;&#10;127.0.0.1:8000/api/auth/login/:1  Failed to load resource: net::ERR_CONNECTION_REFUSED&#10;Login.jsx:17 Échec de la connexion: Object&#10;(anonymous) @&lt;file_name&gt;&#10;127.0.0.1:8000/api/auth/login/:1  Failed to load resource: net::ERR_CONNECTION_REFUSED">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761272187806" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
         <entry key="continuer">
           <value>
             <GhostTextMetaData>
@@ -269,6 +281,18 @@
               <option name="timestamps">
                 <list>
                   <option value="1761052842536" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
+        <entry key="je n'arrive pas a me connecter via le frontend de react mais j'ai de données sur le backend comme utilisateur et mot de passe &#10;dans le navigateur &#10;Chargement des informations utilisateur...&#10;dans le console navigateur &#10;&#10;Chargement des informations utilisateur...&#10;dans le console django toutjours en boucle &#10;[24/Oct/2025 00:20:34] &quot;GET /api/auth/me/ HTTP/1.1&quot; 401 172&#10;Unauthorized: /api/auth/me/&#10;[24/Oct/2025 00:20:34] &quot;GET /api/auth/me/ HTTP/1.1&quot; 401 172&#10;Unauthorized: /api/auth/me/&#10;[24/Oct/2025 00:20:34] &quot;GET /api/auth/me/ HTTP/1.1&quot; 401 172&#10;Unauthorized: /api/auth/me/&#10;PS C:\Users\Administrateur\Videos\Syntaxe\syntaxe-gu - Copie (2)\backend&gt;">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761261969868" />
                 </list>
               </option>
             </GhostTextMetaData>
@@ -579,9 +603,10 @@
         <entry key="salut">
           <value>
             <GhostTextMetaData>
-              <option name="count" value="1.0" />
+              <option name="count" value="2.0" />
               <option name="timestamps">
                 <list>
+                  <option value="1761261530565" />
                   <option value="1761065175415" />
                 </list>
               </option>

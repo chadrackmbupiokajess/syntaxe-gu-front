@@ -1,7 +1,7 @@
 from django.urls import include, re_path, path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import (
-    health, auth_me, student_summary, student_meta, student_grades_recent, student_profile,
+    health, student_summary, student_meta, student_grades_recent, student_profile,
     # Vues ajoutées
     assistant_summary, auditoriums_assistant_my, tptd_my, quizzes_my, assistant_tograde,
     student_notifications, teacher_profile,
@@ -15,7 +15,8 @@ urlpatterns = [
     re_path(r"^health/?$", health, name="health"),
     re_path(r"^auth/token/?$", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     re_path(r"^auth/token/refresh/?$", TokenRefreshView.as_view(), name="token_refresh"),
-    re_path(r"^auth/me/?$", auth_me, name="auth_me"),
+    # Note: l'endpoint /api/auth/me/ est fourni par l'app 'accounts'.
+    # On évite toute duplication ici pour prévenir des conflits de résolution d'URL.
 
     # Student endpoints used by the frontend dashboards
     re_path(r"^student/summary/?$", student_summary, name="student_summary"),
