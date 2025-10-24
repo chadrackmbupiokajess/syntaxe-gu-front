@@ -28,6 +28,7 @@ from .views import (
     assistant_student_detail, assistant_student_grades, assistant_student_submissions,
     # Assistant messages
     assistant_my_courses,
+    tptd_my_detail,
 )
 
 urlpatterns = [
@@ -71,6 +72,7 @@ urlpatterns = [
     re_path(r"^assistant/students/(?P<id>\d+)/grades/?$", assistant_student_grades, name="assistant_student_grades"),
     re_path(r"^assistant/students/(?P<id>\d+)/submissions/?$", assistant_student_submissions, name="assistant_student_submissions"),
     re_path(r"^tptd/my/?$", tptd_my, name="tptd_my"),
+    re_path(r"^tptd/my/(?P<id>\d+)/?$", tptd_my_detail, name="tptd_my_detail"),
     re_path(r"^quizzes/my/?$", quizzes_my, name="quizzes_my"),
     re_path(r"^assistant/tograde/?$", assistant_tograde, name="assistant_tograde"),
 

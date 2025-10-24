@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from datetime import timedelta
 from django.apps import apps
+
 StudentProfile = apps.get_model('accounts', 'StudentProfile')
 AcademicProfile = apps.get_model('accounts', 'AcademicProfile')
 Course = apps.get_model('academics', 'Course')
@@ -72,6 +73,69 @@ def assistant_my_courses(request):
     except Exception:
         pass
     return Response(items)
+
+@api_view(['GET', 'POST'])
+@permission_classes(DEV_PERMS)
+def tptd_my(request):
+    ap = AcademicProfile.objects.get(user=request.user)
+
+    if request.method == 'POST':
+        course_code = request.data.get("course_code")
+        title = request.data.get("title", "").strip()
+        deadline_s = request.data.get("deadline")
+
+        if not (course_code and title and deadline_s):
+            return Response({"detail": "Code du cours, titre et deadline requis."}, status=400)
+
+        course = Course.objects.filter(code=course_code).first()
+        if not course:
+            return Response({"detail": f"Cours avec le code {course_code} introuvable."}, status=404)
+
+        if not CourseAssignment.objects.filter(course=course, assistant=ap).exists():
+            return Response({"detail": "Vous n'êtes pas assigné à ce cours."}, status=403)
+
+        deadline = parse_datetime(deadline_s) if deadline_s else timezone.now() + timedelta(days=7)
+
+        a = Assignment.objects.create(
+            course=course,
+            assistant=ap,
+            title=title,
+            questionnaire=request.data.get("description", ""),
+            deadline=deadline
+        )
+        return Response({
+            "id": a.id,
+            "title": a.title,
+            "type": request.data.get("type", "TP"), # Renvoyer le type pour l'UI
+            "course_code": course.code,
+            "auditorium": course.auditoire.name,
+            "deadline": a.deadline,
+        }, status=201)
+
+    # GET request
+    items = []
+    assignments = Assignment.objects.select_related("course__auditoire").filter(assistant=ap)
+    for a in assignments:
+        items.append({
+            "id": a.id,
+            "title": a.title,
+            "type": "TP/TD", # Placeholder car le modèle ne le stocke pas
+            "course_code": a.course.code,
+            "auditorium": a.course.auditoire.name,
+            "deadline": a.deadline,
+        })
+    return Response(items)
+
+@api_view(["DELETE"])
+@permission_classes(DEV_PERMS)
+def tptd_my_detail(request, id):
+    try:
+        ap = AcademicProfile.objects.get(user=request.user)
+        assignment = Assignment.objects.get(id=id, assistant=ap)
+        assignment.delete()
+        return Response(status=204)
+    except (AcademicProfile.DoesNotExist, Assignment.DoesNotExist):
+        return Response({"detail": "TP/TD non trouvé ou accès non autorisé."}, status=404)
 
 
 # ... (le reste des vues)
@@ -286,12 +350,14 @@ def assistant_student_submissions(request, id: int):
 def assistant_auditorium_courses(request, code: str):
     rows = []
     try:
-        # code correspond au champ Auditoire.name
+        ap = AcademicProfile.objects.get(user=request.user)
         aud = Auditoire.objects.filter(name=code).first()
         if aud:
-            for c in Course.objects.filter(auditoire=aud):
+            # Filtrer les cours pour ne retourner que ceux assignés à l'assistant
+            assigned_courses = Course.objects.filter(auditoire=aud, assignments_by_assistant__assistant=ap)
+            for c in assigned_courses:
                 rows.append({
-                    "code": f"{c.name[:3].upper()}-{c.id}",
+                    "code": c.code,
                     "title": c.name,
                 })
     except Exception:
@@ -450,24 +516,6 @@ def assistant_auditorium_create_quiz(request, code: str):
         return Response({"id": q.id, "title": q.title, "duration": q.duration}, status=201)
     except Exception:
         return Response({"detail": "Erreur de cr\u00e9ation du quiz"}, status=400)
-
-
-@api_view(["GET"])
-@permission_classes(DEV_PERMS)
-def tptd_my(request):
-    items = []
-    try:
-        ap = AcademicProfile.objects.get(user=request.user)
-        for a in Assignment.objects.select_related("course").filter(assistant=ap):
-            items.append({
-                "id": a.id,
-                "title": a.title,
-                "deadline": a.deadline,
-                "course": getattr(a.course, "name", ""),
-            })
-    except Exception:
-        pass
-    return Response(items)
 
 
 @api_view(["GET"])
