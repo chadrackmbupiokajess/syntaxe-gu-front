@@ -10,8 +10,9 @@ const ProtectedRoute = () => {
     const location = useLocation();
 
     useEffect(() => {
-        // Si on a un token mais pas les infos de l'utilisateur, on les récupère une seule fois (status === 'idle')
-        if (access && !me && status === 'idle') {
+        // Si on a un token mais pas les infos de l'utilisateur, on les récupère (y compris juste après login)
+        // On évite seulement de relancer si c'est déjà en cours
+        if (access && !me && status !== 'loading') {
             dispatch(fetchMe());
         }
     }, [access, me, status, dispatch]);

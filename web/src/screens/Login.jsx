@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginThunk } from '../store/authSlice';
+import { loginThunk, fetchMe } from '../store/authSlice';
 import { Navigate, useLocation } from 'react-router-dom';
 
 export default function Login() {
@@ -13,6 +13,10 @@ export default function Login() {
   const handleLogin = () => {
     dispatch(loginThunk({ username, password }))
       .unwrap()
+      .then(() => {
+        // Charger le profil tout de suite aprs un login r3ussi
+        dispatch(fetchMe());
+      })
       .catch((error) => {
         console.error("Échec de la connexion:", error);
         alert("Échec de la connexion. Veuillez vérifier vos identifiants.");

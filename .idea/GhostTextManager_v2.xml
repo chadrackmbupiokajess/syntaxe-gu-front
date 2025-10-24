@@ -418,6 +418,18 @@
             </GhostTextMetaData>
           </value>
         </entry>
+        <entry key="oui j'accede maintenant seulement ca me demande de cliquer sur  actualiser la page pour s'afficher si non j'ai ceci &#10;Chargement des informations utilisateur...">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761272600846" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
         <entry key="oui on y va avec les finitions, et tu ajoutes une page “Notes” complète (moyenne, détails par cours, export CSV) et “Documents” (attestations/inscriptions) dans l’espace Étudiant">
           <value>
             <GhostTextMetaData>
