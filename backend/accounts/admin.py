@@ -49,6 +49,16 @@ class AcademicProfileForm(forms.ModelForm):
         choices=[choice for choice in Role.ROLE_CHOICES if choice[0] != 'etudiant'],
         label="Rôle"
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Préremplir le champ avec le rôle actuel de l'utilisateur si on édite
+        try:
+            user = getattr(self.instance, 'user', None)
+            if user and hasattr(user, 'role') and user.role and user.role.role:
+                self.fields['role_selection'].initial = user.role.role
+        except Exception:
+            pass
     class Meta:
         model = AcademicProfile
         fields = ('nom', 'postnom', 'prenom', 'sexe', 'status', 'profile_picture', 'description')
@@ -81,6 +91,15 @@ class AcademicProfileAdmin(admin.ModelAdmin):
             Role.objects.create(user=user, role=selected_role)
 
             self.message_user(request, f"L'utilisateur '{username}' a été créé avec le mot de passe : {password}", messages.SUCCESS)
+
+        else:
+            # Mise à jour du rôle si on édite le profil académique
+            selected_role = form.cleaned_data.get('role_selection')
+            if selected_role:
+                role_obj, created = Role.objects.get_or_create(user=obj.user, defaults={'role': selected_role})
+                if not created and role_obj.role != selected_role:
+                    role_obj.role = selected_role
+                    role_obj.save()
 
         super().save_model(request, obj, form, change)
 
