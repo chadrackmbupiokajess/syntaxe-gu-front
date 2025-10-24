@@ -417,7 +417,7 @@ def assistant_student_detail(request, id: int):
 def assistant_student_grades(request, id: int):
     rows = []
     try:
-        sp = StudentProfile.objects.get(id=id)
+        sp = StudentProfile.objects.get(user=request.user)
         # Regrouper par cours: moyenne des notes par cours
         subs = Submission.objects.select_related("assignment__course").filter(student=sp, grade__isnull=False)
         by_course = {}
@@ -632,16 +632,30 @@ def assistant_tograde(request):
     items = []
     try:
         ap = AcademicProfile.objects.get(user=request.user)
-        qs = Submission.objects.select_related("assignment__course", "student").filter(assignment__assistant=ap, grade__isnull=True, status='soumis')
-        for s in qs:
+        # Récupérer les soumissions de TP/TD
+        submissions_tptd = Submission.objects.select_related(
+            "assignment__course__auditoire__departement", 
+            "student__user"
+        ).filter(assignment__assistant=ap, grade__isnull=True, status='soumis')
+
+        for s in submissions_tptd:
             items.append({
                 "id": s.id,
-                "student": f"{getattr(s.student, 'nom', '')} {getattr(s.student, 'prenom', '')}",
-                "assignment": getattr(getattr(s, 'assignment', None), 'title', ''),
-                "course": getattr(getattr(getattr(s, 'assignment', None), 'course', None), 'name', ''),
+                "type": s.assignment.type, # Type de l'assignment (TP/TD)
+                "title": s.assignment.title,
+                "student_name": f"{s.student.nom} {s.student.prenom}".strip(),
+                "course_name": s.assignment.course.name,
+                "auditorium": s.assignment.course.auditoire.name,
+                "department": s.assignment.course.auditoire.departement.name,
                 "submitted_at": s.submitted_at,
+                "assignment_id": s.assignment.id,
             })
-    except Exception:
+        
+        # TODO: Ajouter la logique pour les soumissions de Quiz si nécessaire
+
+    except Exception as e:
+        # Log the exception for debugging
+        print(f"Error in assistant_tograde: {e}")
         pass
     return Response(items)
 
