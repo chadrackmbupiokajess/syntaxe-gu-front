@@ -361,6 +361,11 @@ def assistant_profile(request):
             # Update academic profile
             ap.phone = request.data.get('phone', ap.phone)
             ap.office = request.data.get('office', ap.office)
+            
+            # Handle profile picture upload
+            if 'profile_picture' in request.FILES:
+                ap.profile_picture = request.FILES['profile_picture']
+
             ap.save()
 
             # Password change
@@ -383,7 +388,7 @@ def assistant_profile(request):
             "office": ap.office,
             "department": "",
             "faculty": "",
-            "avatar": f"https://i.pravatar.cc/128?u={user.id}",
+            "avatar": ap.profile_picture.url if ap.profile_picture else f"https://i.pravatar.cc/128?u={user.id}",
         }
         latest_assignment = CourseAssignment.objects.filter(assistant=ap).select_related('course__auditoire__departement__section').first()
         if latest_assignment:
@@ -581,7 +586,7 @@ def assistant_student_grades(request, id: int):
                 rows.append({"name": cname, "grade": round(sum(grades) / len(grades), 2)})
     except Exception:
         pass
-    return Response(rows)
+    return Response(items)
 
 
 @api_view(["GET"])
@@ -600,7 +605,7 @@ def assistant_student_submissions(request, id: int):
             })
     except Exception:
         pass
-    return Response(rows)
+    return Response(items)
 
 
 @api_view(["GET"])
@@ -620,7 +625,7 @@ def assistant_auditorium_courses(request, auditoire_id: int):
                 })
     except Exception:
         pass
-    return Response(rows)
+    return Response(items)
 
 
 @api_view(["GET"])
