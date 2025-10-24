@@ -62,55 +62,57 @@ export default function AssistantAuditoriums() {
 
   return (
     <div className="grid gap-4">
-      {rows.map(a => (
-        <div key={a.code} className="card p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <Link to={`/assistant/auditoires/${a.code}`} className="font-semibold">
-                {a.code} - {a.name}
-              </Link>
-              {a.department && (
-                <div className="text-xs text-slate-500 dark:text-white/70">Département: {a.department}</div>
-              )}
+      {rows.map(a => {
+        return (
+          <div key={a.code} className="card p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <Link to={`/assistant/auditoires/${a.code}`} className="font-semibold">
+                  {a.code} - {a.name}
+                </Link>
+                {a.department && (
+                  <div className="text-xs text-slate-500 dark:text-white/70">Département: {a.department}</div>
+                )}
+              </div>
+              <div className="text-sm text-slate-500 dark:text-white/70">{a.students} étudiants</div>
             </div>
-            <div className="text-sm text-slate-500 dark:text-white/70">{a.students} étudiants</div>
+            <div className="flex gap-2 mb-2">
+              <button className="btn" onClick={() => loadCourses(a.code)}>Voir cours</button>
+              <button className="btn !bg-slate-700" onClick={() => loadStudents(a.code)}>Voir étudiants</button>
+            </div>
+            {courses[a.code] && (
+              <div className="overflow-auto">
+                <table className="min-w-full text-sm">
+                  <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">Code</th><th className="py-2 pr-4">Intitulé</th></tr></thead>
+                  <tbody>
+                    {courses[a.code].map(c => (
+                      <tr key={c.code} className="border-t border-slate-200/60 dark:border-slate-800/60">
+                        <td className="py-2 pr-4 font-medium">{c.code}</td>
+                        <td className="py-2 pr-4">{c.title}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {students[a.code] && (
+              <div className="overflow-auto mt-3">
+                <table className="min-w-full text-sm">
+                  <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">ID</th><th className="py-2 pr-4">Nom</th></tr></thead>
+                  <tbody>
+                    {students[a.code].map(s => (
+                      <tr key={s.id} className="border-t border-slate-200/60 dark:border-slate-800/60">
+                        <td className="py-2 pr-4 font-medium">{s.id}</td>
+                        <td className="py-2 pr-4">{s.name}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-          <div className="flex gap-2 mb-2">
-            <button className="btn" onClick={() => loadCourses(a.code)}>Voir cours</button>
-            <button className="btn !bg-slate-700" onClick={() => loadStudents(a.code)}>Voir étudiants</button>
-          </div>
-          {courses[a.code] && (
-            <div className="overflow-auto">
-              <table className="min-w-full text-sm">
-                <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">Code</th><th className="py-2 pr-4">Intitulé</th></tr></thead>
-                <tbody>
-                  {courses[a.code].map(c => (
-                    <tr key={c.code} className="border-t border-slate-200/60 dark:border-slate-800/60">
-                      <td className="py-2 pr-4 font-medium">{c.code}</td>
-                      <td className="py-2 pr-4">{c.title}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {students[a.code] && (
-            <div className="overflow-auto mt-3">
-              <table className="min-w-full text-sm">
-                <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">ID</th><th className="py-2 pr-4">Nom</th></tr></thead>
-                <tbody>
-                  {students[a.code].map(s => (
-                    <tr key={s.id} className="border-t border-slate-200/60 dark:border-slate-800/60">
-                      <td className="py-2 pr-4 font-medium">{s.id}</td>
-                      <td className="py-2 pr-4">{s.name}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   )
 }

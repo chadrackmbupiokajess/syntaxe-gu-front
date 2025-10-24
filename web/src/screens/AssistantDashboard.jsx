@@ -32,14 +32,19 @@ export default function AssistantDashboard() {
       <div className="card p-4">
         <h3 className="text-lg font-semibold mb-2">Mes auditoires</h3>
         <ul className="text-sm grid gap-2">
-          {data.auditoriums.map((a, i) => (
-            <Link to={`/assistant/auditoires/${a.code}`} key={i}>
-              <li className="flex items-center justify-between border rounded-lg px-3 py-2 border-slate-200/60 dark:border-slate-800/60">
-                <span className="font-medium">{a.code}</span>
-                <span className="text-slate-500">{a.students} étudiants</span>
-              </li>
-            </Link>
-          ))}
+          {data.auditoriums.map((a, i) => {
+            return (
+              <Link to={`/assistant/auditoires/${a.code}`} key={i}>
+                <li className="flex items-center justify-between border rounded-lg px-3 py-2 border-slate-200/60 dark:border-slate-800/60">
+                  <div>
+                    <span className="font-medium">{a.code}</span>
+                    <p className="text-xs text-slate-500 mt-1"> {a.department || 'N/A'}</p> {/* Affiche toujours le label */}
+                  </div>
+                  <span className="text-slate-500">{a.students} étudiants</span>
+                </li>
+              </Link>
+            );
+          })}
         </ul>
       </div>
     </div>

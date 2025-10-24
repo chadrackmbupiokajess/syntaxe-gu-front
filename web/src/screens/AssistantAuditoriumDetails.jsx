@@ -67,7 +67,8 @@ export default function AssistantAuditoriumDetails() {
   return (
     <div className="grid gap-4 min-h-screen bg-slate-900 text-white p-4">
       <h1 className="text-3xl font-bold mb-8">Détails de l'auditoire : {code}</h1>
-      
+
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Actions rapides */}
         <div className="card p-4 lg:col-span-1 bg-slate-800 text-white">

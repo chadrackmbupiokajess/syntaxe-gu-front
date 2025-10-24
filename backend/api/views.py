@@ -175,7 +175,11 @@ def assistant_summary(request):
         auds = Auditoire.objects.filter(id__in=aud_ids).select_related("departement")
         for a in auds:
             students = StudentProfile.objects.filter(current_auditoire=a).count()
-            data["auditoriums"].append({"code": a.name, "students": students})
+            data["auditoriums"].append({
+                "code": a.name,
+                "students": students,
+                "department": getattr(a.departement, "name", "")  # Ajout de la propriété 'department'
+            })
     except Exception:
         pass
     return Response(data)
@@ -314,12 +318,13 @@ def assistant_auditorium_activities(request, code: str):
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def assistant_auditorium_stats(request, code: str):
-    data = {"averageGrade": None, "totalStudents": 0, "passRate": None}
+    data = {"averageGrade": None, "totalStudents": 0, "passRate": None, "department": "N/A"}
     try:
         aud = Auditoire.objects.filter(name=code).first()
         if aud:
             students_qs = StudentProfile.objects.filter(current_auditoire=aud)
             data["totalStudents"] = students_qs.count()
+            data["department"] = getattr(aud.departement, "name", "N/A")
             # Notes via submissions associées aux assignments des cours de cet auditoire
             subs = Submission.objects.filter(assignment__course__auditoire=aud, grade__isnull=False)
             grades = list(subs.values_list("grade", flat=True))
