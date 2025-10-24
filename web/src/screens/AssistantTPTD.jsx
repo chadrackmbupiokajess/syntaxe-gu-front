@@ -53,11 +53,12 @@ export default function AssistantTPTD() {
 
   const groupedData = useMemo(() => {
     return rows.reduce((acc, row) => {
-      const { department, auditorium, course_name } = row;
+      const { department, auditorium, course_name, type } = row;
       if (!acc[department]) acc[department] = {};
       if (!acc[department][auditorium]) acc[department][auditorium] = {};
-      if (!acc[department][auditorium][course_name]) acc[department][auditorium][course_name] = [];
-      acc[department][auditorium][course_name].push(row);
+      if (!acc[department][auditorium][course_name]) acc[department][auditorium][course_name] = {};
+      if (!acc[department][auditorium][course_name][type]) acc[department][auditorium][course_name][type] = [];
+      acc[department][auditorium][course_name][type].push(row);
       return acc;
     }, {});
   }, [rows]);
@@ -65,7 +66,7 @@ export default function AssistantTPTD() {
   const toggleSection = (key, level, idsToMarkAsSeen = []) => {
     setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
 
-    if (level === 'course' && !openSections[key] && idsToMarkAsSeen.length > 0) {
+    if (level === 'type' && !openSections[key] && idsToMarkAsSeen.length > 0) {
       setNewlyCreatedIds(prev => {
         const newSet = new Set(prev);
         idsToMarkAsSeen.forEach(id => newSet.delete(id));
@@ -73,7 +74,7 @@ export default function AssistantTPTD() {
       });
     }
   };
-
+  
   const handleQuestionChange = (index, field, value) => {
     const newQuestionnaire = [...form.questionnaire];
     newQuestionnaire[index][field] = value;
@@ -183,7 +184,7 @@ export default function AssistantTPTD() {
       <div className="card p-4 grid gap-2">
         <h3 className="text-lg font-semibold mb-2">Mes TP/TD</h3>
         {Object.entries(groupedData).map(([department, auditoriums]) => {
-          const newInDeptCount = Object.values(auditoriums).flatMap(courses => Object.values(courses).flat()).filter(item => newlyCreatedIds.has(item.id)).length;
+          const newInDeptCount = Object.values(auditoriums).flatMap(courses => Object.values(courses).flatMap(types => Object.values(types).flat())).filter(item => newlyCreatedIds.has(item.id)).length;
           return (
             <div key={department} className="border-b border-slate-200 dark:border-slate-700 last:border-b-0 py-2">
               <button onClick={() => toggleSection(department, 'department')} className="w-full text-left font-semibold text-lg flex justify-between items-center">
@@ -196,7 +197,7 @@ export default function AssistantTPTD() {
               {openSections[department] && (
                 <div className="pl-4 mt-2 grid gap-2">
                   {Object.entries(auditoriums).map(([auditorium, courses]) => {
-                    const newInAuditoriumCount = Object.values(courses).flat().filter(item => newlyCreatedIds.has(item.id)).length;
+                    const newInAuditoriumCount = Object.values(courses).flatMap(types => Object.values(types).flat()).filter(item => newlyCreatedIds.has(item.id)).length;
                     return (
                       <div key={auditorium} className="border-l border-slate-200 dark:border-slate-700 pl-4">
                         <button onClick={() => toggleSection(auditorium, 'auditorium')} className="w-full text-left font-medium text-md flex justify-between items-center">
@@ -208,12 +209,11 @@ export default function AssistantTPTD() {
                         </button>
                         {openSections[auditorium] && (
                           <div className="pl-4 mt-2 grid gap-2">
-                            {Object.entries(courses).map(([course_name, tptdList]) => {
-                              const newInCourseCount = tptdList.filter(item => newlyCreatedIds.has(item.id)).length;
-                              const idsInCourse = tptdList.map(item => item.id);
+                            {Object.entries(courses).map(([course_name, types]) => {
+                              const newInCourseCount = Object.values(types).flat().filter(item => newlyCreatedIds.has(item.id)).length;
                               return (
-                                <div key={course_name}>
-                                  <button onClick={() => toggleSection(course_name, 'course', idsInCourse)} className="w-full text-left font-normal text-sm flex justify-between items-center">
+                                <div key={course_name} className="border-l border-slate-200 dark:border-slate-700 pl-4">
+                                  <button onClick={() => toggleSection(course_name, 'course')} className="w-full text-left font-normal text-sm flex justify-between items-center">
                                     <span className="flex items-center">
                                       {course_name}
                                       {newInCourseCount > 0 && <span className="ml-3 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{newInCourseCount}</span>}
@@ -221,20 +221,38 @@ export default function AssistantTPTD() {
                                     <svg xmlns="http://www.w3.org/2000/svg" className={`w-5 h-5 transition-transform ${openSections[course_name] ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
                                   </button>
                                   {openSections[course_name] && (
-                                    <div className="overflow-auto mt-2">
-                                      <table className="min-w-full text-sm">
-                                        <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">Titre</th><th className="py-2 pr-4">Type</th><th className="py-2 pr-4">Date de remise</th><th className="py-2 pr-4"></th></tr></thead>
-                                        <tbody>
-                                          {tptdList.map(r => (
-                                            <tr key={r.id} className="border-t border-slate-200/60 dark:border-slate-800/60">
-                                              <td className="py-2 pr-4 font-medium"><Link to={`/assistant/tptd/${r.id}`} className="hover:underline">{r.title}</Link></td>
-                                              <td className="py-2 pr-4">{r.type}</td>
-                                              <td className="py-2 pr-4">{formatDate(r.deadline)}</td>
-                                              <td className="py-2 pr-4 text-right"><button className="btn !bg-red-600" onClick={()=>del(r.id)}>Supprimer</button></td>
-                                            </tr>
-                                          ))}
-                                        </tbody>
-                                      </table>
+                                    <div className="pl-4 mt-2 grid gap-2">
+                                      {Object.entries(types).map(([type, tptdList]) => {
+                                        const newInTypeCount = tptdList.filter(item => newlyCreatedIds.has(item.id)).length;
+                                        const idsInType = tptdList.map(item => item.id);
+                                        return (
+                                          <div key={type}>
+                                            <button onClick={() => toggleSection(type, 'type', idsInType)} className="w-full text-left font-normal text-xs flex justify-between items-center">
+                                              <span className="flex items-center">
+                                                {type}
+                                                {newInTypeCount > 0 && <span className="ml-3 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{newInTypeCount}</span>}
+                                              </span>
+                                              <svg xmlns="http://www.w3.org/2000/svg" className={`w-5 h-5 transition-transform ${openSections[type] ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                                            </button>
+                                            {openSections[type] && (
+                                              <div className="overflow-auto mt-2">
+                                                <table className="min-w-full text-sm">
+                                                  <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">Titre</th><th className="py-2 pr-4">Date de remise</th><th className="py-2 pr-4"></th></tr></thead>
+                                                  <tbody>
+                                                    {tptdList.map(r => (
+                                                      <tr key={r.id} className={`border-t border-slate-200/60 dark:border-slate-800/60 ${newlyCreatedIds.has(r.id) ? 'bg-green-100 dark:bg-green-900/30' : ''}`}>
+                                                        <td className="py-2 pr-4 font-medium"><Link to={`/assistant/tptd/${r.id}`} className="hover:underline">{r.title}</Link></td>
+                                                        <td className="py-2 pr-4">{formatDate(r.deadline)}</td>
+                                                        <td className="py-2 pr-4 text-right"><button className="btn !bg-red-600" onClick={()=>del(r.id)}>Supprimer</button></td>
+                                                      </tr>
+                                                    ))}
+                                                  </tbody>
+                                                </table>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )
+                                      })}
                                     </div>
                                   )}
                                 </div>
