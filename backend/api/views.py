@@ -130,14 +130,31 @@ def tptd_my(request):
         })
     return Response(items)
 
-@api_view(["DELETE"])
+@api_view(['GET', 'DELETE'])
 @permission_classes(DEV_PERMS)
 def tptd_my_detail(request, id):
     try:
         ap = AcademicProfile.objects.get(user=request.user)
-        assignment = Assignment.objects.get(id=id, assistant=ap)
-        assignment.delete()
-        return Response(status=204)
+        assignment = Assignment.objects.select_related('course__auditoire__departement').get(id=id, assistant=ap)
+
+        if request.method == 'GET':
+            data = {
+                "id": assignment.id,
+                "title": assignment.title,
+                "type": assignment.type,
+                "course_name": assignment.course.name,
+                "auditorium": assignment.course.auditoire.name,
+                "department": assignment.course.auditoire.departement.name,
+                "description": assignment.questionnaire,
+                "deadline": assignment.deadline,
+                "created_at": assignment.created_at,
+            }
+            return Response(data)
+
+        elif request.method == 'DELETE':
+            assignment.delete()
+            return Response(status=204)
+
     except (AcademicProfile.DoesNotExist, Assignment.DoesNotExist):
         return Response({"detail": "TP/TD non trouvé ou accès non autorisé."}, status=404)
 

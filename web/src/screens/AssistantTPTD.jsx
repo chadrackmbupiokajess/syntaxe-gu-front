@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import axios from 'axios'
 import { useToast } from '../shared/ToastProvider'
+import { Link } from 'react-router-dom';
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -188,7 +189,7 @@ export default function AssistantTPTD() {
                                         <tbody>
                                           {tptdList.map(r => (
                                             <tr key={r.id} className="border-t border-slate-200/60 dark:border-slate-800/60">
-                                              <td className="py-2 pr-4 font-medium">{r.title}</td>
+                                              <td className="py-2 pr-4 font-medium"><Link to={`/assistant/tptd/${r.id}`} className="hover:underline">{r.title}</Link></td>
                                               <td className="py-2 pr-4">{r.type}</td>
                                               <td className="py-2 pr-4">{formatDate(r.deadline)}</td>
                                               <td className="py-2 pr-4 text-right"><button className="btn !bg-red-600" onClick={()=>del(r.id)}>Supprimer</button></td>

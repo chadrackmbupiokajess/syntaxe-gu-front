@@ -42,29 +42,25 @@ import AssistantDashboard from '../screens/AssistantDashboard';
 import AssistantAuditoriums from '../screens/AssistantAuditoriums';
 import AssistantAuditoriumDetails from '../screens/AssistantAuditoriumDetails';
 import AssistantAuditoriumMessage from '../screens/AssistantAuditoriumMessage';
-import AssistantMessages from '../screens/AssistantMessages'; // New import
+import AssistantMessages from '../screens/AssistantMessages';
 import AssistantNewTPTD from '../screens/AssistantNewTPTD';
 import AssistantNewQuiz from '../screens/AssistantNewQuiz';
 import AssistantGrades from '../screens/AssistantGrades';
 import AssistantTPTD from '../screens/AssistantTPTD';
+import AssistantTPTDDetails from '../screens/AssistantTPTDDetails';
 import AssistantQuizzes from '../screens/AssistantQuizzes';
 import AssistantToGrade from '../screens/AssistantToGrade';
 import AssistantProfile from '../screens/AssistantProfile';
-import AssistantStudentProfile from '../screens/AssistantStudentProfile'; // New import
+import AssistantStudentProfile from '../screens/AssistantStudentProfile';
 
 export default function App() {
   return (
     <Routes>
-      {/* Route publique pour la connexion */}
       <Route path="/login" element={<Login />} />
-
-      {/* Routes protégées qui nécessitent une connexion */}
       <Route element={<ProtectedRoute />}>
-        {/* Toutes les routes ici partagent le Layout principal (Navbar, etc.) */}
         <Route element={<Layout />}>
           <Route path="/" element={<RoleLanding />} />
 
-          {/* Routes pour l'Étudiant */}
           <Route path="/etudiant" element={<RoleRoute allowedRoles={['etudiant']} />}>
             <Route element={<StudentLayout />}>
               <Route index element={<StudentDashboard />} />
@@ -81,19 +77,19 @@ export default function App() {
             </Route>
           </Route>
 
-          {/* Routes pour l'Assistant/Enseignant */}
           <Route path="/assistant" element={<RoleRoute allowedRoles={['assistant', 'enseignant']} />}>
             <Route element={<AssistantLayout />}>
               <Route index element={<AssistantDashboard />} />
               <Route path="auditoires" element={<AssistantAuditoriums />} />
               <Route path="auditoires/:code" element={<AssistantAuditoriumDetails />} />
               <Route path="auditoires/:code/message" element={<AssistantAuditoriumMessage />} />
-              <Route path="messages" element={<AssistantMessages />} /> {/* New route */}
+              <Route path="messages" element={<AssistantMessages />} />
               <Route path="auditoires/:code/tptd/new" element={<AssistantNewTPTD />} />
               <Route path="auditoires/:code/quizzes/new" element={<AssistantNewQuiz />} />
-              <Route path="students/:studentId" element={<AssistantStudentProfile />} /> {/* New dynamic route */}
+              <Route path="students/:studentId" element={<AssistantStudentProfile />} />
               <Route path="notes" element={<AssistantGrades />} />
               <Route path="tptd" element={<AssistantTPTD />} />
+              <Route path="tptd/:id" element={<AssistantTPTDDetails />} />
               <Route path="quizzes" element={<AssistantQuizzes />} />
               <Route path="notifications" element={<StudentNotifications />} />
               <Route path="a-corriger" element={<AssistantToGrade />} />
@@ -101,7 +97,6 @@ export default function App() {
             </Route>
           </Route>
 
-          {/* Routes pour les autres rôles (Admin, etc.) */}
           <Route path="/pdg" element={<RoleRoute allowedRoles={['pdg']} />}> 
             <Route index element={<PDGDashboard />} />
           </Route>
@@ -139,7 +134,6 @@ export default function App() {
         </Route>
       </Route>
 
-      {/* Redirection pour toute autre URL non trouvée */}
       <Route path="/unauthorized" element={<Unauthorized />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
