@@ -20,6 +20,8 @@ from .views import (
     finance_summary, finance_operations,
     it_summary, it_incidents,
     library_summary, library_gestion_reservations,
+    # Student actions
+    quizzes_student_start, quizzes_student_attempt_submit, tptd_student_submit,
 )
 
 urlpatterns = [
@@ -41,6 +43,10 @@ urlpatterns = [
     re_path(r"^tptd/student/available/?$", tptd_student_available, name="tptd_student_available"),
     re_path(r"^quizzes/student/my-attempts/?$", quizzes_student_my_attempts, name="quizzes_student_my_attempts"),
     re_path(r"^tptd/student/my-submissions/?$", tptd_student_my_submissions, name="tptd_student_my_submissions"),
+    # Actions étudiant (post)
+    re_path(r"^quizzes/student/(?P<id>\d+)/start/?$", quizzes_student_start, name="quizzes_student_start"),
+    re_path(r"^quizzes/student/attempts/(?P<id>\d+)/submit/?$", quizzes_student_attempt_submit, name="quizzes_student_attempt_submit"),
+    re_path(r"^tptd/student/(?P<id>\d+)/submit/?$", tptd_student_submit, name="tptd_student_submit"),
     re_path(r"^student/courses/?$", student_courses, name="student_courses"),
     re_path(r"^student/calendar/?$", student_calendar, name="student_calendar"),
     re_path(r"^student/grades/all/?$", student_grades_all, name="student_grades_all"),

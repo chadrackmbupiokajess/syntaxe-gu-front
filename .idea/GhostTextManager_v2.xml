@@ -406,6 +406,18 @@
             </GhostTextMetaData>
           </value>
         </entry>
+        <entry key="ok maintenant dans assistant/enseignant et etudiant recuperes les vrai données depuis la base de donner, exemple pour les etudiant affiche son auditoire, les cours de son auditoire, TP/TD, quizz donc tout le menu qui sont la soit vraiment dynamique ainsi qu'assistant/enseignant">
+          <value>
+            <GhostTextMetaData>
+              <option name="count" value="1.0" />
+              <option name="timestamps">
+                <list>
+                  <option value="1761275175366" />
+                </list>
+              </option>
+            </GhostTextMetaData>
+          </value>
+        </entry>
         <entry key="ok vas y">
           <value>
             <GhostTextMetaData>

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "academics",
     "evaluations",
     "core",
+    "tp_td", # Added the new app here
 ]
 
 MIDDLEWARE = [

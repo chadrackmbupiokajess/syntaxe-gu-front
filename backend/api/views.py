@@ -3,6 +3,18 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework import permissions
 from rest_framework.response import Response
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
+from django.apps import apps
+StudentProfile = apps.get_model('accounts', 'StudentProfile')
+AcademicProfile = apps.get_model('accounts', 'AcademicProfile')
+Course = apps.get_model('academics', 'Course')
+Auditoire = apps.get_model('academics', 'Auditoire')
+Calendrier = apps.get_model('academics', 'Calendrier')
+CourseAssignment = apps.get_model('academics', 'CourseAssignment')
+Assignment = apps.get_model('evaluations', 'Assignment')
+Submission = apps.get_model('evaluations', 'Submission')
+Quiz = apps.get_model('evaluations', 'Quiz')
 
 
 def _safe_user_id(u) -> int:
@@ -61,12 +73,26 @@ def student_summary(request):
 def student_meta(request):
     u = request.user
     uid = _safe_user_id(u)
+    auditorium = ""
+    department = ""
+    faculty = ""
+    matricule = f"STU-{uid:05d}"
+    try:
+        sp = StudentProfile.objects.select_related("current_auditoire__departement__section").get(user=u)
+        auditorium = getattr(getattr(sp, "current_auditoire", None), "name", "") or ""
+        dep = getattr(sp.current_auditoire, "departement", None)
+        department = getattr(dep, "name", "") if dep else ""
+        faculty = getattr(getattr(dep, "section", None), "name", "") if dep else ""
+        if sp.matricule:
+            matricule = sp.matricule
+    except Exception:
+        pass
     data = {
-        "auditorium": "B12",
-        "session": "2024-2025",
-        "department": "Informatique",
-        "faculty": "Sciences",
-        "matricule": f"STU-{uid:05d}",
+        "auditorium": auditorium,
+        "session": f"{timezone.now().year}-{timezone.now().year + 1}",
+        "department": department,
+        "faculty": faculty,
+        "matricule": matricule,
         "email": getattr(u, "email", ""),
     }
     return Response(data)
@@ -75,14 +101,22 @@ def student_meta(request):
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def student_grades_recent(request):
-    grades = [
-        {"course": "Algo", "grade": 16},
-        {"course": "BD", "grade": 15},
-        {"course": "Web", "grade": 12},
-        {"course": "Réseaux", "grade": 13},
-        {"course": "Maths", "grade": 17},
-    ]
-    return Response(grades)
+    items = []
+    try:
+        sp = StudentProfile.objects.get(user=request.user)
+        subs = (
+            Submission.objects.select_related("assignment__course")
+            .filter(student=sp, grade__isnull=False)
+            .order_by("-submitted_at")[:10]
+        )
+        for s in subs:
+            items.append({
+                "course": getattr(getattr(s.assignment, "course", None), "name", "Cours"),
+                "grade": s.grade,
+            })
+    except Exception:
+        pass
+    return Response(items)
 
 
 @api_view(["GET"])
@@ -90,17 +124,29 @@ def student_grades_recent(request):
 def student_profile(request):
     u = request.user
     uid = _safe_user_id(u)
+    matricule = f"STU-{uid:05d}"
+    auditorium = department = faculty = ""
+    try:
+        sp = StudentProfile.objects.select_related("current_auditoire__departement__section").get(user=u)
+        if sp.matricule:
+            matricule = sp.matricule
+        auditorium = getattr(getattr(sp, "current_auditoire", None), "name", "") or ""
+        dep = getattr(sp.current_auditoire, "departement", None)
+        department = getattr(dep, "name", "") if dep else ""
+        faculty = getattr(getattr(dep, "section", None), "name", "") if dep else ""
+    except Exception:
+        pass
     data = {
         "avatar": f"https://i.pravatar.cc/128?u={uid}",
         "name": getattr(u, "username", "Invité"),
-        "matricule": f"STU-{uid:05d}",
+        "matricule": matricule,
         "email": getattr(u, "email", ""),
         "phone": "+243 000 000 000",
         "address": "Campus Universitaire",
-        "auditorium": "B12",
-        "session": "2024-2025",
-        "department": "Informatique",
-        "faculty": "Sciences",
+        "auditorium": auditorium,
+        "session": f"{timezone.now().year}-{timezone.now().year + 1}",
+        "department": department,
+        "faculty": faculty,
     }
     return Response(data)
 
@@ -110,44 +156,98 @@ def student_profile(request):
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def assistant_summary(request):
-    # Structure de données corrigée pour correspondre au frontend
-    data = {
-        "courses": 4,
-        "activeTPTD": 3,
-        "activeQuizzes": 2,
-        "toGrade": 15,
-        "auditoriums": [
-            {"code": "G2 INFO", "students": 128},
-            {"code": "G3 INFO", "students": 94},
-            {"code": "L1 INFO", "students": 210},
-        ]
-    }
+    data = {"courses": 0, "activeTPTD": 0, "activeQuizzes": 0, "toGrade": 0, "auditoriums": []}
+    try:
+        ap = AcademicProfile.objects.get(user=request.user)
+        # Cours assignés
+        q_assign = CourseAssignment.objects.select_related("course__auditoire").filter(assistant=ap)
+        data["courses"] = q_assign.count()
+        # TP/TD actifs (deadline future)
+        data["activeTPTD"] = Assignment.objects.filter(assistant=ap, deadline__gte=timezone.now()).count()
+        # Quizzes actifs
+        data["activeQuizzes"] = Quiz.objects.filter(assistant=ap).count()
+        # A corriger (soumis mais non noté)
+        data["toGrade"] = Submission.objects.filter(assignment__assistant=ap, grade__isnull=True, status='soumis').count()
+        # Auditoriums gérés
+        aud_ids = q_assign.values_list("course__auditoire", flat=True).distinct()
+        auds = Auditoire.objects.filter(id__in=aud_ids).select_related("departement")
+        for a in auds:
+            students = StudentProfile.objects.filter(current_auditoire=a).count()
+            data["auditoriums"].append({"code": a.name, "students": students})
+    except Exception:
+        pass
     return Response(data)
 
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def auditoriums_assistant_my(request):
-    # Renvoie un tableau vide pour éviter les erreurs de .map()
-    return Response([])
+    items = []
+    try:
+        ap = AcademicProfile.objects.get(user=request.user)
+        aud_ids = CourseAssignment.objects.filter(assistant=ap).values_list("course__auditoire", flat=True).distinct()
+        for a in Auditoire.objects.filter(id__in=aud_ids):
+            students = StudentProfile.objects.filter(current_auditoire=a).count()
+            items.append({"code": a.name, "students": students})
+    except Exception:
+        pass
+    return Response(items)
 
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def tptd_my(request):
-    return Response([])
+    items = []
+    try:
+        ap = AcademicProfile.objects.get(user=request.user)
+        for a in Assignment.objects.select_related("course").filter(assistant=ap):
+            items.append({
+                "id": a.id,
+                "title": a.title,
+                "deadline": a.deadline,
+                "course": getattr(a.course, "name", ""),
+            })
+    except Exception:
+        pass
+    return Response(items)
 
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def quizzes_my(request):
-    return Response([])
+    items = []
+    try:
+        ap = AcademicProfile.objects.get(user=request.user)
+        for q in Quiz.objects.select_related("course").filter(assistant=ap):
+            items.append({
+                "id": q.id,
+                "title": q.title,
+                "duration": q.duration,
+                "course": getattr(q.course, "name", ""),
+            })
+    except Exception:
+        pass
+    return Response(items)
 
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def assistant_tograde(request):
-    return Response([])
+    items = []
+    try:
+        ap = AcademicProfile.objects.get(user=request.user)
+        qs = Submission.objects.select_related("assignment__course", "student").filter(assignment__assistant=ap, grade__isnull=True, status='soumis')
+        for s in qs:
+            items.append({
+                "id": s.id,
+                "student": f"{getattr(s.student, 'nom', '')} {getattr(s.student, 'prenom', '')}",
+                "assignment": getattr(getattr(s, 'assignment', None), 'title', ''),
+                "course": getattr(getattr(getattr(s, 'assignment', None), 'course', None), 'name', ''),
+                "submitted_at": s.submitted_at,
+            })
+    except Exception:
+        pass
+    return Response(items)
 
 
 @api_view(["GET"])
@@ -167,15 +267,42 @@ def teacher_profile(request):
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def quizzes_student_available(request):
-    # Liste des quiz disponibles pour l'étudiant
-    return Response([])
+    items = []
+    try:
+        sp = StudentProfile.objects.select_related("current_auditoire").get(user=request.user)
+        aud = sp.current_auditoire
+        qs = Quiz.objects.select_related("course").filter(course__auditoire=aud)
+        for q in qs:
+            deadline = (getattr(q, "created_at", None) or timezone.now()) + timedelta(days=7)
+            items.append({
+                "id": q.id,
+                "title": q.title,
+                "duration": q.duration,
+                "deadline": deadline,
+            })
+    except Exception:
+        pass
+    return Response(items)
 
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def tptd_student_available(request):
-    # Travaux pratiques / TD disponibles pour l'étudiant
-    return Response([])
+    items = []
+    try:
+        sp = StudentProfile.objects.select_related("current_auditoire").get(user=request.user)
+        aud = sp.current_auditoire
+        qs = Assignment.objects.select_related("course").filter(course__auditoire=aud)
+        for a in qs:
+            items.append({
+                "id": a.id,
+                "title": a.title,
+                "type": getattr(getattr(a, "course", None), "session_type", "tp"),
+                "deadline": a.deadline,
+            })
+    except Exception:
+        pass
+    return Response(items)
 
 
 @api_view(["GET"])
@@ -188,15 +315,41 @@ def quizzes_student_my_attempts(request):
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def tptd_student_my_submissions(request):
-    # Soumissions TPTD de l'étudiant
-    return Response([])
+    items = []
+    try:
+        sp = StudentProfile.objects.get(user=request.user)
+        subs = Submission.objects.select_related("assignment").filter(student=sp).order_by("-submitted_at")[:20]
+        for s in subs:
+            items.append({
+                "id": s.id,
+                "title": getattr(s.assignment, "title", ""),
+                "submitted_at": s.submitted_at,
+                "grade": s.grade,
+            })
+    except Exception:
+        pass
+    return Response(items)
 
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def student_courses(request):
-    # Cours de l'étudiant
-    return Response([])
+    rows = []
+    try:
+        sp = StudentProfile.objects.select_related("current_auditoire").get(user=request.user)
+        aud = sp.current_auditoire
+        for c in Course.objects.filter(auditoire=aud).select_related("auditoire"):
+            code = f"{c.name[:3].upper()}-{c.id}"
+            title = c.name
+            credits = 3
+            assign = CourseAssignment.objects.filter(course=c).select_related("assistant").first()
+            instructor = (
+                f"{assign.assistant.prenom} {assign.assistant.nom}".strip() if assign and assign.assistant else ""
+            )
+            rows.append({"code": code, "title": title, "credits": credits, "instructor": instructor})
+    except Exception:
+        pass
+    return Response(rows)
 
 
 @api_view(["GET"])
@@ -239,6 +392,40 @@ def student_documents(request):
 def payments_mine(request):
     # Paiements de l'utilisateur
     return Response([])
+
+
+# ---- Actions étudiant (POST) ----
+
+@api_view(["POST"])
+@permission_classes(DEV_PERMS)
+def quizzes_student_start(request, id: int):
+    # Pas de modèle d'"attempt" pour les quiz pour l'instant: on renvoie juste OK
+    return Response({"status": "ok"})
+
+
+@api_view(["POST"])
+@permission_classes(DEV_PERMS)
+def quizzes_student_attempt_submit(request, id: int):
+    # Pas de modèle d'"attempt" pour les quiz pour l'instant: on renvoie juste OK
+    return Response({"status": "ok"})
+
+
+@api_view(["POST"])
+@permission_classes(DEV_PERMS)
+def tptd_student_submit(request, id: int):
+    # Créer une soumission pour l'Assignment id
+    try:
+        sp = StudentProfile.objects.get(user=request.user)
+        a = Assignment.objects.get(id=id)
+        Submission.objects.create(
+            assignment=a,
+            student=sp,
+            status='soumis',
+            submitted_at=timezone.now(),
+        )
+        return Response({"status": "submitted"})
+    except Exception:
+        return Response({"status": "error"})
 
 
 # ---- Endpoints PDG (placeholders) ----
