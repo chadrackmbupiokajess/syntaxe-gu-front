@@ -74,7 +74,7 @@ export default function AssistantAuditoriums() {
                   <div className="text-xs text-slate-500 dark:text-white/70">Département: {a.department}</div>
                 )}
               </div>
-              <div className="text-sm text-slate-500 dark:text-white/70">{a.students} étudiants</div>
+              <div className="text-sm text-slate-500 dark:text-white/70">{a.students} étudiants, {a.course_count} cours</div>
             </div>
             <div className="flex gap-2 mb-2">
               <button className="btn" onClick={() => loadCourses(a.code)}>Voir cours</button>
@@ -83,11 +83,10 @@ export default function AssistantAuditoriums() {
             {courses[a.code] && (
               <div className="overflow-auto">
                 <table className="min-w-full text-sm">
-                  <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">Code</th><th className="py-2 pr-4">Intitulé</th></tr></thead>
+                  <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">Intitulé</th></tr></thead>
                   <tbody>
                     {courses[a.code].map(c => (
                       <tr key={c.code} className="border-t border-slate-200/60 dark:border-slate-800/60">
-                        <td className="py-2 pr-4 font-medium">{c.code}</td>
                         <td className="py-2 pr-4">{c.title}</td>
                       </tr>
                     ))}

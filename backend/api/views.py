@@ -558,8 +558,9 @@ def auditoriums_assistant_my(request):
         aud_ids = CourseAssignment.objects.filter(assistant=ap).values_list("course__auditoire", flat=True).distinct()
         for a in Auditoire.objects.filter(id__in=aud_ids):
             students = StudentProfile.objects.filter(current_auditoire=a).count()
+            course_count = CourseAssignment.objects.filter(assistant=ap, course__auditoire=a).count()
             dept = getattr(a.departement, "name", "")
-            items.append({"id": a.id, "code": a.name, "name": a.name, "department": dept, "students": students})
+            items.append({"id": a.id, "code": a.name, "name": a.name, "department": dept, "students": students, "course_count": course_count})
     except Exception:
         pass
     return Response(items)
