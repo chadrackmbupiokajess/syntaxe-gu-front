@@ -59,11 +59,12 @@ class DepartementAdmin(admin.ModelAdmin):
 
 @admin.register(Auditoire)
 class AuditoireAdmin(admin.ModelAdmin):
-    list_display = ('departement', 'name')
+    list_display = ('departement', 'name', 'level')
     list_filter = ('departement__section', 'departement')
     ordering = ('departement', 'name')
     search_fields = ['name', 'departement__name']
     inlines = [MiSessionCourseInline, SessionCourseInline]
+    readonly_fields = ('level',)
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
