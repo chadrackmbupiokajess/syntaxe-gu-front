@@ -377,7 +377,22 @@ def assistant_profile(request):
                 user.password = make_password(new_password)
                 user.save()
 
-            return Response({"detail": "Profil mis à jour avec succès."}, status=200)
+            # Return updated profile data including new avatar URL
+            data = {
+                "prenom": user.first_name,
+                "nom": user.last_name,
+                "email": user.email,
+                "phone": ap.phone,
+                "office": ap.office,
+                "department": "", # Assuming assistant is not tied to a single dept
+                "faculty": "", # Assuming assistant is not tied to a single faculty
+                "avatar": ap.profile_picture.url if ap.profile_picture else f"https://i.pravatar.cc/128?u={user.id}",
+            }
+            latest_assignment = CourseAssignment.objects.filter(assistant=ap).select_related('course__auditoire__departement__section').first()
+            if latest_assignment:
+                data["department"] = latest_assignment.course.auditoire.departement.name
+                data["faculty"] = latest_assignment.course.auditoire.departement.section.name
+            return Response(data)
 
         # GET request
         data = {
@@ -544,7 +559,7 @@ def auditoriums_assistant_my(request):
         for a in Auditoire.objects.filter(id__in=aud_ids):
             students = StudentProfile.objects.filter(current_auditoire=a).count()
             dept = getattr(a.departement, "name", "")
-            items.append({"id": a.id, "name": a.name, "department": dept, "students": students})
+            items.append({"id": a.id, "code": a.name, "name": a.name, "department": dept, "students": students})
     except Exception:
         pass
     return Response(items)
@@ -586,7 +601,7 @@ def assistant_student_grades(request, id: int):
                 rows.append({"name": cname, "grade": round(sum(grades) / len(grades), 2)})
     except Exception:
         pass
-    return Response(items)
+    return Response(rows)
 
 
 @api_view(["GET"])
@@ -605,7 +620,7 @@ def assistant_student_submissions(request, id: int):
             })
     except Exception:
         pass
-    return Response(items)
+    return Response(rows)
 
 
 @api_view(["GET"])
@@ -625,7 +640,7 @@ def assistant_auditorium_courses(request, auditoire_id: int):
                 })
     except Exception:
         pass
-    return Response(items)
+    return Response(rows)
 
 
 @api_view(["GET"])
@@ -756,7 +771,7 @@ def assistant_auditorium_create_tptd(request, code: str):
         a = Assignment.objects.create(course=course, assistant=ap, title=title, questionnaire="", deadline=deadline)
         return Response({"id": a.id, "title": a.title, "deadline": a.deadline.isoformat()}, status=201)
     except Exception:
-        return Response({"detail": "Erreur de cr\u00e9ation TP/TD"}, status=400)
+        return Response({"detail": "Erreur de création TP/TD"}, status=400)
 
 
 @api_view(["POST"])
@@ -778,7 +793,7 @@ def assistant_auditorium_create_quiz(request, code: str):
         q = Quiz.objects.create(course=course, assistant=ap, title=title, duration=duration)
         return Response({"id": q.id, "title": q.title, "duration": q.duration}, status=201)
     except Exception:
-        return Response({"detail": "Erreur de cr\u00e9ation du quiz"}, status=400)
+        return Response({"detail": "Erreur de création du quiz"}, status=400)
 
 
 @api_view(["GET"])
@@ -1125,6 +1140,8 @@ def jury_defenses(request):
     return Response(rows)
 
 
+# ---- Endpoints Apparitorat (placeholders)
+
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def apparitorat_summary(request):
@@ -1144,6 +1161,8 @@ def apparitorat_presences(request):
     ]
     return Response(rows)
 
+
+# ---- Endpoints Finance/Caisse (placeholders)
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
@@ -1168,6 +1187,8 @@ def finance_operations(request):
     return Response(rows)
 
 
+# ---- Endpoints IT (placeholders)
+
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def it_summary(request):
@@ -1188,6 +1209,8 @@ def it_incidents(request):
     ]
     return Response(rows)
 
+
+# ---- Endpoints Bibliothèque (placeholders)
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)

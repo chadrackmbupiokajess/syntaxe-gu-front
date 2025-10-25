@@ -62,7 +62,7 @@ export default function AssistantAuditoriums() {
 
   return (
     <div className="grid gap-4">
-      {rows.map(a => {
+      {rows.filter(a => a.code).map(a => {
         return (
           <div key={a.code} className="card p-4">
             <div className="flex items-center justify-between mb-3">
