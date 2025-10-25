@@ -98,11 +98,10 @@ export default function AssistantAuditoriums() {
             {students[a.code] && (
               <div className="overflow-auto mt-3">
                 <table className="min-w-full text-sm">
-                  <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">ID</th><th className="py-2 pr-4">Nom</th></tr></thead>
+                  <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">Nom</th></tr></thead>
                   <tbody>
                     {students[a.code].map(s => (
                       <tr key={s.id} className="border-t border-slate-200/60 dark:border-slate-800/60">
-                        <td className="py-2 pr-4 font-medium">{s.id}</td>
                         <td className="py-2 pr-4">{s.name}</td>
                       </tr>
                     ))}
