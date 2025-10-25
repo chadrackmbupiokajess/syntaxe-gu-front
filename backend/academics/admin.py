@@ -14,19 +14,19 @@ class CourseInline(admin.TabularInline):
     model = Course
     extra = 1
     verbose_name_plural = "Ajouter des cours à cet auditoire"
-    fields = ('name', 'session_type')
+    fields = ('name', 'session_type', 'credits')
 
 class MiSessionCourseInline(admin.TabularInline):
     model = MiSessionCourse
     extra = 1
     verbose_name_plural = "Cours de Mi-Session"
-    fields = ('name',)
+    fields = ('name', 'credits')
 
 class SessionCourseInline(admin.TabularInline):
     model = SessionCourse
     extra = 1
     verbose_name_plural = "Cours de Session"
-    fields = ('name',)
+    fields = ('name', 'credits')
 
 class AuditoireInline(admin.TabularInline):
     model = Auditoire
@@ -67,8 +67,22 @@ class AuditoireAdmin(admin.ModelAdmin):
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ('name', 'auditoire', 'session_type')
+    list_display = ('name', 'auditoire', 'session_type', 'credits')
     list_filter = ('auditoire__departement__section', 'auditoire__departement', 'session_type')
+    ordering = ('auditoire__departement', 'auditoire', 'name')
+    search_fields = ['name', 'auditoire__name']
+
+@admin.register(MiSessionCourse)
+class MiSessionCourseAdmin(admin.ModelAdmin):
+    list_display = ('name', 'auditoire', 'credits')
+    list_filter = ('auditoire__departement__section', 'auditoire__departement')
+    ordering = ('auditoire__departement', 'auditoire', 'name')
+    search_fields = ['name', 'auditoire__name']
+
+@admin.register(SessionCourse)
+class SessionCourseAdmin(admin.ModelAdmin):
+    list_display = ('name', 'auditoire', 'credits')
+    list_filter = ('auditoire__departement__section', 'auditoire__departement')
     ordering = ('auditoire__departement', 'auditoire', 'name')
     search_fields = ['name', 'auditoire__name']
 

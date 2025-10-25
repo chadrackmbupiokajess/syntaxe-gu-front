@@ -420,11 +420,47 @@ def assistant_profile(request):
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def student_summary(request):
+    program = "N/A"
+    creditsEarned = 0
+    gpa = 0.0
+    try:
+        sp = StudentProfile.objects.select_related("current_auditoire__departement__section").get(user=request.user)
+        if sp.current_auditoire and sp.current_auditoire.departement and sp.current_auditoire.departement.section:
+            program = sp.current_auditoire.departement.section.name
+
+        # Calcul des crédits et GPA
+        submissions = Submission.objects.filter(student=sp, grade__isnull=False).select_related('assignment__course')
+        
+        # Pour éviter de compter plusieurs fois les crédits d'un même cours
+        successful_courses = set()
+        total_points = 0
+        total_credits = 0
+
+        for sub in submissions:
+            if sub.grade and sub.grade >= 10:
+                # Assumons 3 crédits par cours si non spécifié
+                credits = getattr(sub.assignment.course, 'credits', 3)
+                if sub.assignment.course.id not in successful_courses:
+                    creditsEarned += credits
+                    successful_courses.add(sub.assignment.course.id)
+            
+            # Pour le GPA, on peut faire une moyenne simple ou pondérée
+            # Ici, une moyenne simple des notes
+            if sub.grade is not None:
+                total_points += sub.grade
+                total_credits += 1 # ou utiliser les crédits du cours pour pondérer
+
+        if total_credits > 0:
+            gpa = round(total_points / total_credits, 2)
+
+    except StudentProfile.DoesNotExist:
+        pass
+
     data = {
-        "program": "Informatique",
+        "program": program,
         "semester": "S1",
-        "creditsEarned": 30,
-        "gpa": 14.8,
+        "creditsEarned": creditsEarned,
+        "gpa": gpa,
         "nextEvents": [
             {"title": "Cours d'Algorithmes", "date": "2025-11-05"},
             {"title": "TP Réseaux", "date": "2025-11-07"},

@@ -33,6 +33,7 @@ class Course(models.Model):
     name = models.CharField(max_length=200)
     code = models.CharField(max_length=20, unique=True, blank=True)
     auditoire = models.ForeignKey(Auditoire, on_delete=models.CASCADE, related_name='courses')
+    credits = models.PositiveSmallIntegerField(default=3)
     session_type = models.CharField(max_length=20, choices=SESSION_CHOICES, default='session')
 
     def __str__(self):
