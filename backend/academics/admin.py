@@ -64,7 +64,31 @@ class AuditoireAdmin(admin.ModelAdmin):
     ordering = ('departement', 'name')
     search_fields = ['name', 'departement__name']
     inlines = [MiSessionCourseInline, SessionCourseInline]
-    readonly_fields = ('level',)
+
+    def get_fieldsets(self, request, obj=None):
+        if obj: # Lors de la modification
+            return (
+                (None, {
+                    'fields': ('name', 'departement', 'level')
+                }),
+            )
+        return (
+            (None, {
+                'fields': ('name', 'departement')
+            }),
+            ('Information', {
+                'fields': ('level_status',),
+            }),
+        )
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ('level',)
+        return ('level_status',)
+
+    def level_status(self, obj):
+        return "Sera généré automatiquement"
+    level_status.short_description = "Level"
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
