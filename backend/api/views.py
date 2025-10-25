@@ -625,11 +625,11 @@ def assistant_student_submissions(request, id: int):
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
-def assistant_auditorium_courses(request, auditoire_id: int):
+def assistant_auditorium_courses(request, code: str):
     rows = []
     try:
         ap = AcademicProfile.objects.get(user=request.user)
-        aud = Auditoire.objects.filter(id=auditoire_id).first()
+        aud = Auditoire.objects.filter(name=code).first()
         if aud:
             # Filtrer les cours pour ne retourner que ceux assignés à l'assistant
             assigned_courses = Course.objects.filter(auditoire=aud, assignments_by_assistant__assistant=ap)
