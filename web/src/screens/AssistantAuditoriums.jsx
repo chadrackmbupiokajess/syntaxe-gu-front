@@ -101,7 +101,11 @@ export default function AssistantAuditoriums() {
                   <tbody>
                     {students[a.code].map(s => (
                       <tr key={s.id} className="border-t border-slate-200/60 dark:border-slate-800/60">
-                        <td className="py-2 pr-4">{s.name}</td>
+                        <td className="py-2 pr-4">
+                          <Link to={`/assistant/students/${s.id}`} className="hover:underline">
+                            {s.name}
+                          </Link>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
