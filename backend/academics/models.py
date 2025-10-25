@@ -1,5 +1,6 @@
 from django.db import models
 import uuid
+import re
 
 class Section(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -24,6 +25,23 @@ class Auditoire(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.departement.name}"
+
+    def save(self, *args, **kwargs):
+        # Automatiser le champ 'level' en fonction du nom
+        try:
+            # Extraire le numéro du nom (ex: "Licence 3" -> 3)
+            num_part = re.search(r'\d+', self.name)
+            if num_part:
+                num = int(num_part.group(0))
+                # Si le nom contient "Master", ajouter 3
+                if 'master' in self.name.lower():
+                    self.level = num + 3
+                else:
+                    self.level = num
+        except (ValueError, TypeError):
+            # En cas d'erreur (ex: pas de numéro dans le nom), garder la valeur par défaut
+            pass
+        super().save(*args, **kwargs)
 
 class Course(models.Model):
     SESSION_CHOICES = (
