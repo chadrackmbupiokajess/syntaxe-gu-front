@@ -74,11 +74,11 @@ class AnswerAdmin(admin.ModelAdmin):
 
     @admin.display(description='Student', ordering='attempt__student')
     def get_student(self, obj):
-        return obj.attempt.student
+        return obj.attempt.student if obj.attempt else "N/A"
 
     @admin.display(description='Submitted At', ordering='attempt__submitted_at')
     def get_submitted_at(self, obj):
-        return obj.attempt.submitted_at
+        return obj.attempt.submitted_at if obj.attempt else "N/A"
 
 # Choice n'est pas enregistré directement car il est géré via QuestionInline
 # admin.site.register(Choice)

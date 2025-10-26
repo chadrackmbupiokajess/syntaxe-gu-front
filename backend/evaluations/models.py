@@ -92,13 +92,11 @@ class QuizAttempt(models.Model):
 
 
 class Answer(models.Model):
-    attempt = models.ForeignKey(QuizAttempt, on_delete=models.CASCADE, related_name='answers', null=True, blank=True)
+    attempt = models.ForeignKey(QuizAttempt, on_delete=models.CASCADE, related_name='answers')
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
     selected_choices = models.ManyToManyField(Choice, blank=True)
     answer_text = models.TextField(blank=True) # For free text questions
     points_obtained = models.FloatField(default=0)
 
     def __str__(self):
-        if self.attempt:
-            return f"Answer for attempt {self.attempt.id} to {self.question.question_text[:50]}..."
-        return f"Orphaned answer to {self.question.question_text[:50]}..."
+        return f"Answer for attempt {self.attempt.id} to {self.question.question_text[:50]}..."

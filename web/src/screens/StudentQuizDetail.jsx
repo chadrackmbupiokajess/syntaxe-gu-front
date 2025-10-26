@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { safeGet, safePost } from '../api/safeGet';
 import { useToast } from '../shared/ToastProvider';
@@ -80,12 +80,16 @@ export default function StudentQuizDetail() {
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState({}); // { questionId: answer }
   const [submissionResult, setSubmissionResult] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(null);
 
   const fetchQuiz = async () => {
     setLoading(true);
     const data = await safeGet(`/api/quizzes/student/${id}/`);
     if (data) {
       setQuiz(data);
+      if (!submissionResult) {
+        setTimeLeft(data.duration * 60);
+      }
     }
     setLoading(false);
   };
@@ -93,10 +97,6 @@ export default function StudentQuizDetail() {
   useEffect(() => {
     fetchQuiz();
   }, [id]);
-
-  const handleAnswerChange = (questionId, answer) => {
-    setAnswers(prev => ({ ...prev, [questionId]: answer }));
-  };
 
   const handleSubmit = async () => {
     const res = await safePost(`/api/quizzes/student/attempts/${id}/submit/`, { answers });
@@ -107,6 +107,29 @@ export default function StudentQuizDetail() {
     } else {
         toast.push({ title: "Erreur", message: "Erreur lors de la soumission du quiz.", kind: 'error' });
     }
+  };
+
+  useEffect(() => {
+    if (timeLeft === 0) {
+      handleSubmit();
+    }
+    if (!timeLeft || submissionResult) return;
+    const intervalId = setInterval(() => {
+      setTimeLeft(timeLeft - 1);
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [timeLeft, submissionResult]);
+
+  const formatTime = useMemo(() => {
+    if (timeLeft === null) return "00:00";
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }, [timeLeft]);
+
+  const handleAnswerChange = (questionId, answer) => {
+    setAnswers(prev => ({ ...prev, [questionId]: answer }));
   };
 
   if (loading) {
@@ -120,10 +143,19 @@ export default function StudentQuizDetail() {
   return (
     <div className="container mx-auto p-4">
       <div className="card p-6 mb-6">
-        <h1 className="text-3xl font-bold mb-2">{quiz.title}</h1>
-        <p className="text-slate-600 dark:text-slate-400">Cours: {quiz.course_name}</p>
-        <p className="text-slate-600 dark:text-slate-400">Par: {quiz.assistant_name}</p>
-        <p className="text-slate-600 dark:text-slate-400">Durée: {quiz.duration} minutes</p>
+        <div className="flex justify-between items-center">
+            <div>
+                <h1 className="text-3xl font-bold mb-2">{quiz.title}</h1>
+                <p className="text-slate-600 dark:text-slate-400">Cours: {quiz.course_name}</p>
+                <p className="text-slate-600 dark:text-slate-400">Par: {quiz.assistant_name}</p>
+            </div>
+            {!submissionResult && (
+                <div className="text-2xl font-bold p-4 rounded-lg bg-slate-200 dark:bg-slate-700">
+                    {formatTime}
+                </div>
+            )}
+        </div>
+        <p className="text-slate-600 dark:text-slate-400 mt-2">Durée: {quiz.duration} minutes</p>
         <p className="text-red-500 font-semibold">À passer avant le: {new Date(quiz.deadline).toLocaleString()}</p>
       </div>
 
