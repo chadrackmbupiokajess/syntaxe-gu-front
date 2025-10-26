@@ -28,6 +28,7 @@ import BibliothequeDashboard from '../screens/BibliothequeDashboard';
 import StudentDashboard from '../screens/StudentDashboard';
 import StudentWork from '../screens/StudentWork';
 import StudentTptdDetail from '../screens/StudentTptdDetail';
+import StudentQuizDetail from '../screens/StudentQuizDetail';
 import StudentCourses from '../screens/StudentCourses';
 import StudentChat from '../screens/StudentChat';
 import StudentNotifications from '../screens/StudentNotifications';
@@ -68,6 +69,7 @@ export default function App() {
               <Route index element={<StudentDashboard />} />
               <Route path="travaux" element={<StudentWork />} />
               <Route path="tptd/:id" element={<StudentTptdDetail />} />
+              <Route path="quiz/:id" element={<StudentQuizDetail />} />
               <Route path="cours" element={<StudentCourses />} />
               <Route path="chat" element={<StudentChat />} />
               <Route path="notifications" element={<StudentNotifications />} />

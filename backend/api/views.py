@@ -929,6 +929,45 @@ def tptd_student_detail(request, id):
     except (StudentProfile.DoesNotExist, Assignment.DoesNotExist):
         return Response({"detail": "Devoir non trouvé ou accès non autorisé."}, status=404)
 
+@api_view(['GET'])
+@permission_classes(DEV_PERMS)
+def quizzes_student_detail(request, id):
+    try:
+        sp = StudentProfile.objects.get(user=request.user)
+        quiz = Quiz.objects.select_related('course__auditoire', 'assistant').get(id=id)
+
+        # Security check: Ensure the student belongs to the quiz's auditorium
+        if sp.current_auditoire != quiz.course.auditoire:
+            return Response({"detail": "Accès non autorisé à ce quiz."}, status=403)
+
+        questions = []
+        for q in quiz.questions.all():
+            choices = []
+            # For students, we don't send the is_correct flag
+            if q.question_type in ['single', 'multiple']:
+                for c in q.choices.all():
+                    choices.append({"id": c.id, "text": c.choice_text})
+            questions.append({"id": q.id, "text": q.question_text, "type": q.question_type, "choices": choices})
+
+        assistant_name = f"{quiz.assistant.prenom} {quiz.assistant.nom}".strip() if quiz.assistant else "N/A"
+        deadline = (getattr(quiz, "created_at", None) or timezone.now()) + timedelta(days=7)
+
+
+        data = {
+            "id": quiz.id,
+            "title": quiz.title,
+            "course_name": quiz.course.name,
+            "session_type": quiz.course.get_session_type_display(),
+            "duration": quiz.duration,
+            "assistant_name": assistant_name,
+            "deadline": deadline,
+            "questions": questions,
+        }
+        return Response(data)
+
+    except (StudentProfile.DoesNotExist, Quiz.DoesNotExist):
+        return Response({"detail": "Quiz non trouvé ou accès non autorisé."}, status=404)
+
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)

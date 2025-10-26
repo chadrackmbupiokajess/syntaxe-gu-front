@@ -9,3 +9,12 @@ export async function safeGet(url, fallback = null) {
     return fallback
   }
 }
+
+export async function safePost(url, body, fallback = null) {
+    try {
+      const { data } = await axios.post(url, body)
+      return data
+    } catch (e) {
+      return fallback
+    }
+  }

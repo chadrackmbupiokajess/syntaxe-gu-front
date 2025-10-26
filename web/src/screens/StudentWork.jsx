@@ -114,7 +114,7 @@ export default function StudentWork() {
                     <div className="text-sm text-slate-500 dark:text-slate-400">Durée: {q.duration} min</div>
                     <div className="text-sm text-slate-500 dark:text-slate-400">À passer avant le: {new Date(q.deadline).toLocaleString()}</div>
                   </div>
-                  <button className="btn mt-4 w-full">Démarrer le Quiz</button>
+                  <Link to={`/etudiant/quiz/${q.id}`} className="btn mt-4 w-full text-center">Démarrer le Quiz</Link>
                 </div>
               ))}
             </div>
