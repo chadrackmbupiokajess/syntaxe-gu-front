@@ -636,12 +636,26 @@ def auditoriums_assistant_my(request):
 def assistant_student_detail(request, id: int):
     try:
         sp = StudentProfile.objects.select_related("user", "current_auditoire").get(id=id)
-        return Response({
+        
+        total_grade_obtained = 0
+        total_possible_points = 0
+
+        # Get all graded submissions for the student
+        submissions = Submission.objects.filter(student=sp, grade__isnull=False).select_related('assignment')
+        
+        for sub in submissions:
+            total_grade_obtained += sub.grade
+            total_possible_points += getattr(sub.assignment, 'total_points', 20) # Default to 20 if not set
+
+        data = {
             "id": sp.id,
             "name": f"{sp.nom} {sp.postnom} {sp.prenom}".strip(),
             "email": getattr(getattr(sp, "user", None), "email", ""),
             "auditorium": getattr(getattr(sp, "current_auditoire", None), "name", ""),
-        })
+            "total_grade_obtained": total_grade_obtained,
+            "total_possible_points": total_possible_points,
+        }
+        return Response(data)
     except StudentProfile.DoesNotExist:
         return Response({}, status=404)
 
@@ -651,7 +665,7 @@ def assistant_student_detail(request, id: int):
 def assistant_student_grades(request, id: int):
     rows = []
     try:
-        sp = StudentProfile.objects.get(user=request.user)
+        sp = StudentProfile.objects.get(id=id) # Corrected to get student by ID
         # Regrouper par cours: moyenne des notes par cours
         subs = Submission.objects.select_related("assignment__course").filter(student=sp, grade__isnull=False)
         by_course = {}
@@ -730,10 +744,22 @@ def assistant_auditorium_students(request, code: str):
         if aud:
             qs = StudentProfile.objects.select_related("user").filter(current_auditoire=aud)
             for s in qs:
+                total_grade_obtained = 0
+                total_possible_points = 0
+
+                # Get all graded submissions for the student
+                submissions = Submission.objects.filter(student=s, grade__isnull=False).select_related('assignment')
+                
+                for sub in submissions:
+                    total_grade_obtained += sub.grade
+                    total_possible_points += getattr(sub.assignment, 'total_points', 20) # Default to 20 if not set
+
                 rows.append({
                     "id": s.id,
                     "name": f"{s.nom} {s.postnom} {s.prenom}".strip(),
                     "email": getattr(getattr(s, "user", None), "email", ""),
+                    "total_grade_obtained": total_grade_obtained,
+                    "total_possible_points": total_possible_points,
                 })
     except (ValueError, TypeError):
         pass

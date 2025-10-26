@@ -7,6 +7,9 @@ export default function AssistantAuditoriumDetails() {
   const [students, setStudents] = useState(null);
   const [auditoriumStats, setAuditoriumStats] = useState(null);
   const [auditoriumActivities, setAuditoriumActivities] = useState(null);
+  const [courses, setCourses] = useState([]); // New state for courses
+  const [selectedCourse, setSelectedCourse] = useState(''); // New state for selected course
+  const [gradesByCourse, setGradesByCourse] = useState({}); // New state for grades by course
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -18,12 +21,24 @@ export default function AssistantAuditoriumDetails() {
       setLoading(true);
       setError(false);
       try {
-        // Fetch students
+        // Fetch students (initial fetch, might be updated later based on selected course)
         try {
           const studentsResponse = await axios.get(`/api/assistant/auditoriums/${code}/students`);
           setStudents(studentsResponse.data);
         } catch (err) {
           console.error("Error fetching students:", err);
+          setError(true);
+        }
+
+        // Fetch courses for the auditorium
+        try {
+          const coursesResponse = await axios.get(`/api/assistant/auditoriums/${code}/courses`);
+          setCourses(coursesResponse.data);
+          if (coursesResponse.data.length > 0) {
+            setSelectedCourse(coursesResponse.data[0].code); // Select the first course by default
+          }
+        } catch (err) {
+          console.error("Error fetching courses:", err);
           setError(true);
         }
 
@@ -52,6 +67,27 @@ export default function AssistantAuditoriumDetails() {
 
     fetchAuditoriumData();
   }, [code]);
+
+  // Effect to fetch grades when selectedCourse changes
+  useEffect(() => {
+    const fetchGrades = async () => {
+      if (selectedCourse && code) {
+        try {
+          const gradesResponse = await axios.get(`/api/assistant/grades/${code}/${selectedCourse}`);
+          // Map grades to students for easy lookup
+          const newGradesByCourse = {};
+          gradesResponse.data.forEach(gradeInfo => {
+            newGradesByCourse[gradeInfo.student_id] = gradeInfo.grade;
+          });
+          setGradesByCourse(newGradesByCourse);
+        } catch (err) {
+          console.error(`Error fetching grades for course ${selectedCourse}:`, err);
+          setGradesByCourse({}); // Clear grades if there's an error
+        }
+      }
+    };
+    fetchGrades();
+  }, [selectedCourse, code]);
 
   const scrollToRef = (ref) => {
     ref.current?.scrollIntoView({ behavior: 'smooth' });
@@ -130,20 +166,50 @@ export default function AssistantAuditoriumDetails() {
           </button>
           )
         </h3>
+
+        {/* Course selection dropdown */}
+        {courses && courses.length > 0 && (
+          <div className="mb-4">
+            <label htmlFor="course-select" className="block text-sm font-medium text-white/70 mb-2">Sélectionner un cours:</label>
+            <select
+              id="course-select"
+              className="block w-full p-2 border border-slate-700 rounded-md shadow-sm bg-slate-900 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              value={selectedCourse}
+              onChange={(e) => setSelectedCourse(e.target.value)}
+            >
+              {courses.map((course) => (
+                <option key={course.id} value={course.code}>
+                  {course.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {students && students.length === 0 ? (
           <p className="text-sm text-white/70">Aucun étudiant dans cet auditoire.</p>
         ) : (
           <ul className="grid gap-3">
-            {students && students.map((student, i) => (
-              <Link to={`/assistant/students/${student.id}`} key={i}>
-                <li className="flex items-center justify-between border rounded-lg px-4 py-3 border-white/10 bg-slate-900 hover:bg-slate-800 transition-all duration-200">
-                  <div>
-                    <span className="font-medium">{student.name}</span>
-                    <p className="text-xs text-white/70">{student.email}</p>
-                  </div>
-                </li>
-              </Link>
-            ))}
+            {students && students.map((student, i) => {
+              const studentGrade = gradesByCourse[student.id];
+              return (
+                <Link to={`/assistant/students/${student.id}`} key={i}>
+                  <li className="flex items-center justify-between border rounded-lg px-4 py-3 border-white/10 bg-slate-900 hover:bg-slate-800 transition-all duration-200">
+                    <div>
+                      <span className="font-medium">{student.name}</span>
+                      <p className="text-xs text-white/70">{student.email}</p>
+                      {selectedCourse && studentGrade !== undefined && (
+                        <p className="text-xs text-white/70">Note ({selectedCourse}) : {studentGrade} / 20</p>
+                      )}
+                      {/* Remove the overall total points display from here */}
+                      {/* {student.total_possible_points > 0 && (
+                        <p className="text-xs text-white/70">Total points : {student.total_grade_obtained} / {student.total_possible_points}</p>
+                      )} */}
+                    </div>
+                  </li>
+                </Link>
+              );
+            })}
           </ul>
         )}
       </div>

@@ -36,6 +36,9 @@ export default function AssistantStudentProfile() {
         <p><strong>ID :</strong> {studentDetails.id}</p>
         <p><strong>Email :</strong> {studentDetails.email}</p>
         <p><strong>Auditoire :</strong> {studentDetails.auditorium}</p>
+        {studentDetails.total_possible_points > 0 && (
+          <p><strong>Total points :</strong> {studentDetails.total_grade_obtained} / {studentDetails.total_possible_points}</p>
+        )}
         {/* Ajoutez d'autres détails de l'étudiant ici */}
       </div>
 
