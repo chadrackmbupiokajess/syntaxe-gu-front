@@ -83,7 +83,7 @@ urlpatterns = [
     re_path(r"^quizzes/my/?$", quizzes_my, name="quizzes_my"),
     re_path(r"^quizzes/my/(?P<id>\d+)/?$", quizzes_my_detail, name="quizzes_my_detail"),
     re_path(r"^assistant/tograde/?$", assistant_tograde, name="assistant_tograde"),
-    re_path(r'^assistant/grades/(?P<auditorium_code>[^/]+)/(?P<course_code>[^/]+)/?$', assistant_grades, name='assistant_grades'),
+    re_path(r'^assistant/grades/(?P<auditorium_id>\d+)/(?P<course_code>[^/]+)/?$', assistant_grades, name='assistant_grades'),
 
     # Admin & other roles endpoints
     re_path(r"^pdg/summary/?$", pdg_summary, name="pdg_summary"),

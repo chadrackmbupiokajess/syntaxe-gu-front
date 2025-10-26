@@ -121,15 +121,14 @@ export default function AssistantGrades() {
   }, [selectedAudId]);
 
   useEffect(() => {
-    const auditorium = auditoriums.find(a => a.id === selectedAudId);
-    if (!auditorium || !selectedCourseCode) {
+    if (!selectedAudId || !selectedCourseCode) {
       setRows([]);
       return;
     }
 
     setLoading(prev => ({ ...prev, grades: true }));
     setError(null);
-    axios.get(`/api/assistant/grades/${encodeURIComponent(auditorium.code)}/${encodeURIComponent(selectedCourseCode)}`).then(r => {
+    axios.get(`/api/assistant/grades/${selectedAudId}/${encodeURIComponent(selectedCourseCode)}`).then(r => {
       setRows(r.data);
       setLoading(prev => ({ ...prev, grades: false }));
     }).catch(err => {
@@ -137,13 +136,12 @@ export default function AssistantGrades() {
       setRows([]);
       setLoading(prev => ({ ...prev, grades: false }));
     });
-  }, [selectedAudId, selectedCourseCode, auditoriums]);
+  }, [selectedAudId, selectedCourseCode]);
 
   const setGrade = async (student_id, grade) => {
-    const auditorium = auditoriums.find(a => a.id === selectedAudId);
-    if (!auditorium || !selectedCourseCode) return;
+    if (!selectedAudId || !selectedCourseCode) return;
 
-    return axios.patch(`/api/assistant/grades/${encodeURIComponent(auditorium.code)}/${encodeURIComponent(selectedCourseCode)}`, { student_id, grade: Number(grade) });
+    return axios.patch(`/api/assistant/grades/${selectedAudId}/${encodeURIComponent(selectedCourseCode)}`, { student_id, grade: Number(grade) });
   };
 
   return (

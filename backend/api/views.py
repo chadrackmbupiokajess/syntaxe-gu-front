@@ -254,17 +254,17 @@ def quizzes_my_detail(request, id):
 
 @api_view(['GET', 'PATCH'])
 @permission_classes(DEV_PERMS)
-def assistant_grades(request, auditorium_code, course_code):
+def assistant_grades(request, auditorium_id, course_code):
     try:
         ap = AcademicProfile.objects.get(user=request.user)
         
-        auditorium = Auditoire.objects.filter(name=auditorium_code).first()
+        auditorium = Auditoire.objects.filter(pk=auditorium_id).first()
         if not auditorium:
-            return Response({"detail": f"Auditoire '{auditorium_code}' non trouvé."}, status=404)
+            return Response({"detail": f"Auditoire avec ID '{auditorium_id}' non trouvé."}, status=404)
 
         course = Course.objects.filter(code=course_code, auditoire=auditorium).first()
         if not course:
-            return Response({"detail": f"Cours '{course_code}' non trouvé dans l'auditoire '{auditorium_code}'."}, status=404)
+            return Response({"detail": f"Cours '{course_code}' non trouvé dans l'auditoire '{auditorium.name}'."}, status=404)
 
         if not CourseAssignment.objects.filter(course=course, assistant=ap).exists():
             return Response({"detail": "Accès non autorisé à ce cours."}, status=403)
