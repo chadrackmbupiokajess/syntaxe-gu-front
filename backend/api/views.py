@@ -982,8 +982,9 @@ def quizzes_student_my_attempts(request):
     items = []
     try:
         sp = StudentProfile.objects.get(user=request.user)
-        attempts = QuizAttempt.objects.select_related('quiz__course').filter(student=sp).order_by('-submitted_at')
+        attempts = QuizAttempt.objects.select_related('quiz__course', 'quiz__assistant').filter(student=sp).order_by('-submitted_at')
         for a in attempts:
+            assistant_name = f"{a.quiz.assistant.prenom} {a.quiz.assistant.nom}".strip() if a.quiz.assistant else "N/A"
             items.append({
                 "id": a.id,
                 "quiz_title": a.quiz.title,
@@ -992,6 +993,7 @@ def quizzes_student_my_attempts(request):
                 "total_questions": a.total_questions,
                 "submitted_at": a.submitted_at,
                 "submission_reason": a.get_submission_reason_display(),
+                "assistant_name": assistant_name,
             })
     except StudentProfile.DoesNotExist:
         pass # Should not happen for a logged-in user

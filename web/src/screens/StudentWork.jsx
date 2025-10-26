@@ -142,6 +142,7 @@ export default function StudentWork() {
                       <div>
                         <div className="font-medium">{a.quiz_title}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">{a.course_name}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">Par: {a.assistant_name}</div>
                         <div className="text-xs text-slate-500 dark:text-slate-400">Soumis le: {new Date(a.submitted_at).toLocaleString()}</div>
                       </div>
                       <span className="text-sm font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
