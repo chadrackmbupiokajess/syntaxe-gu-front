@@ -694,26 +694,32 @@ def assistant_student_submissions(request, id: int):
 @permission_classes(DEV_PERMS)
 def assistant_auditorium_courses(request, code: str):
     rows = []
+    course_ids = set()
     try:
         ap = AcademicProfile.objects.get(user=request.user)
         auditorium_id = int(code)
         aud = Auditoire.objects.filter(pk=auditorium_id).first()
         if aud:
-            # Filtrer les cours pour ne retourner que ceux assignés à l'assistant
-            assigned_courses = Course.objects.filter(auditoire=aud, courseassignment__assistant=ap).distinct()
-            for c in assigned_courses:
-                rows.append({
-                    "id": c.id,
-                    "code": c.code,
-                    "title": c.name,
-                })
+            # Find assignments for the current assistant in the specified auditorium
+            assignments = CourseAssignment.objects.filter(
+                assistant=ap, 
+                course__auditoire=aud
+            ).select_related('course')
+
+            for assign in assignments:
+                c = assign.course
+                if c.id not in course_ids:
+                    rows.append({
+                        "id": c.id,
+                        "code": c.code,
+                        "title": c.name,
+                    })
+                    course_ids.add(c.id)
     except (AcademicProfile.DoesNotExist, ValueError, TypeError):
-        # This can happen if user is not logged in, or if code is not a valid int.
-        # In both cases, returning an empty list is a safe default.
         pass
     except Exception as e:
-        print(f"Error in assistant_auditorium_courses: {e}") # Log for debug
-        pass # Return empty list
+        print(f"Error in assistant_auditorium_courses: {e}")
+        pass
     return Response(rows)
 
 
