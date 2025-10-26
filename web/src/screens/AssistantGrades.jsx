@@ -117,7 +117,7 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon, disabled, o
       <button onClick={() => setOpen(!isOpen)} disabled={disabled} className="btn w-full flex items-center justify-between !bg-slate-100 dark:!bg-slate-800">
         <div className="flex items-center gap-2">
           {icon}
-          <span className="text-slate-500 dark:text-white/70 truncate">{selectedOption ? selectedOption.label : placeholder}</span>
+          <span className="text-slate-500 dark:text-white/70">{selectedOption ? selectedOption.label : placeholder}</span>
         </div>
         <svg className={`w-5 h-5 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
       </button>
