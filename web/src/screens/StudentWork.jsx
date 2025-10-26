@@ -84,6 +84,7 @@ export default function StudentWork() {
                   <li key={s.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-700/50">
                     <div>
                       <div className="font-medium">{s.title}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">{s.course_name} - {s.session_type}</div>
                       <div className="text-xs text-slate-500 dark:text-slate-400">Soumis le: {new Date(s.submitted_at).toLocaleDateString()}</div>
                     </div>
                     <span className={`text-sm font-semibold px-2 py-1 rounded-full ${s.status === 'non-soumis' ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200' : (s.grade != null ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200')}`}>

@@ -953,7 +953,7 @@ def tptd_student_my_submissions(request):
                 submitted_at=assignment.deadline
             )
 
-        subs = Submission.objects.select_related("assignment").filter(student=sp).order_by("-submitted_at")[:20]
+        subs = Submission.objects.select_related("assignment", "assignment__course").filter(student=sp).order_by("-submitted_at")[:20]
         for s in subs:
             items.append({
                 "id": s.id,
@@ -962,6 +962,8 @@ def tptd_student_my_submissions(request):
                 "grade": s.grade,
                 "total_points": getattr(s.assignment, "total_points", 20),
                 "status": s.status,
+                "course_name": s.assignment.course.name,
+                "session_type": s.assignment.course.get_session_type_display(),
             })
     except Exception:
         pass
