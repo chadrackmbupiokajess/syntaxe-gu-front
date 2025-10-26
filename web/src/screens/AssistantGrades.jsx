@@ -13,37 +13,40 @@ const StatusIndicator = ({ status }) => {
     saving: 'Enregistrement...',
     saved: 'Enregistré',
     error: 'Erreur',
-    default: 'En attente'
+    default: ''
   }
-  return <div className={`text-xs ${styles[status] || styles.default}`}>{text[status] || text.default}</div>;
+  return <div className={`text-xs h-4 ${styles[status] || styles.default}`}>{text[status] || text.default}</div>;
 };
 
 const StudentGradeCard = ({ student, setGrade }) => {
-  const [grade, setLocalGrade] = useState(student.grade ?? '');
+  const [grade, setLocalGrade] = useState(student.grade);
+  const [isEditing, setIsEditing] = useState(false);
   const [status, setStatus] = useState('default');
 
-  const debouncedSave = useCallback(
-    debounce(async (newGrade) => {
-      setStatus('saving');
-      try {
-        await setGrade(student.student_id, newGrade);
-        setStatus('saved');
-      } catch (error) {
-        setStatus('error');
-      }
-    }, 1000), 
-    [student.student_id, setGrade]
-  );
-
-  const handleChange = (e) => {
-    const newGrade = e.target.value;
-    setLocalGrade(newGrade);
-    setStatus('default');
-    debouncedSave(newGrade);
+  const handleSave = async (newGrade) => {
+    if (newGrade === student.grade) return;
+    setStatus('saving');
+    try {
+      await setGrade(student.student_id, newGrade);
+      setLocalGrade(newGrade);
+      setStatus('saved');
+    } catch (error) {
+      setStatus('error');
+    }
+    setIsEditing(false);
   };
 
-  const handleBlur = () => {
-    debouncedSave.flush();
+  const handleBlur = (e) => {
+    handleSave(Number(e.target.value));
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSave(Number(e.target.value));
+    }
+    if (e.key === 'Escape') {
+      setIsEditing(false);
+    }
   };
 
   return (
@@ -51,19 +54,35 @@ const StudentGradeCard = ({ student, setGrade }) => {
       <img src={student.avatar} alt={`Avatar de ${student.student_name}`} className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700" />
       <div className="flex-grow">
         <div className="font-semibold">{student.student_name}</div>
-        <div className="text-sm text-slate-500 dark:text-white/70">{student.matricule}</div>
       </div>
-      <div className="flex flex-col items-end">
-        <input 
-          type="number" 
-          min="0" 
-          max="20" 
-          step="0.5" 
-          value={grade} 
-          onChange={handleChange}
-          onBlur={handleBlur}
-          className="w-24 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-center font-semibold"
-        />
+      <div className="flex flex-col items-end gap-1">
+        {isEditing ? (
+          <input 
+            type="number" 
+            min="0" 
+            max="20" 
+            step="0.5" 
+            defaultValue={grade ?? ''} 
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            autoFocus
+            className="w-24 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-brand-500 text-center font-semibold"
+          />
+        ) : (
+          <div 
+            className="w-24 h-8 flex items-center justify-center font-bold text-lg cursor-pointer"
+            onClick={() => setIsEditing(true)}
+          >
+            {grade !== null && grade !== undefined ? (
+              <div>
+                <span className={grade < 10 ? 'text-red-500' : 'text-green-500'}>{grade}</span>
+                <span className="text-sm text-slate-500"> /20</span>
+              </div>
+            ) : (
+              <span className="text-sm text-slate-400">Non noté</span>
+            )}
+          </div>
+        )}
         <StatusIndicator status={status} />
       </div>
     </div>
@@ -141,7 +160,12 @@ export default function AssistantGrades() {
   const setGrade = async (student_id, grade) => {
     if (!selectedAudId || !selectedCourseCode) return;
 
-    return axios.patch(`/api/assistant/grades/${selectedAudId}/${encodeURIComponent(selectedCourseCode)}`, { student_id, grade: Number(grade) });
+    await axios.patch(`/api/assistant/grades/${selectedAudId}/${encodeURIComponent(selectedCourseCode)}`, { student_id, grade: Number(grade) });
+    
+    // Optimistically update the UI
+    setRows(prevRows => prevRows.map(row => 
+      row.student_id === student_id ? { ...row, grade: Number(grade) } : row
+    ));
   };
 
   return (
