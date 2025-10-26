@@ -937,6 +937,22 @@ def tptd_student_my_submissions(request):
     items = []
     try:
         sp = StudentProfile.objects.get(user=request.user)
+
+        # Automatically create submissions for overdue assignments
+        overdue_assignments = Assignment.objects.filter(
+            course__auditoire=sp.current_auditoire,
+            deadline__lt=timezone.now()
+        ).exclude(submissions__student=sp)
+
+        for assignment in overdue_assignments:
+            Submission.objects.create(
+                assignment=assignment,
+                student=sp,
+                status='non-soumis',
+                grade=0,
+                submitted_at=assignment.deadline
+            )
+
         subs = Submission.objects.select_related("assignment").filter(student=sp).order_by("-submitted_at")[:20]
         for s in subs:
             items.append({
@@ -944,6 +960,8 @@ def tptd_student_my_submissions(request):
                 "title": getattr(s.assignment, "title", ""),
                 "submitted_at": s.submitted_at,
                 "grade": s.grade,
+                "total_points": getattr(s.assignment, "total_points", 20),
+                "status": s.status,
             })
     except Exception:
         pass
