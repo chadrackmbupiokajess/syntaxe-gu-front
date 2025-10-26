@@ -722,7 +722,8 @@ def assistant_auditorium_courses(request, code: str):
 def assistant_auditorium_students(request, code: str):
     rows = []
     try:
-        aud = Auditoire.objects.filter(name=code).first()
+        auditorium_id = int(code)
+        aud = Auditoire.objects.filter(pk=auditorium_id).first()
         if aud:
             qs = StudentProfile.objects.select_related("user").filter(current_auditoire=aud)
             for s in qs:
@@ -731,7 +732,7 @@ def assistant_auditorium_students(request, code: str):
                     "name": f"{s.nom} {s.postnom} {s.prenom}".strip(),
                     "email": getattr(getattr(s, "user", None), "email", ""),
                 })
-    except Exception:
+    except (ValueError, TypeError):
         pass
     return Response(rows)
 
@@ -741,7 +742,8 @@ def assistant_auditorium_students(request, code: str):
 def assistant_auditorium_activities(request, code: str):
     rows = []
     try:
-        aud = Auditoire.objects.filter(name=code).first()
+        auditorium_id = int(code)
+        aud = Auditoire.objects.filter(pk=auditorium_id).first()
         if aud:
             events = Calendrier.objects.filter(auditoire=aud).order_by("-start_date")[:20]
             for e in events:
@@ -750,7 +752,7 @@ def assistant_auditorium_activities(request, code: str):
                     "type": "Calendrier",
                     "date": e.start_date.strftime("%Y-%m-%d"),
                 })
-    except Exception:
+    except (ValueError, TypeError):
         pass
     return Response(rows)
 
@@ -760,7 +762,8 @@ def assistant_auditorium_activities(request, code: str):
 def assistant_auditorium_stats(request, code: str):
     data = {"averageGrade": None, "totalStudents": 0, "passRate": None, "department": "N/A"}
     try:
-        aud = Auditoire.objects.filter(name=code).first()
+        auditorium_id = int(code)
+        aud = Auditoire.objects.filter(pk=auditorium_id).first()
         if aud:
             students_qs = StudentProfile.objects.filter(current_auditoire=aud)
             data["totalStudents"] = students_qs.count()
@@ -773,7 +776,7 @@ def assistant_auditorium_stats(request, code: str):
                 data["averageGrade"] = round(avg, 2)
                 passed = len([g for g in grades if g >= 10])
                 data["passRate"] = round(100 * passed / len(grades), 1)
-    except Exception:
+    except (ValueError, TypeError):
         pass
     return Response(data)
 
@@ -784,7 +787,8 @@ def assistant_auditorium_stats(request, code: str):
 @permission_classes(DEV_PERMS)
 def assistant_auditorium_messages(request, code: str):
     try:
-        aud = Auditoire.objects.filter(name=code).first()
+        auditorium_id = int(code)
+        aud = Auditoire.objects.filter(pk=auditorium_id).first()
         if not aud:
             return Response([], status=404)
         if request.method == "GET":
@@ -821,6 +825,8 @@ def assistant_auditorium_messages(request, code: str):
             "created_at": msg.created_at.isoformat(),
             "sender": (f"{getattr(ap, 'prenom', '')} {getattr(ap, 'nom', '')}".strip()),
         }, status=201)
+    except (ValueError, TypeError):
+        return Response({"detail": "Code d'auditoire invalide"}, status=400)
     except Exception:
         return Response({"detail": "Erreur de traitement des messages"}, status=400)
 
@@ -829,7 +835,8 @@ def assistant_auditorium_messages(request, code: str):
 @permission_classes(DEV_PERMS)
 def assistant_auditorium_create_tptd(request, code: str):
     try:
-        aud = Auditoire.objects.filter(name=code).first()
+        auditorium_id = int(code)
+        aud = Auditoire.objects.filter(pk=auditorium_id).first()
         if not aud:
             return Response({"detail": "Auditoire introuvable"}, status=404)
         ap = AcademicProfile.objects.get(user=request.user)
@@ -844,6 +851,8 @@ def assistant_auditorium_create_tptd(request, code: str):
         deadline = parse_datetime(deadline_s) or timezone.now() + timedelta(days=7)
         a = Assignment.objects.create(course=course, assistant=ap, title=title, questionnaire="", deadline=deadline)
         return Response({"id": a.id, "title": a.title, "deadline": a.deadline.isoformat()}, status=201)
+    except (ValueError, TypeError):
+        return Response({"detail": "Code d'auditoire invalide"}, status=400)
     except Exception:
         return Response({"detail": "Erreur de création TP/TD"}, status=400)
 
@@ -852,7 +861,8 @@ def assistant_auditorium_create_tptd(request, code: str):
 @permission_classes(DEV_PERMS)
 def assistant_auditorium_create_quiz(request, code: str):
     try:
-        aud = Auditoire.objects.filter(name=code).first()
+        auditorium_id = int(code)
+        aud = Auditoire.objects.filter(pk=auditorium_id).first()
         if not aud:
             return Response({"detail": "Auditoire introuvable"}, status=404)
         ap = AcademicProfile.objects.get(user=request.user)
@@ -866,6 +876,8 @@ def assistant_auditorium_create_quiz(request, code: str):
             return Response({"detail": "Cours introuvable dans cet auditoire"}, status=404)
         q = Quiz.objects.create(course=course, assistant=ap, title=title, duration=duration)
         return Response({"id": q.id, "title": q.title, "duration": q.duration}, status=201)
+    except (ValueError, TypeError):
+        return Response({"detail": "Code d'auditoire invalide"}, status=400)
     except Exception:
         return Response({"detail": "Erreur de création du quiz"}, status=400)
 
