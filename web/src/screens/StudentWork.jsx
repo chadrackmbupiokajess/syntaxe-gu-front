@@ -63,7 +63,7 @@ export default function StudentWork() {
                 <Link to={`/etudiant/tptd/${t.id}`} key={t.id} className="card block hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200">
                   <div className="p-4">
                     <div className="font-bold text-lg mb-1">{t.title}</div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-3">Type: {t.type}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-3">{t.course_name} - {t.type}</div>
                     <div className="flex justify-between items-center">
                       <div className="text-sm">À rendre dans:</div>
                       <Timer deadline={t.deadline} />

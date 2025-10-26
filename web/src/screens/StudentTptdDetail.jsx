@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useToast } from '../shared/ToastProvider';
 
 export default function StudentTptdDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const toast = useToast();
   const [assignment, setAssignment] = useState(null);
   const [submissionContent, setSubmissionContent] = useState('');
@@ -28,7 +29,7 @@ export default function StudentTptdDetail() {
     try {
       await axios.post(`/api/tptd/student/${id}/submit/`, { content: submissionContent });
       toast.push({ title: 'Succès', message: 'Votre travail a été soumis.' });
-      // Optionally, you could redirect the user or update the UI
+      navigate('/etudiant/travaux');
     } catch (error) {
       console.error("Error submitting assignment:", error);
       toast.push({ title: 'Erreur', message: 'La soumission a échoué.' });
@@ -53,7 +54,24 @@ export default function StudentTptdDetail() {
           
           <div className="prose dark:prose-invert max-w-none mb-6">
             <h2 className="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-3">Questionnaire</h2>
-            <div dangerouslySetInnerHTML={{ __html: assignment.questionnaire }} />
+            {typeof assignment.questionnaire === 'string' ? (
+              <div dangerouslySetInnerHTML={{ __html: assignment.questionnaire }} />
+            ) : (
+              <ul className="space-y-4">
+                {assignment.questionnaire.map((q, index) => (
+                  <li key={index} className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700/50">
+                    <p className="font-semibold">{index + 1}. {q.question}</p>
+                    {q.choices && (
+                      <ul className="list-disc list-inside ml-4 mt-2">
+                        {q.choices.map((choice, i) => (
+                          <li key={i}>{choice.text}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="bg-slate-50 dark:bg-slate-700/50 p-4 rounded-lg">

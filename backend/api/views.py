@@ -875,13 +875,24 @@ def tptd_student_available(request):
     try:
         sp = StudentProfile.objects.select_related("current_auditoire").get(user=request.user)
         aud = sp.current_auditoire
-        qs = Assignment.objects.select_related("course").filter(course__auditoire=aud)
+
+        # Get IDs of assignments already submitted by the student
+        submitted_assignment_ids = Submission.objects.filter(student=sp).values_list('assignment_id', flat=True)
+
+        # Filter assignments for the student's auditorium, excluding those already submitted
+        qs = Assignment.objects.select_related("course").filter(
+            course__auditoire=aud
+        ).exclude(
+            id__in=submitted_assignment_ids
+        )
+
         for a in qs:
             items.append({
                 "id": a.id,
                 "title": a.title,
                 "type": getattr(getattr(a, "course", None), "session_type", "tp"),
                 "deadline": a.deadline,
+                "course_name": a.course.name,
             })
     except Exception:
         pass
