@@ -89,16 +89,23 @@ const StudentGradeCard = ({ student, setGrade }) => {
   );
 };
 
-const CustomSelect = ({ options, value, onChange, placeholder, icon, disabled }) => {
+const CustomSelect = ({ options, value, onChange, placeholder, icon, disabled, onToggle }) => {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef(null);
 
   const selectedOption = options.find(o => o.value === value);
 
+  const setOpen = (open) => {
+    if (isOpen !== open) {
+      setIsOpen(open);
+      if (onToggle) onToggle(open);
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (ref.current && !ref.current.contains(event.target)) {
-        setIsOpen(false);
+        setOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -107,17 +114,17 @@ const CustomSelect = ({ options, value, onChange, placeholder, icon, disabled })
 
   return (
     <div className="relative w-64" ref={ref}>
-      <button onClick={() => setIsOpen(!isOpen)} disabled={disabled} className="btn w-full flex items-center justify-between !bg-slate-100 dark:!bg-slate-800">
+      <button onClick={() => setOpen(!isOpen)} disabled={disabled} className="btn w-full flex items-center justify-between !bg-slate-100 dark:!bg-slate-800">
         <div className="flex items-center gap-2">
           {icon}
-          <span className="text-slate-500 dark:text-white/70">{selectedOption ? selectedOption.label : placeholder}</span>
+          <span className="text-slate-500 dark:text-white/70 truncate">{selectedOption ? selectedOption.label : placeholder}</span>
         </div>
-        <svg className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+        <svg className={`w-5 h-5 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
       </button>
       {isOpen && (
-        <div className="absolute z-10 w-full mt-1 card p-2 shadow-lg">
+        <div className="absolute z-20 w-full mt-1 card p-2 shadow-lg max-h-60 overflow-y-auto">
           {options.map(option => (
-            <div key={option.value} onClick={() => { onChange(option.value); setIsOpen(false); }} className="px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">
+            <div key={option.value} onClick={() => { onChange(option.value); setOpen(false); }} className="px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">
               {option.label}
             </div>
           ))}
@@ -135,6 +142,10 @@ export default function AssistantGrades() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState({ aud: true, courses: false, grades: false });
   const [error, setError] = useState(null);
+  const [isAudSelectOpen, setIsAudSelectOpen] = useState(false);
+  const [isCourseSelectOpen, setIsCourseSelectOpen] = useState(false);
+
+  const isSelectOpen = isAudSelectOpen || isCourseSelectOpen;
 
   useEffect(() => {
     setLoading(prev => ({ ...prev, aud: true }));
@@ -199,7 +210,6 @@ export default function AssistantGrades() {
 
     await axios.patch(`/api/assistant/grades/${selectedAudId}/${encodeURIComponent(selectedCourseCode)}`, { student_id, grade: Number(grade) });
     
-    // Optimistically update the UI
     setRows(prevRows => prevRows.map(row => 
       row.student_id === student_id ? { ...row, grade: Number(grade) } : row
     ));
@@ -210,7 +220,7 @@ export default function AssistantGrades() {
 
   return (
     <div className="grid gap-4">
-      <div className="card p-4">
+      <div className="card p-4 relative z-10">
         <h1 className="text-xl font-semibold mb-3">Gestion des Notes par Auditoire</h1>
         <div className="flex flex-wrap items-center gap-3">
           <CustomSelect 
@@ -219,6 +229,7 @@ export default function AssistantGrades() {
             onChange={handleAuditoriumChange}
             placeholder="Sélectionner un auditoire"
             disabled={loading.aud}
+            onToggle={setIsAudSelectOpen}
             icon={<svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0v-4m0 4h5m0-4v4m0-4H5m14 0v-4m0 4h-2m-5-4v4m-5-4h5" /></svg>}
           />
           <CustomSelect 
@@ -227,6 +238,7 @@ export default function AssistantGrades() {
             onChange={setSelectedCourseCode}
             placeholder="Sélectionner un cours"
             disabled={loading.courses || !courses.length}
+            onToggle={setIsCourseSelectOpen}
             icon={<svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v11.494M12 6.253L15.46 9.714M12 6.253L8.54 9.714" /></svg>}
           />
         </div>
@@ -236,7 +248,7 @@ export default function AssistantGrades() {
       {error && <div className="card p-4 bg-red-100 text-red-700">{error}</div>}
       
       {!loading.grades && !error && selectedAudId && selectedCourseCode && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 transition-all duration-300 ${isSelectOpen ? 'blur-sm pointer-events-none' : ''}`}>
           {rows.length > 0 ? (
             rows.map(r => (
               <StudentGradeCard key={r.student_id} student={r} setGrade={setGrade} />
