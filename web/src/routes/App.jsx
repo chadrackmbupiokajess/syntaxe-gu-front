@@ -27,6 +27,7 @@ import BibliothequeDashboard from '../screens/BibliothequeDashboard';
 // Pages Étudiant
 import StudentDashboard from '../screens/StudentDashboard';
 import StudentWork from '../screens/StudentWork';
+import StudentTptdDetail from '../screens/StudentTptdDetail';
 import StudentCourses from '../screens/StudentCourses';
 import StudentChat from '../screens/StudentChat';
 import StudentNotifications from '../screens/StudentNotifications';
@@ -66,6 +67,7 @@ export default function App() {
             <Route element={<StudentLayout />}>
               <Route index element={<StudentDashboard />} />
               <Route path="travaux" element={<StudentWork />} />
+              <Route path="tptd/:id" element={<StudentTptdDetail />} />
               <Route path="cours" element={<StudentCourses />} />
               <Route path="chat" element={<StudentChat />} />
               <Route path="notifications" element={<StudentNotifications />} />

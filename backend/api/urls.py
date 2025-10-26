@@ -24,6 +24,7 @@ from .views import (
     library_summary, library_gestion_reservations,
     # Student actions
     quizzes_student_start, quizzes_student_attempt_submit, tptd_student_submit,
+    tptd_student_detail,
     # Assistant student details
     assistant_student_detail, assistant_student_grades, assistant_student_submissions,
     # Assistant messages
@@ -46,6 +47,7 @@ urlpatterns = [
     re_path(r"^student/notifications/?$", student_notifications, name="student_notifications"),
     re_path(r"^quizzes/student/available/?$", quizzes_student_available, name="quizzes_student_available"),
     re_path(r"^tptd/student/available/?$", tptd_student_available, name="tptd_student_available"),
+    re_path(r"^tptd/student/(?P<id>\d+)/?$", tptd_student_detail, name="tptd_student_detail"),
     re_path(r"^quizzes/student/my-attempts/?$", quizzes_student_my_attempts, name="quizzes_student_my_attempts"),
     re_path(r"^tptd/student/my-submissions/?$", tptd_student_my_submissions, name="tptd_student_my_submissions"),
     re_path(r"^quizzes/student/(?P<id>\d+)/start/?$", quizzes_student_start, name="quizzes_student_start"),

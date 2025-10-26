@@ -890,6 +890,30 @@ def tptd_student_available(request):
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
+def tptd_student_detail(request, id):
+    try:
+        sp = StudentProfile.objects.get(user=request.user)
+        assignment = Assignment.objects.select_related('course__auditoire').get(id=id)
+
+        # Security check: Ensure the student belongs to the assignment's auditorium
+        if sp.current_auditoire != assignment.course.auditoire:
+            return Response({"detail": "Accès non autorisé à ce devoir."}, status=403)
+
+        data = {
+            "id": assignment.id,
+            "title": assignment.title,
+            "course_name": assignment.course.name,
+            "deadline": assignment.deadline,
+            "questionnaire": assignment.questionnaire, # This is the questionnaire field
+        }
+        return Response(data)
+
+    except (StudentProfile.DoesNotExist, Assignment.DoesNotExist):
+        return Response({"detail": "Devoir non trouvé ou accès non autorisé."}, status=404)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
 def quizzes_student_my_attempts(request):
     # Tentatives de quiz de l'étudiant
     return Response([])
