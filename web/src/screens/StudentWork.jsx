@@ -64,7 +64,8 @@ export default function StudentWork() {
                 <Link to={`/etudiant/tptd/${t.id}`} key={t.id} className="card block hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-200">
                   <div className="p-4">
                     <div className="font-bold text-lg mb-1">{t.title}</div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-3">{t.course_name} - {t.type}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">{t.course_name} - {t.type}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-3">Par: {t.assistant_name}</div>
                     <div className="text-sm text-slate-500 dark:text-slate-400">À rendre avant le: {new Date(t.deadline).toLocaleString()}</div>
                     <div className="flex justify-between items-center mt-2">
                       <div className="text-sm">Temps restant:</div>
@@ -85,7 +86,8 @@ export default function StudentWork() {
                     <div>
                       <div className="font-medium">{s.title}</div>
                       <div className="text-xs text-slate-500 dark:text-slate-400">{s.course_name} - {s.session_type}</div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">Soumis le: {new Date(s.submitted_at).toLocaleDateString()}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">Par: {s.assistant_name}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">Soumis le: {new Date(s.submitted_at).toLocaleString()}</div>
                     </div>
                     <span className={`text-sm font-semibold px-2 py-1 rounded-full ${s.status === 'non-soumis' ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200' : (s.grade != null ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-200')}`}>
                       {s.status === 'non-soumis' ? `Temps écoulé - Note: ${s.grade}/${s.total_points}` : (s.grade != null ? `Note: ${s.grade}/${s.total_points}` : 'En attente')}
@@ -99,40 +101,46 @@ export default function StudentWork() {
       )}
 
       {tab === 'quiz' && (
-        // Quiz UI remains the same for now
-        <div className="grid gap-4">
-          <div className="card p-4">
-            <h3 className="font-semibold mb-2">Quiz disponibles</h3>
-            <ul className="space-y-2">
+        <div className="grid gap-6">
+          <div>
+            <h2 className="text-xl font-bold mb-4">Quiz disponibles</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {quizzes.map(q => (
-                <li key={q.id} className="flex items-center justify-between">
+                <div key={q.id} className="card p-4 flex flex-col justify-between">
                   <div>
-                    <div className="font-medium">{q.title}</div>
-                    <div className="text-xs text-slate-500">Durée: {q.duration} min • Deadline: <Timer deadline={q.deadline} /></div>
+                    <div className="font-bold text-lg mb-1">{q.title}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">{q.course_name} - {q.session_type}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mb-3">Par: {q.assistant_name}</div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400">Durée: {q.duration} min</div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400">À passer avant le: {new Date(q.deadline).toLocaleString()}</div>
                   </div>
-                  <button className="btn" onClick={() => {}}>Démarrer</button>
-                </li>
+                  <button className="btn mt-4 w-full">Démarrer le Quiz</button>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
 
-          <div className="card p-4">
-            <h3 className="font-semibold mb-2">Mes tentatives</h3>
-            <ul className="space-y-2 text-sm">
-              {attempts.map(a => (
-                <li key={a.id} className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">{a.quiz?.title}</div>
-                    <div className="text-xs text-slate-500">Démarré: {new Date(a.started_at).toLocaleString()}</div>
-                  </div>
-                  {a.submitted_at ? (
-                    <span className="text-slate-400">Score: {a.score}/100</span>
-                  ) : (
-                    <button className="btn" onClick={() => {}}>Soumettre</button>
-                  )}
-                </li>
-              ))}
-            </ul>
+          <div>
+            <h2 className="text-xl font-bold mb-4 mt-8">Mes Tentatives</h2>
+            <div className="card p-4">
+              <ul className="space-y-3">
+                {attempts.map(a => (
+                  <li key={a.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-700/50">
+                    <div>
+                      <div className="font-medium">{a.quiz?.title}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">Tentative du: {new Date(a.started_at).toLocaleString()}</div>
+                    </div>
+                    {a.submitted_at ? (
+                      <span className="text-sm font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+                        Score: {a.score}/100
+                      </span>
+                    ) : (
+                      <button className="btn btn-sm">Soumettre</button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       )}

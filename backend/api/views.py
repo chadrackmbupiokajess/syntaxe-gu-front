@@ -854,14 +854,18 @@ def quizzes_student_available(request):
     try:
         sp = StudentProfile.objects.select_related("current_auditoire").get(user=request.user)
         aud = sp.current_auditoire
-        qs = Quiz.objects.select_related("course").filter(course__auditoire=aud)
+        qs = Quiz.objects.select_related("course", "assistant").filter(course__auditoire=aud)
         for q in qs:
             deadline = (getattr(q, "created_at", None) or timezone.now()) + timedelta(days=7)
+            assistant_name = f"{q.assistant.prenom} {q.assistant.nom}".strip() if q.assistant else "N/A"
             items.append({
                 "id": q.id,
                 "title": q.title,
                 "duration": q.duration,
                 "deadline": deadline,
+                "course_name": q.course.name,
+                "session_type": q.course.get_session_type_display(),
+                "assistant_name": assistant_name,
             })
     except Exception:
         pass
@@ -880,19 +884,21 @@ def tptd_student_available(request):
         submitted_assignment_ids = Submission.objects.filter(student=sp).values_list('assignment_id', flat=True)
 
         # Filter assignments for the student's auditorium, excluding those already submitted
-        qs = Assignment.objects.select_related("course").filter(
+        qs = Assignment.objects.select_related("course", "assistant").filter(
             course__auditoire=aud
         ).exclude(
             id__in=submitted_assignment_ids
         )
 
         for a in qs:
+            assistant_name = f"{a.assistant.prenom} {a.assistant.nom}".strip() if a.assistant else "N/A"
             items.append({
                 "id": a.id,
                 "title": a.title,
                 "type": getattr(getattr(a, "course", None), "session_type", "tp"),
                 "deadline": a.deadline,
                 "course_name": a.course.name,
+                "assistant_name": assistant_name,
             })
     except Exception:
         pass
@@ -953,8 +959,9 @@ def tptd_student_my_submissions(request):
                 submitted_at=assignment.deadline
             )
 
-        subs = Submission.objects.select_related("assignment", "assignment__course").filter(student=sp).order_by("-submitted_at")[:20]
+        subs = Submission.objects.select_related("assignment", "assignment__course", "assignment__assistant").filter(student=sp).order_by("-submitted_at")[:20]
         for s in subs:
+            assistant_name = f"{s.assignment.assistant.prenom} {s.assignment.assistant.nom}".strip() if s.assignment.assistant else "N/A"
             items.append({
                 "id": s.id,
                 "title": getattr(s.assignment, "title", ""),
@@ -964,6 +971,7 @@ def tptd_student_my_submissions(request):
                 "status": s.status,
                 "course_name": s.assignment.course.name,
                 "session_type": s.assignment.course.get_session_type_display(),
+                "assistant_name": assistant_name,
             })
     except Exception:
         pass
