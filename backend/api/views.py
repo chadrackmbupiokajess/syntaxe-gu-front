@@ -8,7 +8,7 @@ from django.utils.dateparse import parse_datetime
 from datetime import timedelta
 from django.apps import apps
 from django.contrib.auth.hashers import make_password
-from django.db import transaction
+from django.db import transaction, IntegrityError
 
 StudentProfile = apps.get_model('accounts', 'StudentProfile')
 AcademicProfile = apps.get_model('accounts', 'AcademicProfile')
@@ -23,6 +23,7 @@ Quiz = apps.get_model('evaluations', 'Quiz')
 Question = apps.get_model('evaluations', 'Question')
 Choice = apps.get_model('evaluations', 'Choice')
 Answer = apps.get_model('evaluations', 'Answer')
+QuizAttempt = apps.get_model('evaluations', 'QuizAttempt')
 
 
 def _safe_user_id(u) -> int:
@@ -856,7 +857,11 @@ def quizzes_student_available(request):
     try:
         sp = StudentProfile.objects.select_related("current_auditoire").get(user=request.user)
         aud = sp.current_auditoire
-        qs = Quiz.objects.select_related("course", "assistant").filter(course__auditoire=aud)
+        # Get IDs of quizzes already attempted by the student
+        attempted_quiz_ids = QuizAttempt.objects.filter(student=sp).values_list('quiz_id', flat=True)
+        
+        qs = Quiz.objects.select_related("course", "assistant").filter(course__auditoire=aud).exclude(id__in=attempted_quiz_ids)
+
         for q in qs:
             deadline = (getattr(q, "created_at", None) or timezone.now()) + timedelta(days=7)
             assistant_name = f"{q.assistant.prenom} {q.assistant.nom}".strip() if q.assistant else "N/A"
@@ -974,8 +979,22 @@ def quizzes_student_detail(request, id):
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def quizzes_student_my_attempts(request):
-    # Tentatives de quiz de l'étudiant
-    return Response([])
+    items = []
+    try:
+        sp = StudentProfile.objects.get(user=request.user)
+        attempts = QuizAttempt.objects.select_related('quiz__course').filter(student=sp).order_by('-submitted_at')
+        for a in attempts:
+            items.append({
+                "id": a.id,
+                "quiz_title": a.quiz.title,
+                "course_name": a.quiz.course.name,
+                "score": a.score,
+                "total_questions": a.total_questions,
+                "submitted_at": a.submitted_at,
+            })
+    except StudentProfile.DoesNotExist:
+        pass # Should not happen for a logged-in user
+    return Response(items)
 
 
 @api_view(["GET"])
@@ -1101,6 +1120,13 @@ def quizzes_student_attempt_submit(request, id: int):
             answers_data = request.data.get('answers', {})
             total_score = 0
 
+            # Créer la tentative
+            attempt = QuizAttempt.objects.create(
+                student=sp, 
+                quiz=quiz, 
+                total_questions=quiz.questions.count()
+            )
+
             for question_id, answer_value in answers_data.items():
                 question = Question.objects.get(id=question_id)
                 points = 0
@@ -1108,17 +1134,15 @@ def quizzes_student_attempt_submit(request, id: int):
                 if question.question_type == 'single':
                     correct_choice = question.choices.filter(is_correct=True).first()
                     if correct_choice and correct_choice.id == answer_value:
-                        points = 1 # Points par défaut pour une bonne réponse
+                        points = 1
 
                 elif question.question_type == 'multiple':
                     correct_choices = set(question.choices.filter(is_correct=True).values_list('id', flat=True))
                     if isinstance(answer_value, list) and set(answer_value) == correct_choices:
-                        points = 1 # Points par défaut
-
-                # Pour les questions textuelles, la notation est manuelle, donc 0 pour l'instant
+                        points = 1
 
                 answer = Answer.objects.create(
-                    student=sp,
+                    attempt=attempt,
                     question=question,
                     answer_text=str(answer_value) if question.question_type == 'text' else ''
                 )
@@ -1132,9 +1156,14 @@ def quizzes_student_attempt_submit(request, id: int):
                 answer.points_obtained = points
                 answer.save()
                 total_score += points
+            
+            attempt.score = total_score
+            attempt.save()
 
-        return Response({"status": "submitted", "score": total_score, "total_questions": quiz.questions.count()})
+        return Response({"status": "submitted", "score": total_score, "total_questions": attempt.total_questions})
 
+    except IntegrityError:
+        return Response({"detail": "Vous avez déjà soumis ce quiz."}, status=400)
     except (StudentProfile.DoesNotExist, Quiz.DoesNotExist, Question.DoesNotExist):
         return Response({"detail": "Erreur: Quiz ou profil introuvable."}, status=404)
     except Exception as e:

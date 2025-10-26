@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Assignment, Submission, Quiz, Question, Choice, Answer
+from .models import Assignment, Submission, Quiz, Question, Choice, Answer, QuizAttempt
 
 
 # --- Inlines pour les Quiz ---
@@ -59,12 +59,26 @@ class QuestionAdmin(admin.ModelAdmin):
     search_fields = ('question_text', 'quiz__title')
     inlines = [ChoiceInline] # Les choix sont gérés sous la question
 
+@admin.register(QuizAttempt)
+class QuizAttemptAdmin(admin.ModelAdmin):
+    list_display = ('student', 'quiz', 'score', 'total_questions', 'submitted_at')
+    list_filter = ('student', 'quiz')
+    search_fields = ('student__nom', 'quiz__title')
+    date_hierarchy = 'submitted_at'
+
 @admin.register(Answer)
 class AnswerAdmin(admin.ModelAdmin):
-    list_display = ('student', 'question', 'points_obtained', 'submitted_at')
-    list_filter = ('student', 'question__quiz__course__auditoire__departement__section', 'question__quiz__course__auditoire__departement', 'question__quiz__course__auditoire', 'question__quiz__course')
-    search_fields = ('student__full_name', 'question__question_text')
-    date_hierarchy = 'submitted_at'
+    list_display = ('get_student', 'question', 'points_obtained', 'get_submitted_at')
+    list_filter = ('attempt__student', 'question__quiz')
+    search_fields = ('attempt__student__nom', 'question__question_text')
+
+    @admin.display(description='Student', ordering='attempt__student')
+    def get_student(self, obj):
+        return obj.attempt.student
+
+    @admin.display(description='Submitted At', ordering='attempt__submitted_at')
+    def get_submitted_at(self, obj):
+        return obj.attempt.submitted_at
 
 # Choice n'est pas enregistré directement car il est géré via QuestionInline
 # admin.site.register(Choice)

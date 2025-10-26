@@ -74,21 +74,23 @@ function QuizQuestion({ question, answer, onAnswerChange, submitted }) {
 
 export default function StudentQuizDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const toast = useToast();
   const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState({}); // { questionId: answer }
   const [submissionResult, setSubmissionResult] = useState(null);
 
+  const fetchQuiz = async () => {
+    setLoading(true);
+    const data = await safeGet(`/api/quizzes/student/${id}/`);
+    if (data) {
+      setQuiz(data);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchQuiz = async () => {
-      setLoading(true);
-      const data = await safeGet(`/api/quizzes/student/${id}/`);
-      if (data) {
-        setQuiz(data);
-      }
-      setLoading(false);
-    };
     fetchQuiz();
   }, [id]);
 
@@ -101,6 +103,7 @@ export default function StudentQuizDetail() {
     if (res) {
         toast.push({ title: "Succès", message: `Quiz soumis avec succès! Votre score: ${res.score}/${res.total_questions}` });
         setSubmissionResult(res);
+        fetchQuiz(); // Re-fetch data to update UI
     } else {
         toast.push({ title: "Erreur", message: "Erreur lors de la soumission du quiz.", kind: 'error' });
     }
@@ -129,6 +132,7 @@ export default function StudentQuizDetail() {
             <h2 className="text-2xl font-bold mb-4">Résultats du Quiz</h2>
             <p className="text-4xl font-bold">{submissionResult.score} / {submissionResult.total_questions}</p>
             <p className="text-slate-600 dark:text-slate-400 mt-2">Votre score a été enregistré.</p>
+            <button onClick={() => navigate('/etudiant/travaux', { state: { tab: 'quiz' } })} className="btn btn-secondary mt-4">Retour aux travaux</button>
         </div>
       ) : (
         <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>

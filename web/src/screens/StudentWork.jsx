@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
 import { safeGet } from '../api/safeGet';
-import { useToast } from '../shared/ToastProvider';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 function Timer({ deadline }) {
   const [left, setLeft] = useState(() => Math.max(0, new Date(deadline) - new Date()));
@@ -24,8 +22,8 @@ function Timer({ deadline }) {
 }
 
 export default function StudentWork() {
-  const toast = useToast();
-  const [tab, setTab] = useState('tptd');
+  const location = useLocation();
+  const [tab, setTab] = useState(location.state?.tab || 'tptd');
   const [quizzes, setQuizzes] = useState([]);
   const [attempts, setAttempts] = useState([]);
   const [tptd, setTptd] = useState([]);
@@ -127,16 +125,13 @@ export default function StudentWork() {
                 {attempts.map(a => (
                   <li key={a.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-700/50">
                     <div>
-                      <div className="font-medium">{a.quiz?.title}</div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">Tentative du: {new Date(a.started_at).toLocaleString()}</div>
+                      <div className="font-medium">{a.quiz_title}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">{a.course_name}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">Soumis le: {new Date(a.submitted_at).toLocaleString()}</div>
                     </div>
-                    {a.submitted_at ? (
-                      <span className="text-sm font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
-                        Score: {a.score}/100
-                      </span>
-                    ) : (
-                      <button className="btn btn-sm">Soumettre</button>
-                    )}
+                    <span className="text-sm font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+                      Score: {a.score}/{a.total_questions}
+                    </span>
                   </li>
                 ))}
               </ul>

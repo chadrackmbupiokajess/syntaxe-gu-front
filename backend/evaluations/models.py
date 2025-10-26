@@ -77,13 +77,28 @@ class Choice(models.Model):
     def __str__(self):
         return self.choice_text
 
+class QuizAttempt(models.Model):
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='quiz_attempts')
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='attempts')
+    score = models.FloatField(default=0)
+    total_questions = models.PositiveIntegerField(default=0)
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('student', 'quiz') # Assure une seule tentative par étudiant par quiz
+
+    def __str__(self):
+        return f"Attempt by {self.student} on {self.quiz.title}"
+
+
 class Answer(models.Model):
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='quiz_answers')
+    attempt = models.ForeignKey(QuizAttempt, on_delete=models.CASCADE, related_name='answers', null=True, blank=True)
     question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
     selected_choices = models.ManyToManyField(Choice, blank=True)
     answer_text = models.TextField(blank=True) # For free text questions
     points_obtained = models.FloatField(default=0)
-    submitted_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Answer by {self.student} to {self.question.question_text[:50]}..."
+        if self.attempt:
+            return f"Answer for attempt {self.attempt.id} to {self.question.question_text[:50]}..."
+        return f"Orphaned answer to {self.question.question_text[:50]}..."
