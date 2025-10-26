@@ -83,11 +83,11 @@ export default function StudentQuizDetail() {
 
   const submittedRef = useRef(false);
 
-  const handleSubmit = useCallback(async () => {
+  const handleSubmit = useCallback(async (reason = 'manual') => {
     if (submittedRef.current) return;
     submittedRef.current = true;
 
-    const res = await safePost(`/api/quizzes/student/attempts/${id}/submit/`, { answers });
+    const res = await safePost(`/api/quizzes/student/attempts/${id}/submit/`, { answers, reason });
     if (res) {
       if (res.detail === "Vous avez déjà soumis ce quiz.") {
         toast.push({ title: "Information", message: res.detail, kind: 'info' });
@@ -95,6 +95,7 @@ export default function StudentQuizDetail() {
         toast.push({ title: "Succès", message: `Quiz soumis ! Votre score: ${res.score}/${res.total_questions}` });
       }
       setSubmissionResult(res);
+      // Pas besoin de naviguer ici, on reste sur la page pour voir le résultat
     } else {
       toast.push({ title: "Erreur", message: "Erreur lors de la soumission du quiz.", kind: 'error' });
       submittedRef.current = false; // Allow retry if submission fails
@@ -120,7 +121,7 @@ export default function StudentQuizDetail() {
   // Effet pour le compte à rebours
   useEffect(() => {
     if (timeLeft === 0) {
-      handleSubmit();
+      handleSubmit('time-out');
     }
     if (!timeLeft || submissionResult) return;
     const intervalId = setInterval(() => {
@@ -175,7 +176,7 @@ export default function StudentQuizDetail() {
             <button onClick={() => navigate('/etudiant/travaux', { state: { tab: 'quiz' } })} className="btn btn-secondary mt-4">Retour aux travaux</button>
         </div>
       ) : (
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit('manual'); }}>
             {quiz.questions?.map(q => (
             <QuizQuestion
                 key={q.id}

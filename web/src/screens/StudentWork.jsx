@@ -130,18 +130,26 @@ export default function StudentWork() {
             <h2 className="text-xl font-bold mb-4 mt-8">Mes Tentatives</h2>
             <div className="card p-4">
               <ul className="space-y-3">
-                {attempts.map(a => (
-                  <li key={a.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-700/50">
-                    <div>
-                      <div className="font-medium">{a.quiz_title}</div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">{a.course_name}</div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">Soumis le: {new Date(a.submitted_at).toLocaleString()}</div>
-                    </div>
-                    <span className="text-sm font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
-                      Score: {a.score}/{a.total_questions}
-                    </span>
-                  </li>
-                ))}
+                {attempts.map(a => {
+                  let message = "";
+                  if (a.submission_reason === 'Temps écoulé') {
+                    message = "Temps écoulé - ";
+                  } else if (a.submission_reason === 'Page quittée') {
+                    message = "Vous avez quitté la page - ";
+                  }
+                  return (
+                    <li key={a.id} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-700/50">
+                      <div>
+                        <div className="font-medium">{a.quiz_title}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">{a.course_name}</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">Soumis le: {new Date(a.submitted_at).toLocaleString()}</div>
+                      </div>
+                      <span className="text-sm font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+                        {message}Score: {a.score}/{a.total_questions}
+                      </span>
+                    </li>
+                  )
+                })}
               </ul>
             </div>
           </div>

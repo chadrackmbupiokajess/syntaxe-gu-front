@@ -78,11 +78,17 @@ class Choice(models.Model):
         return self.choice_text
 
 class QuizAttempt(models.Model):
+    SUBMISSION_REASONS = (
+        ('manual', 'Manuel'),
+        ('time-out', 'Temps écoulé'),
+        ('left-page', 'Page quittée'),
+    )
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='quiz_attempts')
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='attempts')
     score = models.FloatField(default=0)
     total_questions = models.PositiveIntegerField(default=0)
     submitted_at = models.DateTimeField(auto_now_add=True)
+    submission_reason = models.CharField(max_length=10, choices=SUBMISSION_REASONS, default='left-page')
 
     class Meta:
         unique_together = ('student', 'quiz') # Assure une seule tentative par étudiant par quiz

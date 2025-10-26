@@ -991,6 +991,7 @@ def quizzes_student_my_attempts(request):
                 "score": a.score,
                 "total_questions": a.total_questions,
                 "submitted_at": a.submitted_at,
+                "submission_reason": a.get_submission_reason_display(),
             })
     except StudentProfile.DoesNotExist:
         pass # Should not happen for a logged-in user
@@ -1114,7 +1115,7 @@ def quizzes_student_start(request, id: int):
         attempt, created = QuizAttempt.objects.get_or_create(
             student=sp, 
             quiz=quiz,
-            defaults={'total_questions': quiz.questions.count()}
+            defaults={'total_questions': quiz.questions.count(), 'submission_reason': 'left-page'}
         )
         
         return Response({"status": "ok", "attempt_id": attempt.id})
@@ -1130,6 +1131,7 @@ def quizzes_student_attempt_submit(request, id: int):
             sp = StudentProfile.objects.get(user=request.user)
             quiz = Quiz.objects.get(id=id)
             answers_data = request.data.get('answers', {})
+            reason = request.data.get('reason', 'manual')
             total_score = 0
 
             # Récupère la tentative existante
@@ -1169,7 +1171,8 @@ def quizzes_student_attempt_submit(request, id: int):
                 total_score += points
             
             attempt.score = total_score
-            attempt.submitted_at = timezone.now() # Mettre à jour la date de soumission
+            attempt.submitted_at = timezone.now()
+            attempt.submission_reason = reason
             attempt.save()
 
         return Response({"status": "submitted", "score": total_score, "total_questions": attempt.total_questions})
