@@ -73,6 +73,7 @@ def assistant_my_courses(request):
                 "id": course.id,
                 "code": course.code,
                 "title": course.name,
+                "auditorium_id": getattr(auditoire, "id", None),
                 "auditorium": getattr(auditoire, "name", ""),
                 "department": getattr(departement, "name", "") if departement else "",
             })
@@ -256,27 +257,50 @@ def quizzes_my_detail(request, id):
 def assistant_grades(request, auditorium_code, course_code):
     try:
         ap = AcademicProfile.objects.get(user=request.user)
-        auditorium = Auditoire.objects.get(name=auditorium_code)
-        course = Course.objects.get(code=course_code, auditoire=auditorium)
+        
+        auditorium = Auditoire.objects.filter(name=auditorium_code).first()
+        if not auditorium:
+            return Response({"detail": f"Auditoire '{auditorium_code}' non trouvé."}, status=404)
+
+        course = Course.objects.filter(code=course_code, auditoire=auditorium).first()
+        if not course:
+            return Response({"detail": f"Cours '{course_code}' non trouvé dans l'auditoire '{auditorium_code}'."}, status=404)
 
         # Vérifier si l'assistant est assigné à ce cours
         if not CourseAssignment.objects.filter(course=course, assistant=ap).exists():
             return Response({"detail": "Accès non autorisé à ce cours."}, status=403)
 
         if request.method == 'GET':
-            # Récupérer toutes les soumissions pour ce cours
-            submissions = Submission.objects.select_related('student__user', 'assignment').filter(
-                assignment__course=course
-            ).order_by('student__user__last_name', 'student__user__first_name')
+            # Récupérer tous les étudiants de l'auditoire
+            students = StudentProfile.objects.filter(current_auditoire=auditorium).order_by('nom', 'prenom')
+            
+            # Récupérer toutes les soumissions pour ce cours en une seule requête
+            submissions = Submission.objects.filter(
+                assignment__course=course,
+                student__in=students
+            ).select_related('student')
+
+            # Créer un dictionnaire pour un accès rapide aux notes
+            grades_map = {}
+            for sub in submissions:
+                # On garde la note de la soumission la plus récente
+                student_id = sub.student.id
+                if student_id not in grades_map or sub.submitted_at > grades_map[student_id]['submitted_at']:
+                    grades_map[student_id] = {'grade': sub.grade, 'submitted_at': sub.submitted_at}
 
             grades_data = []
-            for sub in submissions:
+            for student in students:
+                student_grade_info = grades_map.get(student.id)
+                grade = student_grade_info['grade'] if student_grade_info else None
+                
+                student_name = f"{student.nom} {student.prenom}".strip()
+                if not student_name and hasattr(student, 'user') and student.user:
+                    student_name = f"{student.user.first_name} {student.user.last_name}".strip()
+
                 grades_data.append({
-                    "student_id": sub.student.id,
-                    "student_name": f"{sub.student.nom} {sub.student.prenom}".strip(),
-                    "assignment_title": sub.assignment.title,
-                    "grade": sub.grade,
-                    "submission_id": sub.id,
+                    "student_id": student.id,
+                    "student_name": student_name or f"Student {student.id}",
+                    "grade": grade,
                 })
             return Response(grades_data)
 
@@ -287,27 +311,30 @@ def assistant_grades(request, auditorium_code, course_code):
             if student_id is None or grade is None:
                 return Response({"detail": "student_id et grade sont requis pour la mise à jour."}, status=400)
             
-            # Trouver la soumission la plus récente pour cet étudiant et ce cours
-            submission = Submission.objects.filter(
-                student__id=student_id,
-                assignment__course=course
-            ).order_by('-submitted_at').first()
+            student = StudentProfile.objects.filter(id=student_id).first()
+            if not student:
+                return Response({"detail": "Étudiant non trouvé."}, status=404)
 
-            if not submission:
-                return Response({"detail": "Soumission non trouvée pour cet étudiant et ce cours."}, status=404)
-            
-            submission.grade = grade
-            submission.graded_at = timezone.now()
-            submission.save()
+            assignment = Assignment.objects.filter(course=course).order_by('-created_at').first()
+            if not assignment:
+                return Response({"detail": "Aucun devoir (TP/TD) n'est créé pour ce cours. Impossible de noter."}, status=400)
+
+            submission, created = Submission.objects.get_or_create(
+                student=student,
+                assignment=assignment,
+                defaults={'status': 'noté', 'grade': grade, 'submitted_at': timezone.now()}
+            )
+
+            if not created:
+                submission.grade = grade
+                submission.graded_at = timezone.now()
+                submission.status = 'noté'
+                submission.save()
 
             return Response({"detail": "Note mise à jour avec succès.", "grade": grade}, status=200)
 
     except AcademicProfile.DoesNotExist:
         return Response({"detail": "Profil académique non trouvé."}, status=404)
-    except Auditoire.DoesNotExist:
-        return Response({"detail": "Auditoire non trouvé."}, status=404)
-    except Course.DoesNotExist:
-        return Response({"detail": "Cours non trouvé."}, status=404)
     except Exception as e:
         print(f"Error in assistant_grades: {e}")
         return Response({"detail": f"Une erreur inattendue est survenue: {e}"}, status=500)
@@ -669,17 +696,24 @@ def assistant_auditorium_courses(request, code: str):
     rows = []
     try:
         ap = AcademicProfile.objects.get(user=request.user)
-        aud = Auditoire.objects.filter(name=code).first()
+        auditorium_id = int(code)
+        aud = Auditoire.objects.filter(pk=auditorium_id).first()
         if aud:
             # Filtrer les cours pour ne retourner que ceux assignés à l'assistant
-            assigned_courses = Course.objects.filter(auditoire=aud, assignments_by_assistant__assistant=ap)
+            assigned_courses = Course.objects.filter(auditoire=aud, courseassignment__assistant=ap).distinct()
             for c in assigned_courses:
                 rows.append({
+                    "id": c.id,
                     "code": c.code,
                     "title": c.name,
                 })
-    except Exception:
+    except (AcademicProfile.DoesNotExist, ValueError, TypeError):
+        # This can happen if user is not logged in, or if code is not a valid int.
+        # In both cases, returning an empty list is a safe default.
         pass
+    except Exception as e:
+        print(f"Error in assistant_auditorium_courses: {e}") # Log for debug
+        pass # Return empty list
     return Response(rows)
 
 

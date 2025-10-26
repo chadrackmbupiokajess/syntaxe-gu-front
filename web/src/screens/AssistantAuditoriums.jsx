@@ -27,14 +27,14 @@ export default function AssistantAuditoriums() {
     fetchAuditoriums();
   }, [])
 
-  const loadCourses = async (code) => {
-    if (courses[code]) { // Toggle visibility if already loaded
-      setCourses(prev => ({ ...prev, [code]: null }));
+  const loadCourses = async (auditoriumId) => {
+    if (courses[auditoriumId]) { // Toggle visibility if already loaded
+      setCourses(prev => ({ ...prev, [auditoriumId]: null }));
       return;
     }
     try {
-      const { data } = await axios.get(`/api/assistant/auditoriums/${encodeURIComponent(code)}/courses`);
-      setCourses(prev => ({ ...prev, [code]: data }));
+      const { data } = await axios.get(`/api/assistant/auditoriums/${auditoriumId}/courses`);
+      setCourses(prev => ({ ...prev, [auditoriumId]: data }));
     } catch (err) {
       console.error("Error fetching courses:", err);
       setError(true);
@@ -42,14 +42,14 @@ export default function AssistantAuditoriums() {
     }
   }
 
-  const loadStudents = async (code) => {
-    if (students[code]) { // Toggle visibility if already loaded
-      setStudents(prev => ({ ...prev, [code]: null }));
+  const loadStudents = async (auditoriumId) => {
+    if (students[auditoriumId]) { // Toggle visibility if already loaded
+      setStudents(prev => ({ ...prev, [auditoriumId]: null }));
       return;
     }
     try {
-      const { data } = await axios.get(`/api/assistant/auditoriums/${encodeURIComponent(code)}/students`);
-      setStudents(prev => ({ ...prev, [code]: data }));
+      const { data } = await axios.get(`/api/assistant/auditoriums/${auditoriumId}/students`);
+      setStudents(prev => ({ ...prev, [auditoriumId]: data }));
     } catch (err) {
       console.error("Error fetching students:", err);
       setError(true);
@@ -64,10 +64,10 @@ export default function AssistantAuditoriums() {
     <div className="grid gap-4">
       {rows.filter(a => a.code).map(a => {
         return (
-          <div key={a.code} className="card p-4">
+          <div key={a.id} className="card p-4">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <Link to={`/assistant/auditoires/${a.code}`} className="font-semibold">
+                <Link to={`/assistant/auditoires/${a.id}`} className="font-semibold">
                   {a.code} - {a.name}
                 </Link>
                 {a.department && (
@@ -77,15 +77,15 @@ export default function AssistantAuditoriums() {
               <div className="text-sm text-slate-500 dark:text-white/70">{a.students} étudiants, {a.course_count} cours</div>
             </div>
             <div className="flex gap-2 mb-2">
-              <button className="btn" onClick={() => loadCourses(a.code)}>Voir cours</button>
-              <button className="btn !bg-slate-700" onClick={() => loadStudents(a.code)}>Voir étudiants</button>
+              <button className="btn" onClick={() => loadCourses(a.id)}>Voir cours</button>
+              <button className="btn !bg-slate-700" onClick={() => loadStudents(a.id)}>Voir étudiants</button>
             </div>
-            {courses[a.code] && (
+            {courses[a.id] && (
               <div className="overflow-auto">
                 <table className="min-w-full text-sm">
                   <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">Intitulé</th></tr></thead>
                   <tbody>
-                    {courses[a.code].map(c => (
+                    {courses[a.id].map(c => (
                       <tr key={c.code} className="border-t border-slate-200/60 dark:border-slate-800/60">
                         <td className="py-2 pr-4">{c.title}</td>
                       </tr>
@@ -94,12 +94,12 @@ export default function AssistantAuditoriums() {
                 </table>
               </div>
             )}
-            {students[a.code] && (
+            {students[a.id] && (
               <div className="overflow-auto mt-3">
                 <table className="min-w-full text-sm">
                   <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">Nom</th></tr></thead>
                   <tbody>
-                    {students[a.code].map(s => (
+                    {students[a.id].map(s => (
                       <tr key={s.id} className="border-t border-slate-200/60 dark:border-slate-800/60">
                         <td className="py-2 pr-4">
                           <Link to={`/assistant/students/${s.id}`} className="hover:underline">

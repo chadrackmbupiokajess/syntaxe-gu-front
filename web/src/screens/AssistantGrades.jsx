@@ -21,25 +21,25 @@ export default function AssistantGrades() {
     <div className="grid gap-3">
       <div className="flex gap-2">
         <select className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" value={aud} onChange={e => setAud(e.target.value)}>
-          {auditoriums.map((a, index) => <option key={a.code || `aud-option-${index}`} value={a.code}>{a.code} • {a.name}</option>)}
+          {auditoriums.map((a, index) => <option key={`${a.code}-${index}`} value={a.code}>{a.code} • {a.name}</option>)}
         </select>
         <select className="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" value={course} onChange={e => setCourse(e.target.value)}>
-          {courses.map((c, index) => <option key={c.code || `course-option-${index}`} value={c.code}>{c.code} • {c.title}</option>)}
+          {courses.map((c, index) => <option key={`${c.code}-${index}`} value={c.code}>{c.code} • {c.title}</option>)}
         </select>
       </div>
       <div className="card p-4 overflow-auto">
         <table className="min-w-full text-sm">
           <thead><tr className="text-left text-slate-500"><th className="py-2 pr-4">Étudiant</th><th className="py-2 pr-4">Note /20</th></tr></thead>
-        <tbody>
-          {rows.map((r, index) => (
-            <tr key={r.student_id || `student-row-${index}`} className="border-t border-slate-200/60 dark:border-slate-800/60">
-              <td className="py-2 pr-4">{r.name}</td>
-              <td className="py-2 pr-4">
-                <input type="number" min="0" max="20" step="0.5" value={r.grade ?? ''} onChange={(e)=>setGrade(r.student_id, e.target.value)} className="w-24 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700" />
-              </td>
-            </tr>
-          ))}
-        </tbody>
+          <tbody>
+            {rows.map((r, index) => (
+              <tr key={r.student_id || `student-row-${index}`} className="border-t border-slate-200/60 dark:border-slate-800/60">
+                <td className="py-2 pr-4">{r.name}</td>
+                <td className="py-2 pr-4">
+                  <input type="number" min="0" max="20" step="0.5" value={r.grade ?? ''} onChange={(e)=>setGrade(r.student_id, e.target.value)} className="w-24 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
     </div>

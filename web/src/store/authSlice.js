@@ -56,7 +56,16 @@ const slice = createSlice({
       .addCase(loginThunk.rejected, (state, action) => { state.status = 'failed'; state.error = action.payload; })
       .addCase(fetchMe.pending, (state) => { state.status = 'loading'; })
       .addCase(fetchMe.fulfilled, (state, action) => { state.status = 'succeeded'; state.me = action.payload; })
-      .addCase(fetchMe.rejected, (state, action) => { state.status = 'failed'; state.error = action.payload; });
+      .addCase(fetchMe.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload;
+        // Si fetchMe échoue, c'est que le token est probablement invalide. On déconnecte.
+        state.access = null;
+        state.refresh = null;
+        state.me = null;
+        localStorage.removeItem(accessKey);
+        localStorage.removeItem(refreshKey);
+      });
   }
 });
 

@@ -24,7 +24,7 @@ export default function AssistantTPTD() {
   const [rows, setRows] = useState([])
   const [form, setForm] = useState({ title: '', type: 'TP', course_code: '', auditorium_id: '', deadlineLocal: '', questionnaire: [], total_points: 20 })
   const [auditoriums, setAuditoriums] = useState([])
-  const [courses, setCourses] = useState([])
+  const [allCourses, setAllCourses] = useState([])
   const [loading, setLoading] = useState(false)
   const [openSections, setOpenSections] = useState({});
   const [newlyCreatedIds, setNewlyCreatedIds] = useState(new Set());
@@ -33,23 +33,30 @@ export default function AssistantTPTD() {
   useEffect(() => { load() }, [])
 
   useEffect(() => {
-    const fetchAud = async () => {
-      const { data } = await axios.get('/api/auditoriums/assistant/my/')
-      setAuditoriums(data)
-      if (data[0] && !form.auditorium_id) setForm(f => ({ ...f, auditorium_id: data[0].id }))
-    }
-    fetchAud()
-  }, [])
+    const fetchInitialData = async () => {
+      const { data: auds } = await axios.get('/api/auditoriums/assistant/my/');
+      setAuditoriums(auds);
+      if (auds[0] && !form.auditorium_id) {
+        setForm(f => ({ ...f, auditorium_id: auds[0].id }));
+      }
+      const { data: courses } = await axios.get('/api/assistant/courses/');
+      setAllCourses(courses);
+    };
+    fetchInitialData();
+  }, []);
+
+  const courses = useMemo(() => {
+    if (!form.auditorium_id) return [];
+    return allCourses.filter(c => c.auditorium_id === Number(form.auditorium_id));
+  }, [form.auditorium_id, allCourses]);
 
   useEffect(() => {
-    const fetchCourses = async () => {
-      if (!form.auditorium_id) { setCourses([]); return }
-      const { data } = await axios.get(`/api/assistant/auditoriums/${form.auditorium_id}/courses`)
-      setCourses(data)
-      if (data[0] && !form.course_code) setForm(f => ({ ...f, course_code: data[0].code }))
+    if (courses.length > 0) {
+      setForm(f => ({ ...f, course_code: courses[0].code }));
+    } else {
+      setForm(f => ({ ...f, course_code: '' }));
     }
-    fetchCourses()
-  }, [form.auditorium_id])
+  }, [courses]);
 
   const groupedData = useMemo(() => {
     return rows.reduce((acc, row) => {
@@ -76,7 +83,7 @@ export default function AssistantTPTD() {
       });
     }
   };
-  
+
   const handleQuestionChange = (index, field, value) => {
     const newQuestionnaire = [...form.questionnaire];
     newQuestionnaire[index][field] = value;
@@ -119,7 +126,7 @@ export default function AssistantTPTD() {
     }
     setLoading(false)
   }
-  
+
   const del = async (id) => {
     await axios.delete(`/api/tptd/my/${id}/`)
     await load()
@@ -140,7 +147,7 @@ export default function AssistantTPTD() {
             </select>
           </label>
           <label className="text-sm">Auditoire
-            <select className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" value={form.auditorium_id} onChange={e=>setForm({...form,auditorium_id:e.target.value, course_code: ''})}>
+            <select className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" value={form.auditorium_id} onChange={e=>setForm({...form,auditorium_id:e.target.value})}>
               {auditoriums.map(a => (
                 <option key={a.id} value={a.id}>
                   {`${abbreviateAuditorium(a.name)} ° ${a.department}`}
@@ -166,13 +173,13 @@ export default function AssistantTPTD() {
           <h4 className="font-semibold">Questions</h4>
           {form.questionnaire.map((q, index) => (
             <div key={index} className="grid grid-cols-[1fr_auto_auto] gap-2 items-center mt-2">
-              <textarea 
-                className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" 
+              <textarea
+                className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800"
                 placeholder={`Question ${index + 1}`}
                 value={q.question}
                 onChange={e => handleQuestionChange(index, 'question', e.target.value)}
               />
-              <input 
+              <input
                 type="number"
                 className="w-20 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800"
                 value={q.points}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useToast } from '../shared/ToastProvider';
@@ -22,27 +22,34 @@ export default function AssistantNewQuiz() {
   const toast = useToast();
   const [form, setForm] = useState({ title: '', course_code: '', auditorium_id: '', duration: 20, questions: [] });
   const [auditoriums, setAuditoriums] = useState([]);
-  const [courses, setCourses] = useState([]);
+  const [allCourses, setAllCourses] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchAud = async () => {
-      const { data } = await axios.get('/api/auditoriums/assistant/my/');
-      setAuditoriums(data);
-      if (data[0] && !form.auditorium_id) setForm(f => ({ ...f, auditorium_id: data[0].id }));
+    const fetchInitialData = async () => {
+      const { data: auds } = await axios.get('/api/auditoriums/assistant/my/');
+      setAuditoriums(auds);
+      if (auds[0] && !form.auditorium_id) {
+        setForm(f => ({ ...f, auditorium_id: auds[0].id }));
+      }
+      const { data: courses } = await axios.get('/api/assistant/courses/');
+      setAllCourses(courses);
     };
-    fetchAud();
+    fetchInitialData();
   }, []);
 
+  const courses = useMemo(() => {
+    if (!form.auditorium_id) return [];
+    return allCourses.filter(c => c.auditorium_id === Number(form.auditorium_id));
+  }, [form.auditorium_id, allCourses]);
+
   useEffect(() => {
-    const fetchCourses = async () => {
-      if (!form.auditorium_id) { setCourses([]); return; }
-      const { data } = await axios.get(`/api/assistant/auditoriums/${form.auditorium_id}/courses`);
-      setCourses(data);
-      if (data[0] && !form.course_code) setForm(f => ({ ...f, course_code: data[0].code }));
-    };
-    fetchCourses();
-  }, [form.auditorium_id]);
+    if (courses.length > 0) {
+      setForm(f => ({ ...f, course_code: courses[0].code }));
+    } else {
+      setForm(f => ({ ...f, course_code: '' }));
+    }
+  }, [courses]);
 
   const handleQuestionChange = (q_index, field, value) => {
     const newQuestions = [...form.questions];
@@ -120,7 +127,7 @@ export default function AssistantNewQuiz() {
                     <input type="number" min="5" className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" value={form.duration} onChange={e => setForm({ ...form, duration: Number(e.target.value) })} />
                 </label>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-300">Auditoire
-                    <select className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" value={form.auditorium_id} onChange={e => setForm({ ...form, auditorium_id: e.target.value, course_code: '' })}>
+                    <select className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800" value={form.auditorium_id} onChange={e => setForm({ ...form, auditorium_id: e.target.value })}>
                     {auditoriums.map(a => <option key={a.id} value={a.id}>{a.name} - {a.department}</option>)}
                     </select>
                 </label>
