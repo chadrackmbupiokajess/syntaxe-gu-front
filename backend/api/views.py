@@ -1106,8 +1106,20 @@ def payments_mine(request):
 @api_view(["POST"])
 @permission_classes(DEV_PERMS)
 def quizzes_student_start(request, id: int):
-    # Pas de modèle d'"attempt" pour les quiz pour l'instant: on renvoie juste OK
-    return Response({"status": "ok"})
+    try:
+        sp = StudentProfile.objects.get(user=request.user)
+        quiz = Quiz.objects.get(id=id)
+        
+        # Crée ou récupère la tentative. Si elle existe, ne fait rien.
+        attempt, created = QuizAttempt.objects.get_or_create(
+            student=sp, 
+            quiz=quiz,
+            defaults={'total_questions': quiz.questions.count()}
+        )
+        
+        return Response({"status": "ok", "attempt_id": attempt.id})
+    except (StudentProfile.DoesNotExist, Quiz.DoesNotExist):
+        return Response({"detail": "Quiz ou profil introuvable."}, status=404)
 
 
 @api_view(["POST"])
@@ -1120,12 +1132,11 @@ def quizzes_student_attempt_submit(request, id: int):
             answers_data = request.data.get('answers', {})
             total_score = 0
 
-            # Créer la tentative
-            attempt = QuizAttempt.objects.create(
-                student=sp, 
-                quiz=quiz, 
-                total_questions=quiz.questions.count()
-            )
+            # Récupère la tentative existante
+            attempt = QuizAttempt.objects.get(student=sp, quiz=quiz)
+
+            # Supprime les anciennes réponses pour cette tentative pour éviter les doublons
+            Answer.objects.filter(attempt=attempt).delete()
 
             for question_id, answer_value in answers_data.items():
                 question = Question.objects.get(id=question_id)
@@ -1158,12 +1169,13 @@ def quizzes_student_attempt_submit(request, id: int):
                 total_score += points
             
             attempt.score = total_score
+            attempt.submitted_at = timezone.now() # Mettre à jour la date de soumission
             attempt.save()
 
         return Response({"status": "submitted", "score": total_score, "total_questions": attempt.total_questions})
 
-    except IntegrityError:
-        return Response({"detail": "Vous avez déjà soumis ce quiz."}, status=400)
+    except QuizAttempt.DoesNotExist:
+        return Response({"detail": "Tentative de quiz non trouvée. Veuillez démarrer le quiz d'abord."}, status=404)
     except (StudentProfile.DoesNotExist, Quiz.DoesNotExist, Question.DoesNotExist):
         return Response({"detail": "Erreur: Quiz ou profil introuvable."}, status=404)
     except Exception as e:

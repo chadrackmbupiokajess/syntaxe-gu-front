@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { safeGet } from '../api/safeGet';
-import { Link, useLocation } from 'react-router-dom';
+import { safeGet, safePost } from '../api/safeGet';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 function Timer({ deadline }) {
   const [left, setLeft] = useState(() => Math.max(0, new Date(deadline) - new Date()));
@@ -23,6 +23,7 @@ function Timer({ deadline }) {
 
 export default function StudentWork() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [tab, setTab] = useState(location.state?.tab || 'tptd');
   const [quizzes, setQuizzes] = useState([]);
   const [attempts, setAttempts] = useState([]);
@@ -43,6 +44,13 @@ export default function StudentWork() {
   };
 
   useEffect(() => { loadAll() }, []);
+
+  const startQuiz = async (quizId) => {
+    const res = await safePost(`/api/quizzes/student/${quizId}/start/`);
+    if (res && res.status === 'ok') {
+      navigate(`/etudiant/quiz/${quizId}`);
+    }
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -112,7 +120,7 @@ export default function StudentWork() {
                     <div className="text-sm text-slate-500 dark:text-slate-400">Durée: {q.duration} min</div>
                     <div className="text-sm text-slate-500 dark:text-slate-400">À passer avant le: {new Date(q.deadline).toLocaleString()}</div>
                   </div>
-                  <Link to={`/etudiant/quiz/${q.id}`} className="btn mt-4 w-full text-center">Démarrer le Quiz</Link>
+                  <button onClick={() => startQuiz(q.id)} className="btn mt-4 w-full text-center">Démarrer le Quiz</button>
                 </div>
               ))}
             </div>

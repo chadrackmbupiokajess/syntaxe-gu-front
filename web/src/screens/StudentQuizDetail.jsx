@@ -1,76 +1,75 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { safeGet, safePost } from '../api/safeGet';
 import { useToast } from '../shared/ToastProvider';
 
 // Composant pour une seule question
 function QuizQuestion({ question, answer, onAnswerChange, submitted }) {
-  const handleChoiceChange = (choiceId) => {
-    if (submitted) return;
-    if (question.type === 'single') {
-      onAnswerChange(question.id, choiceId);
-    } else if (question.type === 'multiple') {
-      const newAnswer = answer ? [...answer] : [];
-      const choiceIndex = newAnswer.indexOf(choiceId);
-      if (choiceIndex > -1) {
-        newAnswer.splice(choiceIndex, 1);
-      } else {
-        newAnswer.push(choiceId);
+    const handleChoiceChange = (choiceId) => {
+      if (submitted) return;
+      if (question.type === 'single') {
+        onAnswerChange(question.id, choiceId);
+      } else if (question.type === 'multiple') {
+        const newAnswer = answer ? [...answer] : [];
+        const choiceIndex = newAnswer.indexOf(choiceId);
+        if (choiceIndex > -1) {
+          newAnswer.splice(choiceIndex, 1);
+        } else {
+          newAnswer.push(choiceId);
+        }
+        onAnswerChange(question.id, newAnswer);
       }
-      onAnswerChange(question.id, newAnswer);
-    }
-  };
-
-  const handleTextChange = (e) => {
-    if (submitted) return;
-    onAnswerChange(question.id, e.target.value);
-  };
-
-  return (
-    <div className="card p-4 mb-4">
-      <p className="font-semibold mb-3">{question.text}</p>
-      {question.type === 'single' && question.choices.map(choice => (
-        <div key={choice.id} className="flex items-center mb-2">
-          <input
-            type="radio"
-            id={`q${question.id}-c${choice.id}`}
-            name={`question-${question.id}`}
-            value={choice.id}
-            checked={answer === choice.id}
-            onChange={() => handleChoiceChange(choice.id)}
-            disabled={submitted}
-            className="mr-2"
-          />
-          <label htmlFor={`q${question.id}-c${choice.id}`}>{choice.text}</label>
-        </div>
-      ))}
-      {question.type === 'multiple' && question.choices.map(choice => (
-        <div key={choice.id} className="flex items-center mb-2">
-          <input
-            type="checkbox"
-            id={`q${question.id}-c${choice.id}`}
-            value={choice.id}
-            checked={answer?.includes(choice.id)}
-            onChange={() => handleChoiceChange(choice.id)}
-            disabled={submitted}
-            className="mr-2"
-          />
-          <label htmlFor={`q${question.id}-c${choice.id}`}>{choice.text}</label>
-        </div>
-      ))}
-      {question.type === 'text' && (
-         <textarea
-            value={answer || ''}
-            onChange={handleTextChange}
-            disabled={submitted}
-            className="w-full p-2 border rounded bg-slate-50 dark:bg-slate-800"
-            rows="3"
-         />
-      )}
-    </div>
-  );
-}
-
+    };
+  
+    const handleTextChange = (e) => {
+      if (submitted) return;
+      onAnswerChange(question.id, e.target.value);
+    };
+  
+    return (
+      <div className="card p-4 mb-4">
+        <p className="font-semibold mb-3">{question.text}</p>
+        {question.type === 'single' && question.choices.map(choice => (
+          <div key={choice.id} className="flex items-center mb-2">
+            <input
+              type="radio"
+              id={`q${question.id}-c${choice.id}`}
+              name={`question-${question.id}`}
+              value={choice.id}
+              checked={answer === choice.id}
+              onChange={() => handleChoiceChange(choice.id)}
+              disabled={submitted}
+              className="mr-2"
+            />
+            <label htmlFor={`q${question.id}-c${choice.id}`}>{choice.text}</label>
+          </div>
+        ))}
+        {question.type === 'multiple' && question.choices.map(choice => (
+          <div key={choice.id} className="flex items-center mb-2">
+            <input
+              type="checkbox"
+              id={`q${question.id}-c${choice.id}`}
+              value={choice.id}
+              checked={answer?.includes(choice.id)}
+              onChange={() => handleChoiceChange(choice.id)}
+              disabled={submitted}
+              className="mr-2"
+            />
+            <label htmlFor={`q${question.id}-c${choice.id}`}>{choice.text}</label>
+          </div>
+        ))}
+        {question.type === 'text' && (
+           <textarea
+              value={answer || ''}
+              onChange={handleTextChange}
+              disabled={submitted}
+              className="w-full p-2 border rounded bg-slate-50 dark:bg-slate-800"
+              rows="3"
+           />
+        )}
+      </div>
+    );
+  }
 
 export default function StudentQuizDetail() {
   const { id } = useParams();
@@ -78,9 +77,29 @@ export default function StudentQuizDetail() {
   const toast = useToast();
   const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [answers, setAnswers] = useState({}); // { questionId: answer }
+  const [answers, setAnswers] = useState({});
   const [submissionResult, setSubmissionResult] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
+
+  const submittedRef = useRef(false);
+
+  const handleSubmit = useCallback(async () => {
+    if (submittedRef.current) return;
+    submittedRef.current = true;
+
+    const res = await safePost(`/api/quizzes/student/attempts/${id}/submit/`, { answers });
+    if (res) {
+      if (res.detail === "Vous avez déjà soumis ce quiz.") {
+        toast.push({ title: "Information", message: res.detail, kind: 'info' });
+      } else {
+        toast.push({ title: "Succès", message: `Quiz soumis ! Votre score: ${res.score}/${res.total_questions}` });
+      }
+      setSubmissionResult(res);
+    } else {
+      toast.push({ title: "Erreur", message: "Erreur lors de la soumission du quiz.", kind: 'error' });
+      submittedRef.current = false; // Allow retry if submission fails
+    }
+  }, [id, answers, toast]);
 
   const fetchQuiz = async () => {
     setLoading(true);
@@ -98,28 +117,17 @@ export default function StudentQuizDetail() {
     fetchQuiz();
   }, [id]);
 
-  const handleSubmit = async () => {
-    const res = await safePost(`/api/quizzes/student/attempts/${id}/submit/`, { answers });
-    if (res) {
-        toast.push({ title: "Succès", message: `Quiz soumis avec succès! Votre score: ${res.score}/${res.total_questions}` });
-        setSubmissionResult(res);
-        fetchQuiz(); // Re-fetch data to update UI
-    } else {
-        toast.push({ title: "Erreur", message: "Erreur lors de la soumission du quiz.", kind: 'error' });
-    }
-  };
-
+  // Effet pour le compte à rebours
   useEffect(() => {
     if (timeLeft === 0) {
       handleSubmit();
     }
     if (!timeLeft || submissionResult) return;
     const intervalId = setInterval(() => {
-      setTimeLeft(timeLeft - 1);
+      setTimeLeft(prevTime => prevTime - 1);
     }, 1000);
-
     return () => clearInterval(intervalId);
-  }, [timeLeft, submissionResult]);
+  }, [timeLeft, submissionResult, handleSubmit]);
 
   const formatTime = useMemo(() => {
     if (timeLeft === null) return "00:00";
