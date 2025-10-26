@@ -18,7 +18,7 @@ const StatusIndicator = ({ status }) => {
   return <div className={`text-xs h-4 ${styles[status] || styles.default}`}>{text[status] || text.default}</div>;
 };
 
-const StudentGradeCard = ({ student, setGrade }) => {
+const StudentGradeCard = ({ student, setGrade, totalPoints }) => {
   const [grade, setLocalGrade] = useState(student.grade);
   const [isEditing, setIsEditing] = useState(false);
   const [status, setStatus] = useState('default');
@@ -60,7 +60,7 @@ const StudentGradeCard = ({ student, setGrade }) => {
           <input 
             type="number" 
             min="0" 
-            max="20" 
+            max={totalPoints} 
             step="0.5" 
             defaultValue={grade ?? ''} 
             onBlur={handleBlur}
@@ -75,8 +75,8 @@ const StudentGradeCard = ({ student, setGrade }) => {
           >
             {grade !== null && grade !== undefined ? (
               <div>
-                <span className={grade < 10 ? 'text-red-500' : 'text-green-500'}>{grade}</span>
-                <span className="text-sm text-slate-500"> /20</span>
+                <span className={grade < (totalPoints / 2) ? 'text-red-500' : 'text-green-500'}>{grade}</span>
+                <span className="text-sm text-slate-500"> /{totalPoints}</span>
               </div>
             ) : (
               <span className="text-sm text-slate-400">Non noté</span>
@@ -139,13 +139,18 @@ export default function AssistantGrades() {
   const [selectedAudId, setSelectedAudId] = useState(null);
   const [courses, setCourses] = useState([]);
   const [selectedCourseCode, setSelectedCourseCode] = useState('');
-  const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState({ aud: true, courses: false, grades: false });
+  const [assessmentType, setAssessmentType] = useState('assignments'); // 'assignments' or 'quizzes'
+  const [assessments, setAssessments] = useState([]); // List of assignments or quizzes
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState(null);
+  const [gradesData, setGradesData] = useState({ total_points: 20, grades: [] });
+  const [loading, setLoading] = useState({ aud: true, courses: false, assessments: false, grades: false });
   const [error, setError] = useState(null);
   const [isAudSelectOpen, setIsAudSelectOpen] = useState(false);
   const [isCourseSelectOpen, setIsCourseSelectOpen] = useState(false);
+  const [isAssessmentTypeSelectOpen, setIsAssessmentTypeSelectOpen] = useState(false);
+  const [isAssessmentSelectOpen, setIsAssessmentSelectOpen] = useState(false);
 
-  const isSelectOpen = isAudSelectOpen || isCourseSelectOpen;
+  const isSelectOpen = isAudSelectOpen || isCourseSelectOpen || isAssessmentTypeSelectOpen || isAssessmentSelectOpen;
 
   useEffect(() => {
     setLoading(prev => ({ ...prev, aud: true }));
@@ -165,7 +170,31 @@ export default function AssistantGrades() {
     setSelectedAudId(newAudId);
     setCourses([]);
     setSelectedCourseCode('');
-    setRows([]);
+    setAssessments([]);
+    setSelectedAssessmentId(null);
+    setGradesData({ total_points: 20, grades: [] });
+    setError(null);
+  };
+
+  const handleCourseChange = (newCourseCode) => {
+    setSelectedCourseCode(newCourseCode);
+    setAssessments([]);
+    setSelectedAssessmentId(null);
+    setGradesData({ total_points: 20, grades: [] });
+    setError(null);
+  };
+
+  const handleAssessmentTypeChange = (newType) => {
+    setAssessmentType(newType);
+    setAssessments([]);
+    setSelectedAssessmentId(null);
+    setGradesData({ total_points: 20, grades: [] });
+    setError(null);
+  };
+
+  const handleAssessmentChange = (newAssessmentId) => {
+    setSelectedAssessmentId(newAssessmentId);
+    setGradesData({ total_points: 20, grades: [] });
     setError(null);
   };
 
@@ -188,35 +217,65 @@ export default function AssistantGrades() {
   }, [selectedAudId]);
 
   useEffect(() => {
-    if (!selectedAudId || !selectedCourseCode) {
-      setRows([]);
+    if (!selectedAudId || !selectedCourseCode) return;
+
+    setLoading(prev => ({ ...prev, assessments: true }));
+    const url = assessmentType === 'assignments' 
+      ? `/api/assistant/auditoriums/${selectedAudId}/assignments/?course_code=${encodeURIComponent(selectedCourseCode)}`
+      : `/api/assistant/auditoriums/${selectedAudId}/quizzes/?course_code=${encodeURIComponent(selectedCourseCode)}`;
+
+    axios.get(url).then(r => {
+      setAssessments(r.data);
+      if (r.data[0]) {
+        setSelectedAssessmentId(r.data[0].id);
+      } else {
+        setSelectedAssessmentId(null);
+      }
+      setLoading(prev => ({ ...prev, assessments: false }));
+    }).catch(err => {
+      setError(`Impossible de charger les ${assessmentType === 'assignments' ? 'TP/TD' : 'Quiz'}.`);
+      setLoading(prev => ({ ...prev, assessments: false }));
+    });
+  }, [selectedAudId, selectedCourseCode, assessmentType]);
+
+  useEffect(() => {
+    if (!selectedAudId || !selectedCourseCode || !selectedAssessmentId) {
+      setGradesData({ total_points: 20, grades: [] });
       return;
     }
 
     setLoading(prev => ({ ...prev, grades: true }));
     setError(null);
-    axios.get(`/api/assistant/grades/${selectedAudId}/${encodeURIComponent(selectedCourseCode)}`).then(r => {
-      setRows(r.data);
+    axios.get(`/api/assistant/grades/${selectedAudId}/${encodeURIComponent(selectedCourseCode)}/${assessmentType}/${selectedAssessmentId}`).then(r => {
+      setGradesData(r.data);
       setLoading(prev => ({ ...prev, grades: false }));
     }).catch(err => {
       setError("Impossible de charger les notes.");
-      setRows([]);
+      setGradesData({ total_points: 20, grades: [] });
       setLoading(prev => ({ ...prev, grades: false }));
     });
-  }, [selectedAudId, selectedCourseCode]);
+  }, [selectedAudId, selectedCourseCode, assessmentType, selectedAssessmentId]);
 
   const setGrade = async (student_id, grade) => {
-    if (!selectedAudId || !selectedCourseCode) return;
+    if (!selectedAudId || !selectedCourseCode || !selectedAssessmentId) return;
 
-    await axios.patch(`/api/assistant/grades/${selectedAudId}/${encodeURIComponent(selectedCourseCode)}`, { student_id, grade: Number(grade) });
+    await axios.patch(`/api/assistant/grades/${selectedAudId}/${encodeURIComponent(selectedCourseCode)}/${assessmentType}/${selectedAssessmentId}`, { student_id, grade: Number(grade) });
     
-    setRows(prevRows => prevRows.map(row => 
-      row.student_id === student_id ? { ...row, grade: Number(grade) } : row
-    ));
+    setGradesData(prevData => ({
+      ...prevData,
+      grades: prevData.grades.map(row => 
+        row.student_id === student_id ? { ...row, grade: Number(grade) } : row
+      )
+    }));
   };
 
   const audOptions = auditoriums.map(a => ({ value: a.id, label: `${a.code} - ${a.department}` }));
   const courseOptions = courses.map(c => ({ value: c.code, label: c.title }));
+  const assessmentTypeOptions = [
+    { value: 'assignments', label: 'TP/TD' },
+    { value: 'quizzes', label: 'Quiz' },
+  ];
+  const assessmentOptions = assessments.map(a => ({ value: a.id, label: a.title }));
 
   return (
     <div className="grid gap-4">
@@ -235,23 +294,41 @@ export default function AssistantGrades() {
           <CustomSelect 
             options={courseOptions}
             value={selectedCourseCode}
-            onChange={setSelectedCourseCode}
+            onChange={handleCourseChange}
             placeholder="Sélectionner un cours"
             disabled={loading.courses || !courses.length}
             onToggle={setIsCourseSelectOpen}
             icon={<svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v11.494M12 6.253L15.46 9.714M12 6.253L8.54 9.714" /></svg>}
           />
+          <CustomSelect 
+            options={assessmentTypeOptions}
+            value={assessmentType}
+            onChange={handleAssessmentTypeChange}
+            placeholder="Type d'évaluation"
+            disabled={!selectedCourseCode}
+            onToggle={setIsAssessmentTypeSelectOpen}
+            icon={<svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>}
+          />
+          <CustomSelect 
+            options={assessmentOptions}
+            value={selectedAssessmentId}
+            onChange={handleAssessmentChange}
+            placeholder={`Sélectionner un ${assessmentType === 'assignments' ? 'TP/TD' : 'Quiz'}`}
+            disabled={loading.assessments || !assessments.length}
+            onToggle={setIsAssessmentSelectOpen}
+            icon={<svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v2a2 2 0 01-2 2m-14 0a2 2 0 00-2 2v2a2 2 0 002 2m7-14v4m0 0H9m7 0h4" /></svg>}
+          />
         </div>
       </div>
 
-      {(loading.grades || loading.courses) && <div className="text-center p-8">Chargement...</div>}
+      {(loading.grades || loading.courses || loading.assessments) && <div className="text-center p-8">Chargement...</div>}
       {error && <div className="card p-4 bg-red-100 text-red-700">{error}</div>}
       
-      {!loading.grades && !error && selectedAudId && selectedCourseCode && (
+      {!loading.grades && !error && selectedAudId && selectedCourseCode && selectedAssessmentId && (
         <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 transition-all duration-300 ${isSelectOpen ? 'blur-sm pointer-events-none' : ''}`}>
-          {rows.length > 0 ? (
-            rows.map(r => (
-              <StudentGradeCard key={r.student_id} student={r} setGrade={setGrade} />
+          {gradesData.grades.length > 0 ? (
+            gradesData.grades.map(r => (
+              <StudentGradeCard key={r.student_id} student={r} setGrade={setGrade} totalPoints={gradesData.total_points} />
             ))
           ) : (
             <div className="col-span-full text-center p-8 text-slate-500">Aucun étudiant trouvé pour cette sélection.</div>
