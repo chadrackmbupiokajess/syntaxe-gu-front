@@ -153,7 +153,7 @@ export default function AssistantGrades() {
         <div className="flex flex-wrap items-center gap-3">
           <select className="select" value={selectedAudId || ''} onChange={handleAuditoriumChange} disabled={loading.aud}>
             <option value="" disabled>Sélectionner un auditoire</option>
-            {auditoriums.map(a => <option key={a.id} value={a.id}>{a.code}</option>)}
+            {auditoriums.map(a => <option key={a.id} value={a.id}>{a.code} - {a.department}</option>)}
           </select>
           <select className="select" value={selectedCourseCode} onChange={e => setSelectedCourseCode(e.target.value)} disabled={loading.courses || !courses.length}>
             <option value="" disabled>Sélectionner un cours</option>
