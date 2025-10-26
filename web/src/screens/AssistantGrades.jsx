@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import axios from 'axios';
 import { debounce } from 'lodash';
 
@@ -89,6 +89,44 @@ const StudentGradeCard = ({ student, setGrade }) => {
   );
 };
 
+const CustomSelect = ({ options, value, onChange, placeholder, icon, disabled }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef(null);
+
+  const selectedOption = options.find(o => o.value === value);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (ref.current && !ref.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [ref]);
+
+  return (
+    <div className="relative w-64" ref={ref}>
+      <button onClick={() => setIsOpen(!isOpen)} disabled={disabled} className="btn w-full flex items-center justify-between !bg-slate-100 dark:!bg-slate-800">
+        <div className="flex items-center gap-2">
+          {icon}
+          <span className="text-slate-500 dark:text-white/70">{selectedOption ? selectedOption.label : placeholder}</span>
+        </div>
+        <svg className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+      </button>
+      {isOpen && (
+        <div className="absolute z-10 w-full mt-1 card p-2 shadow-lg">
+          {options.map(option => (
+            <div key={option.value} onClick={() => { onChange(option.value); setIsOpen(false); }} className="px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">
+              {option.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function AssistantGrades() {
   const [auditoriums, setAuditoriums] = useState([]);
   const [selectedAudId, setSelectedAudId] = useState(null);
@@ -112,8 +150,7 @@ export default function AssistantGrades() {
     });
   }, []);
 
-  const handleAuditoriumChange = (e) => {
-    const newAudId = Number(e.target.value);
+  const handleAuditoriumChange = (newAudId) => {
     setSelectedAudId(newAudId);
     setCourses([]);
     setSelectedCourseCode('');
@@ -168,19 +205,30 @@ export default function AssistantGrades() {
     ));
   };
 
+  const audOptions = auditoriums.map(a => ({ value: a.id, label: `${a.code} - ${a.department}` }));
+  const courseOptions = courses.map(c => ({ value: c.code, label: c.title }));
+
   return (
     <div className="grid gap-4">
       <div className="card p-4">
         <h1 className="text-xl font-semibold mb-3">Gestion des Notes par Auditoire</h1>
         <div className="flex flex-wrap items-center gap-3">
-          <select className="select" value={selectedAudId || ''} onChange={handleAuditoriumChange} disabled={loading.aud}>
-            <option value="" disabled>Sélectionner un auditoire</option>
-            {auditoriums.map(a => <option key={a.id} value={a.id}>{a.code} - {a.department}</option>)}
-          </select>
-          <select className="select" value={selectedCourseCode} onChange={e => setSelectedCourseCode(e.target.value)} disabled={loading.courses || !courses.length}>
-            <option value="" disabled>Sélectionner un cours</option>
-            {courses.map(c => <option key={c.id} value={c.code}>{c.title}</option>)}
-          </select>
+          <CustomSelect 
+            options={audOptions}
+            value={selectedAudId}
+            onChange={handleAuditoriumChange}
+            placeholder="Sélectionner un auditoire"
+            disabled={loading.aud}
+            icon={<svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0v-4m0 4h5m0-4v4m0-4H5m14 0v-4m0 4h-2m-5-4v4m-5-4h5" /></svg>}
+          />
+          <CustomSelect 
+            options={courseOptions}
+            value={selectedCourseCode}
+            onChange={setSelectedCourseCode}
+            placeholder="Sélectionner un cours"
+            disabled={loading.courses || !courses.length}
+            icon={<svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v11.494M12 6.253L15.46 9.714M12 6.253L8.54 9.714" /></svg>}
+          />
         </div>
       </div>
 
