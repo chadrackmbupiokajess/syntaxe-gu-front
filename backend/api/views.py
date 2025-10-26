@@ -8,6 +8,7 @@ from django.utils.dateparse import parse_datetime
 from datetime import timedelta
 from django.apps import apps
 from django.contrib.auth.hashers import make_password
+from django.db import transaction
 
 StudentProfile = apps.get_model('accounts', 'StudentProfile')
 AcademicProfile = apps.get_model('accounts', 'AcademicProfile')
@@ -21,6 +22,7 @@ Submission = apps.get_model('evaluations', 'Submission')
 Quiz = apps.get_model('evaluations', 'Quiz')
 Question = apps.get_model('evaluations', 'Question')
 Choice = apps.get_model('evaluations', 'Choice')
+Answer = apps.get_model('evaluations', 'Answer')
 
 
 def _safe_user_id(u) -> int:
@@ -1092,8 +1094,51 @@ def quizzes_student_start(request, id: int):
 @api_view(["POST"])
 @permission_classes(DEV_PERMS)
 def quizzes_student_attempt_submit(request, id: int):
-    # Pas de modèle d'"attempt" pour les quiz pour l'instant: on renvoie juste OK
-    return Response({"status": "ok"})
+    try:
+        with transaction.atomic():
+            sp = StudentProfile.objects.get(user=request.user)
+            quiz = Quiz.objects.get(id=id)
+            answers_data = request.data.get('answers', {})
+            total_score = 0
+
+            for question_id, answer_value in answers_data.items():
+                question = Question.objects.get(id=question_id)
+                points = 0
+
+                if question.question_type == 'single':
+                    correct_choice = question.choices.filter(is_correct=True).first()
+                    if correct_choice and correct_choice.id == answer_value:
+                        points = 1 # Points par défaut pour une bonne réponse
+
+                elif question.question_type == 'multiple':
+                    correct_choices = set(question.choices.filter(is_correct=True).values_list('id', flat=True))
+                    if isinstance(answer_value, list) and set(answer_value) == correct_choices:
+                        points = 1 # Points par défaut
+
+                # Pour les questions textuelles, la notation est manuelle, donc 0 pour l'instant
+
+                answer = Answer.objects.create(
+                    student=sp,
+                    question=question,
+                    answer_text=str(answer_value) if question.question_type == 'text' else ''
+                )
+
+                if question.question_type in ['single', 'multiple'] and answer_value:
+                    if isinstance(answer_value, list):
+                        answer.selected_choices.set(answer_value)
+                    else:
+                        answer.selected_choices.set([answer_value])
+                
+                answer.points_obtained = points
+                answer.save()
+                total_score += points
+
+        return Response({"status": "submitted", "score": total_score, "total_questions": quiz.questions.count()})
+
+    except (StudentProfile.DoesNotExist, Quiz.DoesNotExist, Question.DoesNotExist):
+        return Response({"detail": "Erreur: Quiz ou profil introuvable."}, status=404)
+    except Exception as e:
+        return Response({"detail": f"Une erreur est survenue: {str(e)}"}, status=500)
 
 
 @api_view(["POST"])

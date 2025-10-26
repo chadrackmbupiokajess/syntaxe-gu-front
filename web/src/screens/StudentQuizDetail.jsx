@@ -4,8 +4,9 @@ import { safeGet, safePost } from '../api/safeGet';
 import { useToast } from '../shared/ToastProvider';
 
 // Composant pour une seule question
-function QuizQuestion({ question, answer, onAnswerChange }) {
+function QuizQuestion({ question, answer, onAnswerChange, submitted }) {
   const handleChoiceChange = (choiceId) => {
+    if (submitted) return;
     if (question.type === 'single') {
       onAnswerChange(question.id, choiceId);
     } else if (question.type === 'multiple') {
@@ -21,6 +22,7 @@ function QuizQuestion({ question, answer, onAnswerChange }) {
   };
 
   const handleTextChange = (e) => {
+    if (submitted) return;
     onAnswerChange(question.id, e.target.value);
   };
 
@@ -36,6 +38,7 @@ function QuizQuestion({ question, answer, onAnswerChange }) {
             value={choice.id}
             checked={answer === choice.id}
             onChange={() => handleChoiceChange(choice.id)}
+            disabled={submitted}
             className="mr-2"
           />
           <label htmlFor={`q${question.id}-c${choice.id}`}>{choice.text}</label>
@@ -49,6 +52,7 @@ function QuizQuestion({ question, answer, onAnswerChange }) {
             value={choice.id}
             checked={answer?.includes(choice.id)}
             onChange={() => handleChoiceChange(choice.id)}
+            disabled={submitted}
             className="mr-2"
           />
           <label htmlFor={`q${question.id}-c${choice.id}`}>{choice.text}</label>
@@ -58,6 +62,7 @@ function QuizQuestion({ question, answer, onAnswerChange }) {
          <textarea
             value={answer || ''}
             onChange={handleTextChange}
+            disabled={submitted}
             className="w-full p-2 border rounded bg-slate-50 dark:bg-slate-800"
             rows="3"
          />
@@ -69,11 +74,11 @@ function QuizQuestion({ question, answer, onAnswerChange }) {
 
 export default function StudentQuizDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const toast = useToast();
   const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState({}); // { questionId: answer }
+  const [submissionResult, setSubmissionResult] = useState(null);
 
   useEffect(() => {
     const fetchQuiz = async () => {
@@ -92,11 +97,13 @@ export default function StudentQuizDetail() {
   };
 
   const handleSubmit = async () => {
-    // TODO: Implémenter la logique de soumission
-    console.log("Réponses soumises:", answers);
-    toast.success("Quiz soumis avec succès !");
-    // Rediriger l'utilisateur après la soumission
-    navigate('/etudiant/travaux');
+    const res = await safePost(`/api/quizzes/student/attempts/${id}/submit/`, { answers });
+    if (res) {
+        toast.push({ title: "Succès", message: `Quiz soumis avec succès! Votre score: ${res.score}/${res.total_questions}` });
+        setSubmissionResult(res);
+    } else {
+        toast.push({ title: "Erreur", message: "Erreur lors de la soumission du quiz.", kind: 'error' });
+    }
   };
 
   if (loading) {
@@ -117,20 +124,29 @@ export default function StudentQuizDetail() {
         <p className="text-red-500 font-semibold">À passer avant le: {new Date(quiz.deadline).toLocaleString()}</p>
       </div>
 
-      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-        {quiz.questions?.map(q => (
-          <QuizQuestion
-            key={q.id}
-            question={q}
-            answer={answers[q.id]}
-            onAnswerChange={handleAnswerChange}
-          />
-        ))}
+      {submissionResult ? (
+        <div className="card p-6 text-center">
+            <h2 className="text-2xl font-bold mb-4">Résultats du Quiz</h2>
+            <p className="text-4xl font-bold">{submissionResult.score} / {submissionResult.total_questions}</p>
+            <p className="text-slate-600 dark:text-slate-400 mt-2">Votre score a été enregistré.</p>
+        </div>
+      ) : (
+        <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+            {quiz.questions?.map(q => (
+            <QuizQuestion
+                key={q.id}
+                question={q}
+                answer={answers[q.id]}
+                onAnswerChange={handleAnswerChange}
+                submitted={!!submissionResult}
+            />
+            ))}
 
-        <button type="submit" className="btn btn-primary w-full mt-4">
-          Soumettre le quiz
-        </button>
-      </form>
+            <button type="submit" className="btn btn-primary w-full mt-4">
+            Soumettre le quiz
+            </button>
+        </form>
+      )}
     </div>
   );
 }
