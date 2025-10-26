@@ -38,7 +38,12 @@ const StudentGradeCard = ({ student, setGrade }) => {
   const handleChange = (e) => {
     const newGrade = e.target.value;
     setLocalGrade(newGrade);
+    setStatus('default');
     debouncedSave(newGrade);
+  };
+
+  const handleBlur = () => {
+    debouncedSave.flush();
   };
 
   return (
@@ -56,7 +61,7 @@ const StudentGradeCard = ({ student, setGrade }) => {
           step="0.5" 
           value={grade} 
           onChange={handleChange}
-          onBlur={() => debouncedSave.flush()} // Save immediately on blur
+          onBlur={handleBlur}
           className="w-24 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-center font-semibold"
         />
         <StatusIndicator status={status} />
@@ -67,9 +72,9 @@ const StudentGradeCard = ({ student, setGrade }) => {
 
 export default function AssistantGrades() {
   const [auditoriums, setAuditoriums] = useState([]);
-  const [audId, setAudId] = useState(null);
+  const [selectedAudId, setSelectedAudId] = useState(null);
   const [courses, setCourses] = useState([]);
-  const [courseCode, setCourseCode] = useState('');
+  const [selectedCourseCode, setSelectedCourseCode] = useState('');
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState({ aud: true, courses: false, grades: false });
   const [error, setError] = useState(null);
@@ -79,7 +84,7 @@ export default function AssistantGrades() {
     axios.get('/api/auditoriums/assistant/my/').then(r => {
       setAuditoriums(r.data);
       if (r.data[0]) {
-        setAudId(r.data[0].id);
+        setSelectedAudId(r.data[0].id);
       }
       setLoading(prev => ({ ...prev, aud: false }));
     }).catch(err => {
@@ -88,49 +93,57 @@ export default function AssistantGrades() {
     });
   }, []);
 
-  useEffect(() => {
-    if (!audId) return;
-    setLoading(prev => ({ ...prev, courses: true }));
-    const selectedAud = auditoriums.find(a => a.id === audId);
-    if (!selectedAud) return;
+  const handleAuditoriumChange = (e) => {
+    const newAudId = Number(e.target.value);
+    setSelectedAudId(newAudId);
+    setCourses([]);
+    setSelectedCourseCode('');
+    setRows([]);
+    setError(null);
+  };
 
-    axios.get(`/api/assistant/auditoriums/${selectedAud.id}/courses`).then(r => {
+  useEffect(() => {
+    if (!selectedAudId) return;
+
+    setLoading(prev => ({ ...prev, courses: true }));
+    axios.get(`/api/assistant/auditoriums/${selectedAudId}/courses`).then(r => {
       setCourses(r.data);
       if (r.data[0]) {
-        setCourseCode(r.data[0].code);
+        setSelectedCourseCode(r.data[0].code);
       } else {
-        setCourseCode('');
-        setRows([]);
+        setSelectedCourseCode('');
       }
       setLoading(prev => ({ ...prev, courses: false }));
     }).catch(err => {
       setError("Impossible de charger les cours.");
       setLoading(prev => ({ ...prev, courses: false }));
     });
-  }, [audId, auditoriums]);
+  }, [selectedAudId]);
 
   useEffect(() => {
-    const selectedAud = auditoriums.find(a => a.id === audId);
-    if (!selectedAud || !courseCode) {
+    const auditorium = auditoriums.find(a => a.id === selectedAudId);
+    if (!auditorium || !selectedCourseCode) {
       setRows([]);
       return;
     }
 
     setLoading(prev => ({ ...prev, grades: true }));
-    axios.get(`/api/assistant/grades/${encodeURIComponent(selectedAud.code)}/${encodeURIComponent(courseCode)}`).then(r => {
+    setError(null);
+    axios.get(`/api/assistant/grades/${encodeURIComponent(auditorium.code)}/${encodeURIComponent(selectedCourseCode)}`).then(r => {
       setRows(r.data);
       setLoading(prev => ({ ...prev, grades: false }));
     }).catch(err => {
       setError("Impossible de charger les notes.");
+      setRows([]);
       setLoading(prev => ({ ...prev, grades: false }));
     });
-  }, [audId, courseCode, auditoriums]);
+  }, [selectedAudId, selectedCourseCode, auditoriums]);
 
   const setGrade = async (student_id, grade) => {
-    const selectedAud = auditoriums.find(a => a.id === audId);
-    if (!selectedAud || !courseCode) return;
+    const auditorium = auditoriums.find(a => a.id === selectedAudId);
+    if (!auditorium || !selectedCourseCode) return;
 
-    return axios.patch(`/api/assistant/grades/${encodeURIComponent(selectedAud.code)}/${encodeURIComponent(courseCode)}`, { student_id, grade: Number(grade) });
+    return axios.patch(`/api/assistant/grades/${encodeURIComponent(auditorium.code)}/${encodeURIComponent(selectedCourseCode)}`, { student_id, grade: Number(grade) });
   };
 
   return (
@@ -138,11 +151,11 @@ export default function AssistantGrades() {
       <div className="card p-4">
         <h1 className="text-xl font-semibold mb-3">Gestion des Notes par Auditoire</h1>
         <div className="flex flex-wrap items-center gap-3">
-          <select className="select" value={audId || ''} onChange={e => setAudId(Number(e.target.value))} disabled={loading.aud}>
+          <select className="select" value={selectedAudId || ''} onChange={handleAuditoriumChange} disabled={loading.aud}>
             <option value="" disabled>Sélectionner un auditoire</option>
             {auditoriums.map(a => <option key={a.id} value={a.id}>{a.code}</option>)}
           </select>
-          <select className="select" value={courseCode} onChange={e => setCourseCode(e.target.value)} disabled={loading.courses || !courses.length}>
+          <select className="select" value={selectedCourseCode} onChange={e => setSelectedCourseCode(e.target.value)} disabled={loading.courses || !courses.length}>
             <option value="" disabled>Sélectionner un cours</option>
             {courses.map(c => <option key={c.id} value={c.code}>{c.title}</option>)}
           </select>
@@ -152,7 +165,7 @@ export default function AssistantGrades() {
       {(loading.grades || loading.courses) && <div className="text-center p-8">Chargement...</div>}
       {error && <div className="card p-4 bg-red-100 text-red-700">{error}</div>}
       
-      {!loading.grades && !error && audId && courseCode && (
+      {!loading.grades && !error && selectedAudId && selectedCourseCode && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {rows.length > 0 ? (
             rows.map(r => (
