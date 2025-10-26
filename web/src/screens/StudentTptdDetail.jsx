@@ -47,7 +47,7 @@ export default function StudentTptdDetail() {
         <div className="p-6">
           <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">{assignment.title}</h1>
           <div className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-            <p><strong>Cours :</strong> {assignment.course_name}</p>
+            <p><strong>Cours :</strong> {assignment.course_name} ({assignment.session_type})</p>
             <p><strong>À rendre avant le :</strong> {new Date(assignment.deadline).toLocaleString()}</p>
           </div>
           

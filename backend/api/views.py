@@ -903,6 +903,7 @@ def tptd_student_detail(request, id):
             "id": assignment.id,
             "title": assignment.title,
             "course_name": assignment.course.name,
+            "session_type": assignment.course.get_session_type_display(),
             "deadline": assignment.deadline,
             "questionnaire": assignment.questionnaire, # This is the questionnaire field
         }
