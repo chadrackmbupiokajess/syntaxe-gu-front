@@ -15,7 +15,7 @@ function Timer({ deadline }) {
     const days = Math.floor(left / (1000 * 60 * 60 * 24));
     const hours = Math.floor((left / (1000 * 60 * 60)) % 24);
     const minutes = Math.floor((left / 1000 / 60) % 60);
-    if (days > 0) return `${days}j ${hours}h`;
+    if (days > 0) return `${days}j ${hours}h ${minutes}m`;
     return `${hours}h ${minutes}m`;
   }, [left]);
 
@@ -65,8 +65,8 @@ export default function StudentWork() {
                     <div className="font-bold text-lg mb-1">{t.title}</div>
                     <div className="text-xs text-slate-500 dark:text-slate-400 mb-3">{t.course_name} - {t.type}</div>
                     <div className="flex justify-between items-center">
-                      <div className="text-sm">À rendre dans:</div>
-                      <Timer deadline={t.deadline} />
+                      <div className="text-sm">À rendre avant le:</div>
+                      <span className="text-sm font-semibold">{new Date(t.deadline).toLocaleString()}</span>
                     </div>
                   </div>
                 </Link>
