@@ -266,24 +266,19 @@ def assistant_grades(request, auditorium_code, course_code):
         if not course:
             return Response({"detail": f"Cours '{course_code}' non trouvé dans l'auditoire '{auditorium_code}'."}, status=404)
 
-        # Vérifier si l'assistant est assigné à ce cours
         if not CourseAssignment.objects.filter(course=course, assistant=ap).exists():
             return Response({"detail": "Accès non autorisé à ce cours."}, status=403)
 
         if request.method == 'GET':
-            # Récupérer tous les étudiants de l'auditoire
-            students = StudentProfile.objects.filter(current_auditoire=auditorium).order_by('nom', 'prenom')
+            students = StudentProfile.objects.select_related('user').filter(current_auditoire=auditorium).order_by('nom', 'prenom')
             
-            # Récupérer toutes les soumissions pour ce cours en une seule requête
             submissions = Submission.objects.filter(
                 assignment__course=course,
                 student__in=students
             ).select_related('student')
 
-            # Créer un dictionnaire pour un accès rapide aux notes
             grades_map = {}
             for sub in submissions:
-                # On garde la note de la soumission la plus récente
                 student_id = sub.student.id
                 if student_id not in grades_map or sub.submitted_at > grades_map[student_id]['submitted_at']:
                     grades_map[student_id] = {'grade': sub.grade, 'submitted_at': sub.submitted_at}
@@ -300,6 +295,8 @@ def assistant_grades(request, auditorium_code, course_code):
                 grades_data.append({
                     "student_id": student.id,
                     "student_name": student_name or f"Student {student.id}",
+                    "matricule": student.matricule or "",
+                    "avatar": f"https://i.pravatar.cc/128?u={student.user.id}" if hasattr(student, 'user') and student.user else "",
                     "grade": grade,
                 })
             return Response(grades_data)
