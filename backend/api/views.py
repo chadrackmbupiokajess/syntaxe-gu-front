@@ -275,18 +275,24 @@ def assistant_grades(request, auditorium_id, course_code):
             submissions = Submission.objects.filter(
                 assignment__course=course,
                 student__in=students
-            ).select_related('student')
+            ).select_related('student', 'assignment') # Select related assignment to get total_points
 
             grades_map = {}
             for sub in submissions:
                 student_id = sub.student.id
+                # This logic seems to only keep the latest submission grade if multiple exist
                 if student_id not in grades_map or sub.submitted_at > grades_map[student_id]['submitted_at']:
-                    grades_map[student_id] = {'grade': sub.grade, 'submitted_at': sub.submitted_at}
+                    grades_map[student_id] = {
+                        'grade': sub.grade, 
+                        'submitted_at': sub.submitted_at, 
+                        'total_points': getattr(sub.assignment, 'total_points', 20) # Get total_points from assignment
+                    }
 
             grades_data = []
             for student in students:
                 student_grade_info = grades_map.get(student.id)
                 grade = student_grade_info['grade'] if student_grade_info else None
+                total_points = student_grade_info['total_points'] if student_grade_info else 20 # Default to 20 if no submission or total_points not set
                 
                 student_name = f"{student.nom} {student.prenom}".strip()
                 if not student_name and hasattr(student, 'user') and student.user:
@@ -298,6 +304,7 @@ def assistant_grades(request, auditorium_id, course_code):
                     "matricule": student.matricule or "",
                     "avatar": f"https://i.pravatar.cc/128?u={student.user.id}" if hasattr(student, 'user') and student.user else "",
                     "grade": grade,
+                    "total_points": total_points, # Include total_points in the response
                 })
             return Response(grades_data)
 
@@ -369,6 +376,108 @@ def assistant_tograde(request):
         print(f"Error in assistant_tograde: {e}")
         pass
     return Response(items)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def assistant_submission_detail(request, assignment_id: int, submission_id: int):
+    try:
+        ap = AcademicProfile.objects.get(user=request.user)
+        submission = Submission.objects.select_related(
+            'assignment__course__auditoire__departement',
+            'student__user',
+            'assignment__assistant'
+        ).get(id=submission_id, assignment__id=assignment_id)
+
+        # Vérifier que l'assistant est bien assigné à ce devoir
+        if submission.assignment.assistant != ap:
+            return Response({"detail": "Accès non autorisé à cette soumission."}, status=403)
+
+        # Safely get student name parts
+        student_profile = submission.student
+        student_user = getattr(student_profile, 'user', None)
+        student_nom = getattr(student_profile, 'nom', '')
+        student_prenom = getattr(student_profile, 'prenom', '')
+        student_name = f"{student_nom} {student_prenom}".strip()
+        if not student_name and student_user:
+            student_name = f"{getattr(student_user, 'first_name', '')} {getattr(student_user, 'last_name', '')}".strip()
+        if not student_name: # Fallback if no name found
+            student_name = f"Étudiant {getattr(student_profile, 'id', 'Inconnu')}"
+
+        # Safely get course and auditorium details
+        assignment = submission.assignment
+        course = getattr(assignment, 'course', None)
+        auditoire = getattr(course, 'auditoire', None)
+        departement = getattr(auditoire, 'departement', None)
+
+        course_name = getattr(course, 'name', 'N/A')
+        auditorium_name = getattr(auditoire, 'name', 'N/A')
+        department_name = getattr(departement, 'name', 'N/A')
+
+        data = {
+            "id": submission.id,
+            "assignment_id": getattr(assignment, 'id', None),
+            "assignment_title": getattr(assignment, 'title', 'N/A'),
+            "assignment_questionnaire": getattr(assignment, 'questionnaire', []) or [], # Ensure it's a list
+            "assignment_total_points": getattr(assignment, 'total_points', 0),
+            "student_name": student_name,
+            "student_id": getattr(student_profile, 'id', None),
+            "course_name": course_name,
+            "auditorium": auditorium_name,
+            "department": department_name,
+            "content": str(getattr(submission, 'content', 'N/A')), # Ensure it's a string
+            "submitted_at": getattr(submission, 'submitted_at', None),
+            "grade": getattr(submission, 'grade', None),
+            "feedback": getattr(submission, 'feedback', ''), # Safely access feedback
+            "graded_at": getattr(submission, 'graded_at', None),
+            "status": getattr(submission, 'status', 'N/A'),
+        }
+        return Response(data)
+    except AcademicProfile.DoesNotExist:
+        return Response({"detail": "Profil académique non trouvé."}, status=404)
+    except Submission.DoesNotExist:
+        return Response({"detail": "Soumission non trouvée ou accès non autorisé."}, status=404)
+    except Exception as e:
+        print(f"Error in assistant_submission_detail: {e}")
+        return Response({"detail": f"Une erreur inattendue est survenue: {e}"}, status=500)
+
+
+@api_view(["POST"])
+@permission_classes(DEV_PERMS)
+def assistant_grade_submission(request, assignment_id: int, submission_id: int):
+    try:
+        ap = AcademicProfile.objects.get(user=request.user)
+        submission = Submission.objects.select_related('assignment__assistant').get(id=submission_id, assignment__id=assignment_id)
+
+        # Vérifier que l'assistant est bien assigné à ce devoir
+        if submission.assignment.assistant != ap:
+            return Response({"detail": "Accès non autorisé à cette soumission."}, status=403)
+
+        grade = request.data.get("grade")
+        feedback = request.data.get("feedback", "").strip()
+
+        if grade is None:
+            return Response({"detail": "La note est requise."}, status=400)
+        
+        # Valider la note (par exemple, entre 0 et total_points de l'assignment)
+        if not (0 <= float(grade) <= submission.assignment.total_points):
+             return Response({"detail": f"La note doit être entre 0 et {submission.assignment.total_points}."}, status=400)
+
+        submission.grade = grade
+        submission.feedback = feedback
+        submission.graded_at = timezone.now()
+        submission.status = 'noté'
+        submission.save()
+
+        return Response({"detail": "Note et commentaires soumis avec succès.", "grade": submission.grade, "feedback": submission.feedback}, status=200)
+
+    except AcademicProfile.DoesNotExist:
+        return Response({"detail": "Profil académique non trouvé."}, status=404)
+    except Submission.DoesNotExist:
+        return Response({"detail": "Soumission non trouvée ou accès non autorisé."}, status=404)
+    except Exception as e:
+        print(f"Error in assistant_grade_submission: {e}")
+        return Response({"detail": f"Une erreur inattendue est survenue: {e}"}, status=500)
 
 
 @api_view(['GET', 'PATCH'])
@@ -820,10 +929,26 @@ def assistant_auditorium_messages(request, code: str):
         aud = Auditoire.objects.filter(pk=auditorium_id).first()
         if not aud:
             return Response([], status=404)
+        
         if request.method == "GET":
-            msgs = CourseMessage.objects.select_related("course", "sender").filter(course__auditoire=aud).order_by("-created_at")[:100]
+            # Fetch messages, selecting related user for sender
+            msgs = CourseMessage.objects.select_related("course", "sender__academicprofile", "sender__studentprofile").filter(course__auditoire=aud).order_by("-created_at")[:100]
             out = []
             for m in msgs:
+                sender_name = ""
+                sender_type = ""
+                if hasattr(m.sender, 'academicprofile') and m.sender.academicprofile:
+                    sender_profile = m.sender.academicprofile
+                    sender_name = f"{sender_profile.prenom} {sender_profile.nom}".strip()
+                    sender_type = "Assistant"
+                elif hasattr(m.sender, 'studentprofile') and m.sender.studentprofile:
+                    sender_profile = m.sender.studentprofile
+                    sender_name = f"{sender_profile.prenom} {sender_profile.nom}".strip()
+                    sender_type = "Étudiant"
+                else:
+                    sender_name = m.sender.username if m.sender else "Inconnu"
+                    sender_type = "Utilisateur"
+
                 out.append({
                     "id": m.id,
                     "courseId": m.course_id,
@@ -831,20 +956,44 @@ def assistant_auditorium_messages(request, code: str):
                     "title": m.title,
                     "body": m.body,
                     "created_at": m.created_at.isoformat(),
-                    "sender": (f"{getattr(m.sender, 'prenom', '')} {getattr(m.sender, 'nom', '')}".strip() if m.sender else ""),
+                    "sender": sender_name,
+                    "sender_type": sender_type,
                 })
             return Response(out)
-        # POST
-        ap = AcademicProfile.objects.get(user=request.user)
+        
+        # POST request
+        # Assuming CourseMessage.sender is a ForeignKey to User
+        user = request.user
+        if not user.is_authenticated:
+            return Response({"detail": "Authentification requise pour envoyer un message."}, status=401)
+
         course_id = request.data.get("course_id")
         title = request.data.get("title", "").strip()
         body = request.data.get("body", "").strip()
+        
         if not (course_id and title and body):
             return Response({"detail": "course_id, title, body requis"}, status=400)
+        
         course = Course.objects.filter(id=course_id, auditoire=aud).first()
         if not course:
             return Response({"detail": "Cours introuvable dans cet auditoire"}, status=404)
-        msg = CourseMessage.objects.create(course=course, sender=ap, title=title, body=body)
+        
+        msg = CourseMessage.objects.create(course=course, sender=user, title=title, body=body)
+
+        sender_name = ""
+        sender_type = ""
+        if hasattr(user, 'academicprofile') and user.academicprofile:
+            sender_profile = user.academicprofile
+            sender_name = f"{sender_profile.prenom} {sender_profile.nom}".strip()
+            sender_type = "Assistant"
+        elif hasattr(user, 'studentprofile') and user.studentprofile:
+            sender_profile = user.studentprofile
+            sender_name = f"{sender_profile.prenom} {sender_profile.nom}".strip()
+            sender_type = "Étudiant"
+        else:
+            sender_name = user.username
+            sender_type = "Utilisateur"
+
         return Response({
             "id": msg.id,
             "courseId": msg.course_id,
@@ -852,12 +1001,14 @@ def assistant_auditorium_messages(request, code: str):
             "title": msg.title,
             "body": msg.body,
             "created_at": msg.created_at.isoformat(),
-            "sender": (f"{getattr(ap, 'prenom', '')} {getattr(ap, 'nom', '')}".strip()),
+            "sender": sender_name,
+            "sender_type": sender_type,
         }, status=201)
     except (ValueError, TypeError):
         return Response({"detail": "Code d'auditoire invalide"}, status=400)
-    except Exception:
-        return Response({"detail": "Erreur de traitement des messages"}, status=400)
+    except Exception as e:
+        print(f"Error in assistant_auditorium_messages: {e}")
+        return Response({"detail": f"Erreur de traitement des messages: {e}"}, status=500)
 
 
 @api_view(["POST"])
@@ -872,18 +1023,22 @@ def assistant_auditorium_create_tptd(request, code: str):
         course_id = request.data.get("course_id")
         title = (request.data.get("title") or "").strip()
         deadline_s = request.data.get("deadline")
+        questionnaire = request.data.get("questionnaire", []) # Added questionnaire
+        total_points = request.data.get("total_points", 20) # Added total_points
+
         if not (course_id and title and deadline_s):
             return Response({"detail": "course_id, title, deadline requis"}, status=400)
         course = Course.objects.filter(id=course_id, auditoire=aud).first()
         if not course:
             return Response({"detail": "Cours introuvable dans cet auditoire"}, status=404)
         deadline = parse_datetime(deadline_s) or timezone.now() + timedelta(days=7)
-        a = Assignment.objects.create(course=course, assistant=ap, title=title, questionnaire="", deadline=deadline)
+        a = Assignment.objects.create(course=course, assistant=ap, title=title, questionnaire=questionnaire, total_points=total_points, deadline=deadline)
         return Response({"id": a.id, "title": a.title, "deadline": a.deadline.isoformat()}, status=201)
     except (ValueError, TypeError):
         return Response({"detail": "Code d'auditoire invalide"}, status=400)
-    except Exception:
-        return Response({"detail": "Erreur de création TP/TD"}, status=400)
+    except Exception as e:
+        print(f"Error in assistant_auditorium_create_tptd: {e}")
+        return Response({"detail": f"Erreur de création TP/TD: {e}"}, status=400)
 
 
 @api_view(["POST"])
@@ -898,17 +1053,28 @@ def assistant_auditorium_create_quiz(request, code: str):
         course_id = request.data.get("course_id")
         title = (request.data.get("title") or "").strip()
         duration = int(request.data.get("duration") or 0)
-        if not (course_id and title and duration):
-            return Response({"detail": "course_id, title, duration requis"}, status=400)
+        questions_data = request.data.get("questions", []) # Added questions_data
+
+        if not (course_id and title and duration and questions_data):
+            return Response({"detail": "course_id, title, duration et questions requis"}, status=400)
         course = Course.objects.filter(id=course_id, auditoire=aud).first()
         if not course:
             return Response({"detail": "Cours introuvable dans cet auditoire"}, status=404)
+        
         q = Quiz.objects.create(course=course, assistant=ap, title=title, duration=duration)
+
+        for q_data in questions_data:
+            question = Question.objects.create(quiz=q, question_text=q_data['text'], question_type=q_data['type'])
+            if q_data['type'] in ['single', 'multiple']:
+                for choice_data in q_data['choices']:
+                    Choice.objects.create(question=question, choice_text=choice_data['text'], is_correct=choice_data['is_correct'])
+
         return Response({"id": q.id, "title": q.title, "duration": q.duration}, status=201)
     except (ValueError, TypeError):
         return Response({"detail": "Code d'auditoire invalide"}, status=400)
-    except Exception:
-        return Response({"detail": "Erreur de création du quiz"}, status=400)
+    except Exception as e:
+        print(f"Error in assistant_auditorium_create_quiz: {e}")
+        return Response({"detail": f"Erreur de création du quiz: {e}"}, status=500)
 
 
 @api_view(["GET"])
@@ -1265,19 +1431,21 @@ def quizzes_student_attempt_submit(request, id: int):
 @api_view(["POST"])
 @permission_classes(DEV_PERMS)
 def tptd_student_submit(request, id: int):
-    # Créer une soumission pour l'Assignment id
     try:
         sp = StudentProfile.objects.get(user=request.user)
         a = Assignment.objects.get(id=id)
+        content = request.data.get('content', '') # Get content from request
         Submission.objects.create(
             assignment=a,
             student=sp,
+            content=content, # Save the content
             status='soumis',
             submitted_at=timezone.now(),
         )
         return Response({"status": "submitted"})
-    except Exception:
-        return Response({"status": "error"})
+    except Exception as e:
+        print(f"Error in tptd_student_submit: {e}")
+        return Response({"status": "error"}, status=500)
 
 
 # ---- Endpoints PDG (placeholders) ----

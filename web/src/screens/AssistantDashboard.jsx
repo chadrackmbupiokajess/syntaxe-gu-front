@@ -34,15 +34,18 @@ export default function AssistantDashboard() {
         <ul className="text-sm grid gap-2">
           {data.auditoriums.map((a, i) => {
             return (
-              <Link to={`/assistant/auditoires/${a.code}`} key={i}>
-                <li className="flex items-center justify-between border rounded-lg px-3 py-2 border-slate-200/60 dark:border-slate-800/60">
-                  <div>
+              <li key={i} className="flex items-center justify-between border rounded-lg px-3 py-2 border-slate-200/60 dark:border-slate-800/60">
+                <div>
+                  <Link to={`/assistant/auditoires/${a.code}`}>
                     <span className="font-medium">{a.code}</span>
-                    <p className="text-xs text-slate-500 mt-1"> {a.department || 'N/A'}</p> {/* Affiche toujours le label */}
-                  </div>
+                    <p className="text-xs text-slate-500 mt-1"> {a.department || 'N/A'}</p>
+                  </Link>
+                </div>
+                <div className="flex items-center space-x-2">
                   <span className="text-slate-500">{a.students} étudiants</span>
-                </li>
-              </Link>
+                  <Link to={`/assistant/auditoires/${a.code}/messages`} className="btn btn-sm">Messages</Link>
+                </div>
+              </li>
             );
           })}
         </ul>

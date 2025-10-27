@@ -33,6 +33,8 @@ from .views import (
     quizzes_my_detail,
     assistant_profile,
     assistant_grades,
+    # New Assistant TPTD Submission endpoints
+    assistant_submission_detail, assistant_grade_submission,
 )
 
 urlpatterns = [
@@ -84,6 +86,10 @@ urlpatterns = [
     re_path(r"^quizzes/my/(?P<id>\d+)/?$", quizzes_my_detail, name="quizzes_my_detail"),
     re_path(r"^assistant/tograde/?$", assistant_tograde, name="assistant_tograde"),
     re_path(r'^assistant/grades/(?P<auditorium_id>\d+)/(?P<course_code>[^/]+)/?$', assistant_grades, name='assistant_grades'),
+    
+    # New Assistant TPTD Submission endpoints
+    re_path(r"^assistant/tptd/(?P<assignment_id>\d+)/submission/(?P<submission_id>\d+)/?$", assistant_submission_detail, name="assistant_submission_detail"),
+    re_path(r"^assistant/tptd/(?P<assignment_id>\d+)/submission/(?P<submission_id>\d+)/grade/?$", assistant_grade_submission, name="assistant_grade_submission"),
 
     # Admin & other roles endpoints
     re_path(r"^pdg/summary/?$", pdg_summary, name="pdg_summary"),
