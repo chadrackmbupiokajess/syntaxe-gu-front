@@ -30,6 +30,7 @@ class Assignment(models.Model):
 class Submission(models.Model):
     assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='submissions')
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='submissions')
+    content = models.TextField(blank=True, help_text="Contenu de la soumission de l'étudiant") # <-- Champ ajouté
     status = models.CharField(max_length=20, choices=[('soumis', 'Soumis'), ('non_soumis', 'Non soumis')], default='non_soumis')
     grade = models.FloatField(null=True, blank=True)
     submitted_at = models.DateTimeField(null=True, blank=True)
