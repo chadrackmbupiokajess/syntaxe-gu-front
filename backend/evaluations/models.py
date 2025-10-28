@@ -30,7 +30,7 @@ class Assignment(models.Model):
 class Submission(models.Model):
     assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='submissions')
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='submissions')
-    content = models.TextField(blank=True, help_text="Contenu de la soumission de l'étudiant") # <-- Champ ajouté
+    content = models.TextField(blank=True, help_text="Contenu de la soumission de l'étudiant")
     status = models.CharField(max_length=20, choices=[('soumis', 'Soumis'), ('non_soumis', 'Non soumis')], default='non_soumis')
     grade = models.FloatField(null=True, blank=True)
     submitted_at = models.DateTimeField(null=True, blank=True)
@@ -52,6 +52,7 @@ class Quiz(models.Model):
     )
     title = models.CharField(max_length=255)
     duration = models.PositiveIntegerField(default=30, help_text="Durée du quiz en minutes")
+    total_points = models.PositiveSmallIntegerField(default=20, help_text="La note maximale pour ce quiz") # <-- CHAMP AJOUTÉ
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

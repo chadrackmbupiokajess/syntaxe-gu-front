@@ -179,6 +179,7 @@ def quizzes_my(request):
         course_code = request.data.get("course_code")
         title = request.data.get("title", "").strip()
         duration = request.data.get("duration", 20)
+        total_points = request.data.get("total_points", 20) # <-- RÉCUPÉRATION
         questions = request.data.get("questions", [])
 
         if not (course_code and title and questions):
@@ -191,7 +192,7 @@ def quizzes_my(request):
         if not CourseAssignment.objects.filter(course=course, assistant=ap).exists():
             return Response({"detail": "Vous n'êtes pas assigné à ce cours."}, status=403)
 
-        quiz = Quiz.objects.create(course=course, assistant=ap, title=title, duration=duration)
+        quiz = Quiz.objects.create(course=course, assistant=ap, title=title, duration=duration, total_points=total_points) # <-- SAUVEGARDE
 
         for q_data in questions:
             question = Question.objects.create(quiz=quiz, question_text=q_data['text'], question_type=q_data['type'])
@@ -212,6 +213,7 @@ def quizzes_my(request):
             "department": q.course.auditoire.departement.name,
             "auditorium": q.course.auditoire.name,
             "duration": q.duration,
+            "total_points": q.total_points, # <-- AJOUT
         })
     return Response(items)
 
@@ -238,6 +240,7 @@ def quizzes_my_detail(request, id):
                 "auditorium": quiz.course.auditoire.name,
                 "department": quiz.course.auditoire.departement.name,
                 "duration": quiz.duration,
+                "total_points": quiz.total_points, # <-- AJOUT
                 "created_at": quiz.created_at,
                 "questions": questions,
             }
