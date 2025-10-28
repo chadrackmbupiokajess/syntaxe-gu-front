@@ -5,17 +5,45 @@ import { safeGet } from '../api/safeGet'
 export default function StudentNotes() {
   const [rows, setRows] = useState([])
   const [q, setQ] = useState('')
-  useEffect(() => { safeGet('/api/student/grades/all', []).then(setRows) }, [])
+
+  useEffect(() => {
+    const fetchNotes = async () => {
+      const [attempts, submissions] = await Promise.all([
+        safeGet('/api/quizzes/student/my-attempts/', []),
+        safeGet('/api/tptd/student/my-submissions/', [])
+      ]);
+
+      const a = (attempts || []).map(item => ({
+        code: item.course_name,
+        title: item.quiz_title,
+        credits: 0, // Credits not available in this endpoint
+        grade: item.score
+      }));
+
+      const s = (submissions || []).map(item => ({
+        code: item.course_name,
+        title: item.title,
+        credits: 0, // Credits not available in this endpoint
+        grade: item.grade
+      }));
+
+      setRows([...a, ...s]);
+    };
+
+    fetchNotes();
+  }, [])
+
   const filtered = rows.filter(r => [r.code, r.title].join(' ').toLowerCase().includes(q.toLowerCase()))
+  
   const avg = useMemo(() => {
     if (!rows.length) return 0
-    const totalCredits = rows.reduce((s, r) => s + (r.credits||0), 0)
-    const weighted = rows.reduce((s, r) => s + (r.grade*(r.credits||0)), 0)
-    return totalCredits ? (weighted/totalCredits).toFixed(2) : 0
+    const totalCredits = rows.reduce((s, r) => s + (r.credits || 0), 0)
+    const weighted = rows.reduce((s, r) => s + (r.grade * (r.credits || 0)), 0)
+    return totalCredits ? (weighted / totalCredits).toFixed(2) : 0
   }, [rows])
 
   const exportCSV = () => {
-    const headers = ['Code','Intitulé','Crédits','Note']
+    const headers = ['Code', 'Intitulé', 'Crédits', 'Note']
     const lines = filtered.map(r => [r.code, r.title, r.credits, r.grade])
     const csv = [headers, ...lines].map(a => a.join(';')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -52,8 +80,8 @@ export default function StudentNotes() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(r => (
-                <tr key={r.code} className="border-t border-slate-200/60 dark:border-slate-800/60">
+              {filtered.map((r,i) => (
+                <tr key={i} className="border-t border-slate-200/60 dark:border-slate-800/60">
                   <td className="py-2 pr-4 font-medium">{r.code}</td>
                   <td className="py-2 pr-4">{r.title}</td>
                   <td className="py-2 pr-4">{r.credits}</td>
