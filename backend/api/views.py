@@ -634,21 +634,27 @@ def student_meta(request):
     u = request.user
     uid = _safe_user_id(u)
     auditorium = ""
+    auditorium_id = None  # <-- LIGNE AJOUTÉE
     department = ""
     faculty = ""
     matricule = f"STU-{uid:05d}"
     try:
         sp = StudentProfile.objects.select_related("current_auditoire__departement__section").get(user=u)
-        auditorium = getattr(getattr(sp, "current_auditoire", None), "name", "") or ""
-        dep = getattr(sp.current_auditoire, "departement", None)
-        department = getattr(dep, "name", "") if dep else ""
-        faculty = getattr(getattr(dep, "section", None), "name", "") if dep else ""
+        if sp.current_auditoire: # <-- Vérification ajoutée
+            auditorium = sp.current_auditoire.name
+            auditorium_id = sp.current_auditoire.id  # <-- LIGNE AJOUTÉE
+            dep = sp.current_auditoire.departement
+            if dep:
+                department = dep.name
+                if dep.section:
+                    faculty = dep.section.name
         if sp.matricule:
             matricule = sp.matricule
     except Exception:
         pass
     data = {
         "auditorium": auditorium,
+        "auditorium_id": auditorium_id,  # <-- LIGNE AJOUTÉE
         "session": f"{timezone.now().year}-{timezone.now().year + 1}",
         "department": department,
         "faculty": faculty,
