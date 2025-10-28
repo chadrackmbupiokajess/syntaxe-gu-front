@@ -652,7 +652,7 @@ def student_grades_recent(request):
         )
         for s in subs:
             items.append({
-                "course": getattr(getattr(s.assignment, "course", None), "name", "Cours"),
+                "course": getattr(s.assignment, "course", None).name if getattr(s.assignment, "course", None) else "Cours",
                 "grade": s.grade,
             })
     except Exception:
@@ -1361,7 +1361,7 @@ def quizzes_student_start(request, id: int):
         attempt, created = QuizAttempt.objects.get_or_create(
             student=sp, 
             quiz=quiz,
-            defaults={'total_questions': quiz.questions.count(), 'submission_reason': 'left-page'}
+            defaults={'total_questions': quiz.questions.count(), 'submission_reason': 'manual'} # Default to manual
         )
         
         return Response({"status": "ok", "attempt_id": attempt.id})
@@ -1377,33 +1377,40 @@ def quizzes_student_attempt_submit(request, id: int):
             sp = StudentProfile.objects.get(user=request.user)
             quiz = Quiz.objects.get(id=id)
             answers_data = request.data.get('answers', {})
-            reason = request.data.get('reason', 'manual')
-            total_score = 0
+            reason = request.data.get('reason', 'manual') # Default to manual if not provided
 
             # Récupère la tentative existante
             attempt = QuizAttempt.objects.get(student=sp, quiz=quiz)
+            attempt.submission_reason = reason # Set the submission reason
 
             # Supprime les anciennes réponses pour cette tentative pour éviter les doublons
             Answer.objects.filter(attempt=attempt).delete()
 
+            total_score = 0
+
+            # Déterminer si la correction automatique doit avoir lieu
+            should_auto_grade = attempt.submission_reason in ['time-out', 'left-page']
+
             for question_id, answer_value in answers_data.items():
                 question = Question.objects.get(id=question_id)
-                points = 0
+                points = None # Par défaut, les points sont None pour correction manuelle
 
-                if question.question_type == 'single':
-                    correct_choice = question.choices.filter(is_correct=True).first()
-                    if correct_choice and correct_choice.id == answer_value:
-                        points = 1
+                if should_auto_grade:
+                    if question.question_type == 'single':
+                        correct_choice = question.choices.filter(is_correct=True).first()
+                        if correct_choice and correct_choice.id == answer_value:
+                            points = 1
 
-                elif question.question_type == 'multiple':
-                    correct_choices = set(question.choices.filter(is_correct=True).values_list('id', flat=True))
-                    if isinstance(answer_value, list) and set(answer_value) == correct_choices:
-                        points = 1
+                    elif question.question_type == 'multiple':
+                        correct_choices = set(question.choices.filter(is_correct=True).values_list('id', flat=True))
+                        if isinstance(answer_value, list) and set(answer_value) == correct_choices:
+                            points = 1
 
                 answer = Answer.objects.create(
                     attempt=attempt,
                     question=question,
-                    answer_text=str(answer_value) if question.question_type == 'text' else ''
+                    answer_text=str(answer_value) if question.question_type == 'text' else '',
+                    points_obtained=points # Assigner les points calculés ou None
                 )
 
                 if question.question_type in ['single', 'multiple'] and answer_value:
@@ -1412,16 +1419,23 @@ def quizzes_student_attempt_submit(request, id: int):
                     else:
                         answer.selected_choices.set([answer_value])
                 
-                answer.points_obtained = points
-                answer.save()
-                total_score += points
+                # Ajouter au score total uniquement si la correction est automatique et les points sont définis
+                if should_auto_grade and points is not None:
+                    total_score += points
             
-            attempt.score = total_score
+            attempt.score = total_score if should_auto_grade else None # Définir le score à None si pas de correction automatique
             attempt.submitted_at = timezone.now()
-            attempt.submission_reason = reason
-            attempt.save()
+            attempt.save() # La méthode save du modèle QuizAttempt définira correction_status
 
-        return Response({"status": "submitted", "score": total_score, "total_questions": attempt.total_questions})
+        response_data = {
+            "status": "submitted",
+            "correction_status": attempt.correction_status,
+            "total_questions": attempt.total_questions
+        }
+        if should_auto_grade:
+            response_data["score"] = attempt.score
+
+        return Response(response_data)
 
     except QuizAttempt.DoesNotExist:
         return Response({"detail": "Tentative de quiz non trouvée. Veuillez démarrer le quiz d'abord."}, status=404)

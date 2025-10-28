@@ -89,13 +89,14 @@ export default function StudentQuizDetail() {
 
     const res = await safePost(`/api/quizzes/student/attempts/${id}/submit/`, { answers, reason });
     if (res) {
-      if (res.detail === "Vous avez déjà soumis ce quiz.") {
-        toast.push({ title: "Information", message: res.detail, kind: 'info' });
-      } else {
-        toast.push({ title: "Succès", message: `Quiz soumis ! Votre score: ${res.score}/${res.total_questions}` });
-      }
       setSubmissionResult(res);
-      // Pas besoin de naviguer ici, on reste sur la page pour voir le résultat
+      if (res.correction_status === 'automatic') {
+        toast.push({ title: "Succès", message: `Quiz soumis ! Votre score: ${res.score}/${res.total_questions}` });
+      } else if (res.correction_status === 'pending') {
+        toast.push({ title: "Soumission enregistrée", message: "Votre quiz est en attente de correction.", kind: 'info' });
+      } else if (res.detail) {
+         toast.push({ title: "Information", message: res.detail, kind: 'info' });
+      }
     } else {
       toast.push({ title: "Erreur", message: "Erreur lors de la soumission du quiz.", kind: 'error' });
       submittedRef.current = false; // Allow retry if submission fails
@@ -171,8 +172,17 @@ export default function StudentQuizDetail() {
       {submissionResult ? (
         <div className="card p-6 text-center">
             <h2 className="text-2xl font-bold mb-4">Résultats du Quiz</h2>
-            <p className="text-4xl font-bold">{submissionResult.score} / {submissionResult.total_questions}</p>
-            <p className="text-slate-600 dark:text-slate-400 mt-2">Votre score a été enregistré.</p>
+            {submissionResult.correction_status === 'pending' || submissionResult.score === null || submissionResult.score === undefined ? (
+                <>
+                    <p className="text-2xl font-semibold mt-4">Résultats du Quiz est en attente</p>
+                    <p className="text-slate-600 dark:text-slate-400 mt-2">Votre soumission a été enregistrée et sera corrigée manuellement.</p>
+                </>
+            ) : (
+                <>
+                    <p className="text-4xl font-bold">{submissionResult.score} / {submissionResult.total_questions}</p>
+                    <p className="text-slate-600 dark:text-slate-400 mt-2">Votre score a été enregistré.</p>
+                </>
+            )}
             <button onClick={() => navigate('/etudiant/travaux', { state: { tab: 'quiz' } })} className="btn btn-secondary mt-4">Retour aux travaux</button>
         </div>
       ) : (

@@ -96,7 +96,7 @@ export default function App() {
               <Route path="notes" element={<AssistantGrades />} />
               <Route path="tptd" element={<AssistantTPTD />} />
               <Route path="tptd/:id" element={<AssistantTPTDDetails />} />
-              <Route path="tptd/:assignmentId/submission/:submissionId" element={<AssistantSubmissionDetail />} /> {/* <-- Nouvelle route */} 
+              <Route path="tptd/:assignmentId/submission/:submissionId" element={<AssistantSubmissionDetail />} /> {/* <-- Nouvelle route */}
               <Route path="quizzes" element={<AssistantQuizzes />} />
               <Route path="quizzes/new" element={<AssistantNewQuiz />} />
               <Route path="quizzes/:id" element={<AssistantQuizDetails />} />
