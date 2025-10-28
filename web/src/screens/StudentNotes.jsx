@@ -8,24 +8,42 @@ export default function StudentNotes() {
 
   useEffect(() => {
     const fetchNotes = async () => {
-      const [attempts, submissions] = await Promise.all([
+      const [attempts, submissions, courses] = await Promise.all([
         safeGet('/api/quizzes/student/my-attempts/', []),
-        safeGet('/api/tptd/student/my-submissions/', [])
+        safeGet('/api/tptd/student/my-submissions/', []),
+        safeGet('/api/student/courses', [])
       ]);
 
-      const a = (attempts || []).map(item => ({
-        code: item.course_name,
-        title: item.quiz_title,
-        credits: 0, // Credits not available in this endpoint
-        grade: item.score
-      }));
+      const courseCredits = courses.reduce((acc, course) => {
+        acc[course.title] = course.credits;
+        return acc;
+      }, {});
 
-      const s = (submissions || []).map(item => ({
-        code: item.course_name,
-        title: item.title,
-        credits: 0, // Credits not available in this endpoint
-        grade: item.grade
-      }));
+      const a = (attempts || []).map(item => {
+        const gradeValue = (item.score !== null && item.score !== undefined && item.total_questions)
+          ? (item.score / item.total_questions) * 10
+          : 'En attente';
+
+        return {
+          code: item.course_name,
+          title: item.quiz_title,
+          credits: courseCredits[item.course_name] || 0,
+          grade: gradeValue
+        };
+      });
+
+      const s = (submissions || []).map(item => {
+        const gradeValue = (item.grade !== null && item.grade !== undefined && item.total_points)
+          ? (item.grade / item.total_points) * 10
+          : 'En attente';
+
+        return {
+          code: item.course_name,
+          title: item.title,
+          credits: courseCredits[item.course_name] || 0,
+          grade: gradeValue
+        };
+      });
 
       setRows([...a, ...s]);
     };
@@ -35,16 +53,23 @@ export default function StudentNotes() {
 
   const filtered = rows.filter(r => [r.code, r.title].join(' ').toLowerCase().includes(q.toLowerCase()))
   
+  const gradedRows = useMemo(() => filtered.filter(r => typeof r.grade === 'number'), [filtered]);
+
   const avg = useMemo(() => {
-    if (!rows.length) return 0
-    const totalCredits = rows.reduce((s, r) => s + (r.credits || 0), 0)
-    const weighted = rows.reduce((s, r) => s + (r.grade * (r.credits || 0)), 0)
-    return totalCredits ? (weighted / totalCredits).toFixed(2) : 0
-  }, [rows])
+    if (!gradedRows.length) return 0
+    const totalCredits = gradedRows.reduce((s, r) => s + (r.credits || 0), 0)
+    if (totalCredits === 0) {
+        if (gradedRows.length === 0) return 0;
+        const simpleAvg = gradedRows.reduce((s, r) => s + r.grade, 0) / gradedRows.length;
+        return simpleAvg.toFixed(2);
+    }
+    const weighted = gradedRows.reduce((s, r) => s + (r.grade * (r.credits || 0)), 0)
+    return (weighted / totalCredits).toFixed(2)
+  }, [gradedRows])
 
   const exportCSV = () => {
-    const headers = ['Code', 'Intitulé', 'Crédits', 'Note']
-    const lines = filtered.map(r => [r.code, r.title, r.credits, r.grade])
+    const headers = ['Code', 'Intitulé', 'Crédits', 'Note (sur 10)']
+    const lines = filtered.map(r => [r.code, r.title, r.credits, typeof r.grade === 'number' ? r.grade.toFixed(2) : 'En attente'])
     const csv = [headers, ...lines].map(a => a.join(';')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
@@ -59,7 +84,7 @@ export default function StudentNotes() {
     <div className="grid gap-4">
       <div className="card p-4 flex items-center justify-between">
         <div>
-          <div className="text-sm text-slate-500">Moyenne pondérée (sur 20)</div>
+          <div className="text-sm text-slate-500">Moyenne pondérée (sur 10)</div>
           <div className="text-2xl font-semibold">{avg}</div>
         </div>
         <button className="btn" onClick={exportCSV}>Exporter CSV</button>
@@ -76,7 +101,7 @@ export default function StudentNotes() {
                 <th className="py-2 pr-4">Code</th>
                 <th className="py-2 pr-4">Intitulé</th>
                 <th className="py-2 pr-4">Crédits</th>
-                <th className="py-2 pr-4">Note</th>
+                <th className="py-2 pr-4">Note (sur 10)</th>
               </tr>
             </thead>
             <tbody>
@@ -85,7 +110,7 @@ export default function StudentNotes() {
                   <td className="py-2 pr-4 font-medium">{r.code}</td>
                   <td className="py-2 pr-4">{r.title}</td>
                   <td className="py-2 pr-4">{r.credits}</td>
-                  <td className="py-2 pr-4">{r.grade}</td>
+                  <td className="py-2 pr-4">{typeof r.grade === 'number' ? r.grade.toFixed(2) : r.grade}</td>
                 </tr>
               ))}
             </tbody>
