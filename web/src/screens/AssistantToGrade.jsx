@@ -15,9 +15,9 @@ export default function AssistantToGrade() {
   const [openSections, setOpenSections] = useState({});
 
   useEffect(() => {
-    const load = async () => { 
-      const { data } = await axios.get('/api/assistant/tograde'); 
-      setItems(data); 
+    const load = async () => {
+      const { data } = await axios.get('/api/assistant/tograde');
+      setItems(data);
     }
     load();
   }, []);
@@ -101,17 +101,23 @@ export default function AssistantToGrade() {
                                               </tr>
                                             </thead>
                                             <tbody>
-                                              {submissions.map(s => (
-                                                <tr key={s.id} className="border-t border-slate-700 hover:bg-slate-600 transition-colors duration-150">
-                                                  <td className="py-2 px-4 font-medium text-slate-100">{s.student_name}</td>
-                                                  <td className="py-2 px-4 text-slate-300">{formatDate(s.submitted_at)}</td>
-                                                  <td className="py-2 px-4 text-right">
-                                                    <Link to={`/assistant/tptd/${s.assignment_id}/submission/${s.id}`} className="btn bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-1 px-3 rounded-md transition-colors duration-200 shadow-md">
-                                                      Corriger
-                                                    </Link>
-                                                  </td>
-                                                </tr>
-                                              ))}
+                                              {submissions.map(s => {
+                                                const submissionUrl = s.type === 'quiz'
+                                                  ? `/assistant/quizzes/${s.assignment_id}/submission/${s.id}`
+                                                  : `/assistant/tptd/${s.assignment_id}/submission/${s.id}`;
+
+                                                return (
+                                                  <tr key={s.id} className="border-t border-slate-700 hover:bg-slate-600 transition-colors duration-150">
+                                                    <td className="py-2 px-4 font-medium text-slate-100">{s.student_name}</td>
+                                                    <td className="py-2 px-4 text-slate-300">{formatDate(s.submitted_at)}</td>
+                                                    <td className="py-2 px-4 text-right">
+                                                      <Link to={submissionUrl} className="btn bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-1 px-3 rounded-md transition-colors duration-200 shadow-md">
+                                                        Corriger
+                                                      </Link>
+                                                    </td>
+                                                  </tr>
+                                                );
+                                              })}
                                             </tbody>
                                           </table>
                                         </div>

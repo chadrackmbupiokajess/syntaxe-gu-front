@@ -100,6 +100,7 @@ export default function App() {
               <Route path="quizzes" element={<AssistantQuizzes />} />
               <Route path="quizzes/new" element={<AssistantNewQuiz />} />
               <Route path="quizzes/:id" element={<AssistantQuizDetails />} />
+              <Route path="quizzes/:quizId/submission/:submissionId" element={<AssistantSubmissionDetail />} /> {/* <-- Nouvelle route pour les soumissions de quiz */}
               <Route path="notifications" element={<StudentNotifications />} />
               <Route path="a-corriger" element={<AssistantToGrade />} />
               <Route path="profil" element={<AssistantProfile />} />

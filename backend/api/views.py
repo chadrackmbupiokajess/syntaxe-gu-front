@@ -9,6 +9,7 @@ from datetime import timedelta
 from django.apps import apps
 from django.contrib.auth.hashers import make_password
 from django.db import transaction, IntegrityError
+from django.db.models import Q
 
 StudentProfile = apps.get_model('accounts', 'StudentProfile')
 AcademicProfile = apps.get_model('accounts', 'AcademicProfile')
@@ -353,11 +354,11 @@ def assistant_tograde(request):
     items = []
     try:
         ap = AcademicProfile.objects.get(user=request.user)
-        # Récupérer les soumissions de TP/TD
+        # Récupérer les soumissions de TP/TD qui ne sont pas encore notées
         submissions_tptd = Submission.objects.select_related(
-            "assignment__course__auditoire__departement", 
+            "assignment__course__auditoire__departement",
             "student__user"
-        ).filter(assignment__assistant=ap, grade__isnull=True, status='soumis')
+        ).filter(assignment__assistant=ap, grade__isnull=True).exclude(status='non_soumis')
 
         for s in submissions_tptd:
             items.append({
@@ -371,8 +372,26 @@ def assistant_tograde(request):
                 "submitted_at": s.submitted_at,
                 "assignment_id": s.assignment.id,
             })
-        
-        # TODO: Ajouter la logique pour les soumissions de Quiz si nécessaire
+
+        # Récupérer les tentatives de Quiz à corriger
+        quiz_attempts = QuizAttempt.objects.select_related(
+            "quiz__course__auditoire__departement",
+            "student__user"
+        ).filter(quiz__assistant=ap, correction_status__in=['pending', 'manual'])
+
+        for qa in quiz_attempts:
+            items.append({
+                "id": qa.id,
+                "type": "Quiz",
+                "title": qa.quiz.title,
+                "student_name": f"{qa.student.nom} {qa.student.prenom}".strip(),
+                "course_name": qa.quiz.course.name,
+                "auditorium": qa.quiz.course.auditoire.name,
+                "department": qa.quiz.course.auditoire.departement.name,
+                "submitted_at": qa.submitted_at,
+                "quiz_id": qa.quiz.id,
+                "attempt_id": qa.id
+            })
 
     except Exception as e:
         # Log the exception for debugging
@@ -461,7 +480,7 @@ def assistant_grade_submission(request, assignment_id: int, submission_id: int):
 
         if grade is None:
             return Response({"detail": "La note est requise."}, status=400)
-        
+
         # Valider la note (par exemple, entre 0 et total_points de l'assignment)
         if not (0 <= float(grade) <= submission.assignment.total_points):
              return Response({"detail": f"La note doit être entre 0 et {submission.assignment.total_points}."}, status=400)
@@ -500,7 +519,7 @@ def assistant_profile(request):
             # Update academic profile
             ap.phone = request.data.get('phone', ap.phone)
             ap.office = request.data.get('office', ap.office)
-            
+
             # Handle profile picture upload
             if 'profile_picture' in request.FILES:
                 ap.profile_picture = request.FILES['profile_picture']
@@ -554,7 +573,7 @@ def assistant_profile(request):
         return Response({"detail": "Profil non trouvé."}, status=404)
 
 
-# --- Vues Placeholder --- 
+# --- Vues Placeholder ---
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
@@ -569,7 +588,7 @@ def student_summary(request):
 
         # Calcul des crédits et GPA
         submissions = Submission.objects.filter(student=sp, grade__isnull=False).select_related('assignment__course')
-        
+
         # Pour éviter de compter plusieurs fois les crédits d'un même cours
         successful_courses = set()
         total_points = 0
@@ -582,7 +601,7 @@ def student_summary(request):
                 if sub.assignment.course.id not in successful_courses:
                     creditsEarned += credits
                     successful_courses.add(sub.assignment.course.id)
-            
+
             # Pour le GPA, on peut faire une moyenne simple ou pondérée
             # Ici, une moyenne simple des notes
             if sub.grade is not None:
@@ -748,13 +767,13 @@ def auditoriums_assistant_my(request):
 def assistant_student_detail(request, id: int):
     try:
         sp = StudentProfile.objects.select_related("user", "current_auditoire").get(id=id)
-        
+
         total_grade_obtained = 0
         total_possible_points = 0
 
         # Get all graded submissions for the student
         submissions = Submission.objects.filter(student=sp, grade__isnull=False).select_related('assignment')
-        
+
         for sub in submissions:
             total_grade_obtained += sub.grade
             total_possible_points += getattr(sub.assignment, 'total_points', 20) # Default to 20 if not set
@@ -825,7 +844,7 @@ def assistant_auditorium_courses(request, code: str):
         if aud:
             # Find assignments for the current assistant in the specified auditorium
             assignments = CourseAssignment.objects.filter(
-                assistant=ap, 
+                assistant=ap,
                 course__auditoire=aud
             ).select_related('course')
 
@@ -861,7 +880,7 @@ def assistant_auditorium_students(request, code: str):
 
                 # Get all graded submissions for the student
                 submissions = Submission.objects.filter(student=s, grade__isnull=False).select_related('assignment')
-                
+
                 for sub in submissions:
                     total_grade_obtained += sub.grade
                     total_possible_points += getattr(sub.assignment, 'total_points', 20) # Default to 20 if not set
@@ -932,7 +951,7 @@ def assistant_auditorium_messages(request, code: str):
         aud = Auditoire.objects.filter(pk=auditorium_id).first()
         if not aud:
             return Response([], status=404)
-        
+
         if request.method == "GET":
             # Fetch messages, selecting related user for sender
             msgs = CourseMessage.objects.select_related("course", "sender__academicprofile", "sender__studentprofile").filter(course__auditoire=aud).order_by("-created_at")[:100]
@@ -963,7 +982,7 @@ def assistant_auditorium_messages(request, code: str):
                     "sender_type": sender_type,
                 })
             return Response(out)
-        
+
         # POST request
         # Assuming CourseMessage.sender is a ForeignKey to User
         user = request.user
@@ -973,14 +992,14 @@ def assistant_auditorium_messages(request, code: str):
         course_id = request.data.get("course_id")
         title = request.data.get("title", "").strip()
         body = request.data.get("body", "").strip()
-        
+
         if not (course_id and title and body):
             return Response({"detail": "course_id, title, body requis"}, status=400)
-        
+
         course = Course.objects.filter(id=course_id, auditoire=aud).first()
         if not course:
             return Response({"detail": "Cours introuvable dans cet auditoire"}, status=404)
-        
+
         msg = CourseMessage.objects.create(course=course, sender=user, title=title, body=body)
 
         sender_name = ""
