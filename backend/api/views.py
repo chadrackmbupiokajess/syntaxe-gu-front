@@ -1314,7 +1314,7 @@ def student_courses(request):
         for c in Course.objects.filter(auditoire=aud).select_related("auditoire"):
             code = f"{c.name[:3].upper()}-{c.id}"
             title = c.name
-            credits = 3
+            credits = c.credits
             assign = CourseAssignment.objects.filter(course=c).select_related("assistant").first()
             instructor = (
                 f"{assign.assistant.prenom} {assign.assistant.nom}".strip() if assign and assign.assistant else ""
