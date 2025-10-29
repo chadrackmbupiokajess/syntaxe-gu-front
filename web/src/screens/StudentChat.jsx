@@ -36,10 +36,10 @@ function CourseSidebar({ courses, onSelectCourse, selectedCourse }) {
       <nav className="flex flex-col gap-2">
         {courses.map(course => (
           <button
-            key={course.code}
+            key={course.id}
             onClick={() => onSelectCourse(course)}
             className={`text-left p-2 rounded-md transition-colors duration-200 ${
-              selectedCourse?.code === course.code
+              selectedCourse?.id === course.id
                 ? 'bg-blue-500 text-white font-semibold'
                 : 'hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
@@ -53,7 +53,7 @@ function CourseSidebar({ courses, onSelectCourse, selectedCourse }) {
   );
 }
 
-function ChatArea({ course, studentMeta }) {
+function ChatArea({ course, studentMeta, currentUser }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -65,7 +65,7 @@ function ChatArea({ course, studentMeta }) {
   }
 
   useEffect(() => {
-    if (!course || !studentMeta || !studentMeta.auditorium_id) {
+    if (!course) {
         setMessages([]);
         return;
     }
@@ -73,10 +73,10 @@ function ChatArea({ course, studentMeta }) {
     const fetchMessages = async () => {
       setLoading(true);
       try {
-        const response = await safeGet(`/api/assistant/auditoriums/${studentMeta.auditorium_id}/messages`);
+        const response = await safeGet(`/api/student/messages`);
         if (response) {
             const filteredMessages = response.filter(msg => 
-                msg.course === course.title && msg.sender_type === 'Assistant'
+                msg.courseId === course.id
             );
             setMessages(filteredMessages);
         } else {
@@ -90,15 +90,15 @@ function ChatArea({ course, studentMeta }) {
       setLoading(false);
     };
     fetchMessages();
-  }, [course, studentMeta]);
+  }, [course]);
 
   useEffect(scrollToBottom, [messages]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !course || !studentMeta || !studentMeta.auditorium_id) return;
+    if (!newMessage.trim() || !course) return;
     try {
-      const response = await safePost(`/api/assistant/auditoriums/${studentMeta.auditorium_id}/messages`, { course_id: course.id, body: newMessage });
+      const response = await safePost(`/api/student/messages`, { course_id: course.id, body: newMessage });
       if(response) {
         setMessages(prev => [...prev, response]);
       }
@@ -138,7 +138,7 @@ function ChatArea({ course, studentMeta }) {
       lastDate = msgDate;
     }
 
-    const isSelf = msg.sender_type !== 'Assistant'; // Student is self
+    const isSelf = msg.sender_id === currentUser.id;
     const avatar = (
       <div className={`w-8 h-8 rounded-full ${isSelf ? 'bg-blue-500' : 'bg-slate-600'} flex-shrink-0 flex items-center justify-center font-bold text-white`}>
         {isSelf ? 'Moi' : msg.sender.charAt(0).toUpperCase()}
@@ -170,7 +170,7 @@ function ChatArea({ course, studentMeta }) {
       </div>
       <div className="flex-1 p-6 overflow-y-auto">
         <div className="flex flex-col gap-4">
-          {chatElements.length > 0 ? chatElements : <p className="text-center text-slate-500">Aucun message de l'assistant pour ce cours.</p>}
+          {chatElements.length > 0 ? chatElements : <p className="text-center text-slate-500">Aucun message pour ce cours.</p>}
           <div ref={messagesEndRef} />
         </div>
       </div>
@@ -201,17 +201,17 @@ function ChatArea({ course, studentMeta }) {
 export default function StudentChat() {
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
-  const [studentMeta, setStudentMeta] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [coursesResponse, metaResponse] = await Promise.all([
+        const [coursesResponse, userResponse] = await Promise.all([
             safeGet('/api/student/courses'),
-            safeGet('/api/student/meta')
+            safeGet('/api/auth/me'),
         ]);
         setCourses(coursesResponse || []);
-        setStudentMeta(metaResponse || {});
+        setCurrentUser(userResponse || {});
       } catch (error) {
         console.error("Erreur lors de la récupération des données initiales:", error);
       }
@@ -226,7 +226,7 @@ export default function StudentChat() {
         onSelectCourse={setSelectedCourse}
         selectedCourse={selectedCourse}
       />
-      <ChatArea key={selectedCourse?.code} course={selectedCourse} studentMeta={studentMeta} />
+      <ChatArea key={selectedCourse?.id} course={selectedCourse} currentUser={currentUser} />
     </div>
   );
 }

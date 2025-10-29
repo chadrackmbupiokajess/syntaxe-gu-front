@@ -4,7 +4,7 @@ from .views import (
     health, student_summary, student_meta, student_grades_recent, student_profile,
     # Vues ajoutées
     assistant_summary, auditoriums_assistant_my, tptd_my, quizzes_my, assistant_tograde,
-    assistant_auditorium_courses, assistant_auditorium_students, assistant_auditorium_activities, assistant_auditorium_stats, assistant_auditorium_messages,
+    assistant_auditorium_courses, assistant_auditorium_students, assistant_auditorium_activities, assistant_auditorium_stats,
     assistant_auditorium_create_tptd, assistant_auditorium_create_quiz,
     student_notifications, 
     # Endpoints manquants (student/library/payments)
@@ -35,6 +35,8 @@ from .views import (
     assistant_grades,
     # New Assistant TPTD Submission endpoints
     assistant_submission_detail, assistant_grade_submission,
+    # New student messages endpoint
+    student_messages,
 )
 
 urlpatterns = [
@@ -64,6 +66,7 @@ urlpatterns = [
     re_path(r"^library/catalog/?$", library_catalog, name="library_catalog"),
     re_path(r"^library/myloans/?$", library_myloans, name="library_myloans"),
     re_path(r"^payments/mine/?$", payments_mine, name="payments_mine"),
+    re_path(r"^student/messages/?$", student_messages, name="student_messages"),
 
     # Assistant endpoints
     re_path(r"^assistant/summary/?$", assistant_summary, name="assistant_summary"),
@@ -74,7 +77,6 @@ urlpatterns = [
     re_path(r"^assistant/auditoriums/(?P<code>.+)/students/?$", assistant_auditorium_students, name="assistant_auditorium_students"),
     re_path(r"^assistant/auditoriums/(?P<code>.+)/activities/?$", assistant_auditorium_activities, name="assistant_auditorium_activities"),
     re_path(r"^assistant/auditoriums/(?P<code>.+)/stats/?$", assistant_auditorium_stats, name="assistant_auditorium_stats"),
-    re_path(r"^assistant/auditoriums/(?P<code>.+)/messages/?$", assistant_auditorium_messages, name="assistant_auditorium_messages"),
     re_path(r"^assistant/auditoriums/(?P<code>.+)/tptd/new/?$", assistant_auditorium_create_tptd, name="assistant_auditorium_create_tptd"),
     re_path(r"^assistant/auditoriums/(?P<code>.+)/quizzes/new/?$", assistant_auditorium_create_quiz, name="assistant_auditorium_create_quiz"),
     re_path(r"^assistant/students/(?P<id>\d+)/?$", assistant_student_detail, name="assistant_student_detail"),

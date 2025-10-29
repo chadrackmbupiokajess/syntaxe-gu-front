@@ -363,7 +363,7 @@ def assistant_tograde(request):
         for s in submissions_tptd:
             items.append({
                 "id": s.id,
-                "type": s.assignment.type, # Type de l'assignment (TP/TD)
+                "type": "TP/TD", # Type de l'assignment (TP/TD)
                 "title": s.assignment.title,
                 "student_name": f"{s.student.nom} {s.student.prenom}".strip(),
                 "course_name": s.assignment.course.name,
@@ -385,7 +385,7 @@ def assistant_tograde(request):
                 "type": "Quiz",
                 "title": qa.quiz.title,
                 "student_name": f"{qa.student.nom} {qa.student.prenom}".strip(),
-                "course_name": qa.quiz.course.name,
+                "course_name": qa.quiz.course.auditoire.name,
                 "auditorium": qa.quiz.course.auditoire.name,
                 "department": qa.quiz.course.auditoire.departement.name,
                 "submitted_at": qa.submitted_at,
@@ -895,6 +895,7 @@ def assistant_auditorium_students(request, code: str):
                     "id": s.id,
                     "name": f"{s.nom} {s.postnom} {s.prenom}".strip(),
                     "email": getattr(getattr(s, "user", None), "email", ""),
+                    "auditorium": getattr(getattr(s, "current_auditoire", None), "name", ""),
                     "total_grade_obtained": total_grade_obtained,
                     "total_possible_points": total_possible_points,
                 })
@@ -947,95 +948,102 @@ def assistant_auditorium_stats(request, code: str):
     return Response(data)
 
 
-# ---- Assistant: auditorium messages (GET list, POST create) ----
+# ---- Student messages (GET list, POST create) ----
 
 @api_view(["GET", "POST"])
 @permission_classes(DEV_PERMS)
-def assistant_auditorium_messages(request, code: str):
+def student_messages(request):
     try:
-        auditorium_id = int(code)
-        aud = Auditoire.objects.filter(pk=auditorium_id).first()
-        if not aud:
-            return Response([], status=404)
+        sp = StudentProfile.objects.get(user=request.user)
+        
+        # If student has no current_auditoire, they cannot access messages
+        if not sp.current_auditoire:
+            return Response({"detail": "L'étudiant n'est pas assigné à un auditoire."}, status=403)
+        
+        aud = sp.current_auditoire # Directly use the related object
 
         if request.method == "GET":
-            # Fetch messages, selecting related user for sender
-            msgs = CourseMessage.objects.select_related("course", "sender__academicprofile", "sender__studentprofile").filter(course__auditoire=aud).order_by("-created_at")[:100]
+            msgs = CourseMessage.objects.select_related("course", "sender", "sender__academicprofile", "sender__studentprofile").filter(course__auditoire=aud).order_by("created_at")[:100]
             out = []
             for m in msgs:
-                sender_name = ""
-                sender_type = ""
-                if hasattr(m.sender, 'academicprofile') and m.sender.academicprofile:
-                    sender_profile = m.sender.academicprofile
-                    sender_name = f"{sender_profile.prenom} {sender_profile.nom}".strip()
-                    sender_type = "Assistant"
-                elif hasattr(m.sender, 'studentprofile') and m.sender.studentprofile:
-                    sender_profile = m.sender.studentprofile
-                    sender_name = f"{sender_profile.prenom} {sender_profile.nom}".strip()
-                    sender_type = "Étudiant"
-                else:
-                    sender_name = m.sender.username if m.sender else "Inconnu"
-                    sender_type = "Utilisateur"
+                sender_name = "Inconnu"
+                sender_type = "Utilisateur"
+
+                if m.sender:
+                    first_name = getattr(m.sender, 'first_name', '')
+                    last_name = getattr(m.sender, 'last_name', '')
+                    full_name = f"{first_name} {last_name}".strip()
+                    
+                    if full_name:
+                        sender_name = full_name
+                    else:
+                        sender_name = getattr(m.sender, 'username', 'Inconnu') # Fallback to username
+
+                    if hasattr(m.sender, 'academicprofile') and m.sender.academicprofile:
+                        sender_type = "Assistant"
+                    elif hasattr(m.sender, 'studentprofile') and m.sender.studentprofile:
+                        sender_type = "Étudiant"
 
                 out.append({
                     "id": m.id,
                     "courseId": m.course_id,
-                    "course": getattr(m.course, "name", ""),
-                    "title": m.title,
-                    "body": m.body,
-                    "created_at": m.created_at.isoformat(),
+                    "course": getattr(m.course, "name", "") if m.course else "", # Safer access
+                    "title": getattr(m, "title", ""), # Safer access for title
+                    "body": getattr(m, "body", ""),   # Safer access for body
+                    "created_at": m.created_at.isoformat() if m.created_at else "", # Safer access for created_at
                     "sender": sender_name,
                     "sender_type": sender_type,
+                    "sender_id": m.sender_id,
                 })
             return Response(out)
 
         # POST request
-        # Assuming CourseMessage.sender is a ForeignKey to User
-        user = request.user
-        if not user.is_authenticated:
-            return Response({"detail": "Authentification requise pour envoyer un message."}, status=401)
-
         course_id = request.data.get("course_id")
-        title = request.data.get("title", "").strip()
         body = request.data.get("body", "").strip()
 
-        if not (course_id and title and body):
-            return Response({"detail": "course_id, title, body requis"}, status=400)
+        if not (course_id and body):
+            return Response({"detail": "course_id et body requis"}, status=400)
 
         course = Course.objects.filter(id=course_id, auditoire=aud).first()
         if not course:
             return Response({"detail": "Cours introuvable dans cet auditoire"}, status=404)
 
-        msg = CourseMessage.objects.create(course=course, sender=user, title=title, body=body)
+        msg = CourseMessage.objects.create(course=course, sender=request.user, title="", body=body)
 
-        sender_name = ""
-        sender_type = ""
-        if hasattr(user, 'academicprofile') and user.academicprofile:
-            sender_profile = user.academicprofile
-            sender_name = f"{sender_profile.prenom} {sender_profile.nom}".strip()
-            sender_type = "Assistant"
-        elif hasattr(user, 'studentprofile') and user.studentprofile:
-            sender_profile = user.studentprofile
-            sender_name = f"{sender_profile.prenom} {sender_profile.nom}".strip()
-            sender_type = "Étudiant"
-        else:
-            sender_name = user.username
-            sender_type = "Utilisateur"
+        sender_name = "Inconnu"
+        sender_type = "Utilisateur"
+
+        if request.user:
+            first_name = getattr(request.user, 'first_name', '')
+            last_name = getattr(request.user, 'last_name', '')
+            full_name = f"{first_name} {last_name}".strip()
+
+            if full_name:
+                sender_name = full_name
+            else:
+                sender_name = getattr(request.user, 'username', 'Inconnu')
+
+            if hasattr(request.user, 'academicprofile') and request.user.academicprofile:
+                sender_type = "Assistant"
+            elif hasattr(request.user, 'studentprofile') and request.user.studentprofile:
+                sender_type = "Étudiant"
 
         return Response({
             "id": msg.id,
             "courseId": msg.course_id,
-            "course": getattr(msg.course, "name", ""),
-            "title": msg.title,
-            "body": msg.body,
-            "created_at": msg.created_at.isoformat(),
+            "course": getattr(msg.course, "name", "") if msg.course else "", # Safer access
+            "title": getattr(msg, "title", ""),
+            "body": getattr(msg, "body", ""),
+            "created_at": msg.created_at.isoformat() if msg.created_at else "",
             "sender": sender_name,
             "sender_type": sender_type,
+            "sender_id": request.user.id,
         }, status=201)
-    except (ValueError, TypeError):
-        return Response({"detail": "Code d'auditoire invalide"}, status=400)
+
+    except StudentProfile.DoesNotExist:
+        return Response({"detail": "Profil étudiant non trouvé."}, status=403)
     except Exception as e:
-        print(f"Error in assistant_auditorium_messages: {e}")
+        print(f"Error in student_messages: {e}")
         return Response({"detail": f"Erreur de traitement des messages: {e}"}, status=500)
 
 
@@ -1317,16 +1325,36 @@ def student_courses(request):
     try:
         sp = StudentProfile.objects.select_related("current_auditoire").get(user=request.user)
         aud = sp.current_auditoire
-        for c in Course.objects.filter(auditoire=aud).select_related("auditoire"):
-            code = f"{c.name[:3].upper()}-{c.id}"
-            title = c.name
-            credits = c.credits
-            assign = CourseAssignment.objects.filter(course=c).select_related("assistant").first()
-            instructor = (
-                f"{assign.assistant.prenom} {assign.assistant.nom}".strip() if assign and assign.assistant else ""
-            )
-            rows.append({"code": code, "title": title, "credits": credits, "instructor": instructor})
-    except Exception:
+        if aud:
+            for c in Course.objects.filter(auditoire=aud).select_related("auditoire"):
+                code = f"{c.name[:3].upper()}-{c.id}"
+                title = c.name
+                credits = c.credits
+                assign = CourseAssignment.objects.filter(course=c).select_related("assistant__user").first()
+                
+                instructor = "N/A"
+                if assign and assign.assistant and assign.assistant.user:
+                    user = assign.assistant.user
+                    first_name = getattr(user, 'first_name', '')
+                    last_name = getattr(user, 'last_name', '')
+                    full_name = f"{first_name} {last_name}".strip()
+                    if full_name:
+                        instructor = full_name
+                    else:
+                        instructor = getattr(user, 'username', 'N/A')
+
+                rows.append({
+                    "id": c.id,
+                    "code": code,
+                    "title": title,
+                    "credits": credits,
+                    "instructor": instructor,
+                    "session_type": c.get_session_type_display(),
+                })
+    except StudentProfile.DoesNotExist:
+        pass # Let it return empty list if no student profile
+    except Exception as e:
+        print(f"Error in student_courses: {e}") # Log other errors
         pass
     return Response(rows)
 
