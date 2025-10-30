@@ -109,6 +109,31 @@ export default function AssistantSubmissionDetail() {
           <p><span className="font-semibold">Cours:</span> {submission.course_name}</p>
           <p><span className="font-semibold">Auditoire:</span> {submission.auditorium}</p>
         </div>
+
+        {/* Nouvelle section pour le questionnaire */}
+        {submission.assignment_questionnaire && submission.assignment_questionnaire.length > 0 && (
+          <div className="card bg-white dark:bg-slate-800 p-5 shadow-lg">
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">Questionnaire du Devoir</h3>
+            <div className="space-y-4">
+              {submission.assignment_questionnaire.map((q, index) => (
+                <div key={index} className="border-b border-slate-200 dark:border-slate-700 pb-4 last:border-b-0">
+                  {/* Utilise q.text si disponible, sinon q.question pour la compatibilité */}
+                  <p className="font-medium text-slate-700 dark:text-slate-300">Question {index + 1}: {q.text || q.question}</p>
+                  {q.type !== 'text' && q.choices && q.choices.length > 0 && (
+                    <ul className="list-disc list-inside ml-4 text-slate-600 dark:text-slate-400">
+                      {q.choices.map((choice, cIndex) => (
+                        <li key={cIndex} className={`${choice.is_correct ? 'font-semibold text-green-500' : ''}`}>
+                          {choice.text} {choice.is_correct && '(Correct)'}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="card bg-white dark:bg-slate-800 p-5 shadow-lg">
           <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">Informations sur l'Étudiant</h3>
           <p><span className="font-semibold">Nom:</span> {submission.student_name}</p>
