@@ -20,7 +20,7 @@ const PlusCircleIcon = () => (
 export default function AssistantNewQuiz() {
   const navigate = useNavigate();
   const toast = useToast();
-  const [form, setForm] = useState({ title: '', course_code: '', auditorium_id: '', duration: 20, total_points: 20, questions: [] });
+  const [form, setForm] = useState({ title: '', course_code: '', auditorium_id: '', duration: 20, total_points: 10, questions: [] }); // CHANGEMENT ICI
   const [auditoriums, setAuditoriums] = useState([]);
   const [allCourses, setAllCourses] = useState([]);
   const [loading, setLoading] = useState(false);

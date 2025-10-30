@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useToast } from '../shared/ToastProvider';
 
@@ -11,139 +11,114 @@ export default function AssistantSubmissionDetail() {
   const [grade, setGrade] = useState('');
   const [feedback, setFeedback] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isSubmittingGrade, setIsSubmittingGrade] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const fetchSubmissionDetails = async () => {
-      try {
-        setLoading(true);
-        const { data } = await axios.get(`/api/assistant/tptd/${assignmentId}/submission/${submissionId}/`);
-        setSubmission(data);
-        setGrade(data.grade || ''); // Pre-fill if already graded
-        setFeedback(data.feedback || ''); // Pre-fill if already graded
-      } catch (err) {
-        setError('Impossible de charger les détails de la soumission.');
-        console.error(err);
-        toast.push({ title: 'Erreur', message: 'Impossible de charger les détails de la soumission.' });
-      } finally {
+    axios.get(`/api/assistant/tptd/${assignmentId}/submission/${submissionId}/`)
+      .then(response => {
+        setSubmission(response.data);
+        setGrade(response.data.grade || '');
+        setFeedback(response.data.feedback || '');
         setLoading(false);
-      }
-    };
-    fetchSubmissionDetails();
+      })
+      .catch(error => {
+        console.error("Error fetching submission details:", error);
+        toast.push({ kind: 'error', title: 'Erreur', message: 'Impossible de charger la soumission.' });
+        setLoading(false);
+      });
   }, [assignmentId, submissionId, toast]);
 
-  const handleGradeSubmission = async () => {
-    setIsSubmittingGrade(true);
+  const handleGradeSubmit = async () => {
+    if (grade === '' || grade < 0 || grade > submission.assignment_total_points) {
+      toast.push({ kind: 'error', title: 'Note invalide', message: `La note doit être entre 0 et ${submission.assignment_total_points}.` });
+      return;
+    }
+    setSaving(true);
     try {
       await axios.post(`/api/assistant/tptd/${assignmentId}/submission/${submissionId}/grade/`, {
-        grade: grade,
-        feedback: feedback,
+        grade: parseFloat(grade),
+        feedback,
       });
-      toast.push({ title: 'Succès', message: 'Note et commentaires soumis avec succès.' });
-      navigate('/assistant/to-grade'); // Navigate back to the to-grade list
-    } catch (err) {
-      setError('Erreur lors de la soumission de la note.');
-      console.error(err);
-      toast.push({ title: 'Erreur', message: 'Erreur lors de la soumission de la note.' });
+      toast.push({ title: 'Succès', message: 'La note a été enregistrée.' });
+      navigate('/assistant/a-corriger');
+    } catch (error) {
+      console.error("Error saving grade:", error);
+      toast.push({ kind: 'error', title: 'Erreur', message: 'Impossible d\'enregistrer la note.' });
     } finally {
-      setIsSubmittingGrade(false);
+      setSaving(false);
     }
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 flex items-center justify-center"><p className="text-xl">Chargement des détails de la soumission...</p></div>;
-  }
-
-  if (error) {
-    return <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 flex items-center justify-center"><p className="text-xl text-red-400">{error}</p></div>;
+    return <div className="card p-4">Chargement de la soumission...</div>;
   }
 
   if (!submission) {
-    return <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 flex items-center justify-center"><p className="text-xl">Aucune soumission trouvée.</p></div>;
+    return <div className="card p-4">Soumission non trouvée.</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center mb-6">
-          <Link to="/assistant/to-grade" className="btn bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200 shadow-md flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
-            Retour aux corrections
-          </Link>
-          <h1 className="text-3xl font-extrabold ml-4 text-indigo-400">Correction de la soumission</h1>
-        </div>
-
-        <div className="bg-slate-800 shadow-lg rounded-lg overflow-hidden mb-6 p-6 border border-slate-700">
-          <h2 className="text-2xl font-bold text-indigo-300 mb-4">
-            Soumission de <span className="text-white"> {submission.student_name}</span> pour "<span className="text-white"> {submission.assignment_title}</span>"
-          </h2>
-          <div className="text-sm text-slate-400 grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
-            <p><strong>Cours :</strong> <span className="text-slate-200"> {submission.course_name}</span></p>
-            <p><strong>Auditoire :</strong> <span className="text-slate-200"> {submission.auditorium}</span></p>
-            <p><strong>Département :</strong> <span className="text-slate-200"> {submission.department}</span></p>
-            <p><strong>Soumis le :</strong> <span className="text-slate-200"> {new Date(submission.submitted_at).toLocaleString()}</span></p>
-            {submission.graded_at && <p><strong>Corrigé le :</strong> <span className="text-slate-200"> {new Date(submission.graded_at).toLocaleString()}</span></p>}
-            <p><strong>Statut :</strong> <span className={`font-semibold ${submission.status === 'noté' ? 'text-green-400' : 'text-yellow-400'}`}> {submission.status}</span></p>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Colonne de gauche: Infos et notation */}
+      <div className="lg:col-span-1 space-y-6">
+        <div className="card bg-white dark:bg-slate-800 p-5 shadow-lg">
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Noter la Soumission</h2>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="grade" className="block text-sm font-medium text-slate-600 dark:text-slate-300">Note</label>
+              <div className="mt-1 flex items-center">
+                <input
+                  type="number"
+                  id="grade"
+                  value={grade}
+                  onChange={(e) => setGrade(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800"
+                  placeholder={`Note sur ${submission.assignment_total_points}`}
+                />
+                <span className="ml-2 text-slate-500">/ {submission.assignment_total_points}</span>
+              </div>
+            </div>
+            <div>
+              <label htmlFor="feedback" className="block text-sm font-medium text-slate-600 dark:text-slate-300">Commentaires</label>
+              <textarea
+                id="feedback"
+                rows="4"
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                className="mt-1 w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800"
+                placeholder="Ajouter un commentaire pour l'étudiant..."
+              />
+            </div>
           </div>
         </div>
-
-        <div className="bg-slate-800 shadow-lg rounded-lg overflow-hidden mb-6 p-6 border border-slate-700">
-          <h3 className="text-xl font-semibold text-indigo-300 mb-3">Questionnaire de l'assignation</h3>
-          {submission.assignment_questionnaire && submission.assignment_questionnaire.length > 0 ? (
-            <ul className="list-decimal pl-5 space-y-3 text-slate-300">
-              {submission.assignment_questionnaire.map((q, index) => (
-                <li key={index} className="bg-slate-700 p-3 rounded-md">
-                  <p className="whitespace-pre-wrap font-medium">{q.question}</p>
-                  <p className="text-sm text-slate-400">({q.points} points)</p>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-slate-400">Aucune question définie pour cette assignation.</p>
-          )}
-        </div>
-
-        <div className="bg-slate-800 shadow-lg rounded-lg overflow-hidden mb-6 p-6 border border-slate-700">
-          <h3 className="text-xl font-semibold text-indigo-300 mb-3">Contenu de la soumission de l'étudiant</h3>
-          <div className="whitespace-pre-wrap p-4 border border-slate-600 rounded-md bg-slate-900 text-slate-200 min-h-[150px]">
-            {submission.content || "L'étudiant n'a pas fourni de contenu."}
-          </div>
-        </div>
-
-        <div className="bg-slate-800 shadow-lg rounded-lg overflow-hidden p-6 border border-slate-700">
-          <h3 className="text-xl font-semibold text-indigo-300 mb-3">Notation et commentaires</h3>
-          <div className="mb-4">
-            <label htmlFor="grade" className="block text-sm font-medium text-slate-300 mb-1">Note (/ {submission.assignment_total_points})</label>
-            <input
-              type="number"
-              id="grade"
-              className="mt-1 block w-full p-3 rounded-md bg-slate-900 border border-slate-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-white placeholder-slate-500"
-              value={grade}
-              onChange={(e) => setGrade(e.target.value)}
-              min="0"
-              max={submission.assignment_total_points}
-              placeholder="Entrez la note..."
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="feedback" className="block text-sm font-medium text-slate-300 mb-1">Commentaires</label>
-            <textarea
-              id="feedback"
-              className="mt-1 block w-full p-3 rounded-md bg-slate-900 border border-slate-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-white placeholder-slate-500"
-              rows="5"
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              placeholder="Entrez vos commentaires pour l'étudiant..."
-            ></textarea>
-          </div>
-          <button
-            className="w-full sm:w-auto mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={handleGradeSubmission}
-            disabled={isSubmittingGrade}
-          >
-            {isSubmittingGrade ? 'Soumission en cours...' : 'Soumettre la note'}
+        <div className="flex flex-col gap-3">
+          <button className="btn btn-lg w-full" onClick={handleGradeSubmit} disabled={saving}>
+            {saving ? 'Enregistrement...' : 'Enregistrer la Note'}
           </button>
+          <button className="btn btn-lg w-full !bg-slate-600" onClick={() => navigate('/assistant/a-corriger')}>
+            Annuler
+          </button>
+        </div>
+      </div>
+
+      {/* Colonne de droite: Détails de la soumission */}
+      <div className="lg:col-span-2 space-y-4">
+        <div className="card bg-white dark:bg-slate-800 p-5 shadow-lg">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">Détails du Devoir</h3>
+          <p><span className="font-semibold">Titre:</span> {submission.assignment_title}</p>
+          <p><span className="font-semibold">Cours:</span> {submission.course_name}</p>
+          <p><span className="font-semibold">Auditoire:</span> {submission.auditorium}</p>
+        </div>
+        <div className="card bg-white dark:bg-slate-800 p-5 shadow-lg">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">Informations sur l'Étudiant</h3>
+          <p><span className="font-semibold">Nom:</span> {submission.student_name}</p>
+          <p><span className="font-semibold">Soumis le:</span> {new Date(submission.submitted_at).toLocaleString()}</p>
+        </div>
+        <div className="card bg-white dark:bg-slate-800 p-5 shadow-lg">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">Contenu de la Soumission</h3>
+          <div className="prose dark:prose-invert max-w-none">
+            <p>{submission.content || 'Aucun contenu textuel soumis.'}</p>
+          </div>
         </div>
       </div>
     </div>

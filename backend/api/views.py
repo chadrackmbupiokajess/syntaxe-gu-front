@@ -93,7 +93,7 @@ def tptd_my(request):
         deadline_s = request.data.get("deadline")
         assignment_type = request.data.get("type", "TP")
         questionnaire = request.data.get("questionnaire", [])
-        total_points = request.data.get("total_points", 20)
+        total_points = request.data.get("total_points", 10)
 
         if not (course_code and title and deadline_s):
             return Response({"detail": "Code du cours, titre et deadline requis."}, status=400)
@@ -179,7 +179,7 @@ def quizzes_my(request):
         course_code = request.data.get("course_code")
         title = request.data.get("title", "").strip()
         duration = request.data.get("duration", 20)
-        total_points = request.data.get("total_points", 20)
+        total_points = request.data.get("total_points", 10)
         questions = request.data.get("questions", [])
 
         if not (course_code and title and questions):
@@ -283,14 +283,14 @@ def assistant_grades(request, auditorium_id, course_code):
                     grades_map[student_id] = {
                         'grade': sub.grade, 
                         'submitted_at': sub.submitted_at, 
-                        'total_points': getattr(sub.assignment, 'total_points', 20)
+                        'total_points': getattr(sub.assignment, 'total_points', 10)
                     }
 
             grades_data = []
             for student in students:
                 student_grade_info = grades_map.get(student.id)
                 grade = student_grade_info['grade'] if student_grade_info else None
-                total_points = student_grade_info['total_points'] if student_grade_info else 20
+                total_points = student_grade_info['total_points'] if student_grade_info else 10
                 
                 grades_data.append({
                     "student_id": student.id,
@@ -908,7 +908,7 @@ def assistant_auditorium_create_tptd(request, code: str):
         title = (request.data.get("title") or "").strip()
         deadline_s = request.data.get("deadline")
         questionnaire = request.data.get("questionnaire", [])
-        total_points = request.data.get("total_points", 20)
+        total_points = request.data.get("total_points", 10)
 
         if not (course_id and title and deadline_s):
             return Response({"detail": "course_id, title, deadline requis"}, status=400)

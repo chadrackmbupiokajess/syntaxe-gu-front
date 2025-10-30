@@ -15,12 +15,12 @@ class Assignment(models.Model):
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True, 
-        limit_choices_to={'role__in': ['assistant', 'enseignant']}
+        limit_choices_to={'role__in': ['assistant', 'professeur']}
     )
     title = models.CharField(max_length=255)
     type = models.CharField(max_length=2, choices=ASSIGNMENT_TYPES, default='TP')
     questionnaire = models.JSONField(default=list, help_text="Liste de questions pour le devoir")
-    total_points = models.PositiveSmallIntegerField(default=20, help_text="La note maximale pour ce devoir")
+    total_points = models.PositiveSmallIntegerField(default=10, help_text="La note maximale pour ce devoir")
     deadline = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -33,6 +33,7 @@ class Submission(models.Model):
     content = models.TextField(blank=True, help_text="Contenu de la soumission de l'étudiant")
     status = models.CharField(max_length=20, choices=[('soumis', 'Soumis'), ('non_soumis', 'Non soumis')], default='non_soumis')
     grade = models.FloatField(null=True, blank=True)
+    feedback = models.TextField(blank=True, null=True) # AJOUT DU CHAMP FEEDBACK
     submitted_at = models.DateTimeField(null=True, blank=True)
     graded_at = models.DateTimeField(null=True, blank=True)
 
@@ -48,11 +49,11 @@ class Quiz(models.Model):
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True, 
-        limit_choices_to={'role__in': ['assistant', 'enseignant']}
+        limit_choices_to={'role__in': ['assistant', 'professeur']}
     )
     title = models.CharField(max_length=255)
     duration = models.PositiveIntegerField(default=30, help_text="Durée du quiz en minutes")
-    total_points = models.PositiveSmallIntegerField(default=20, help_text="La note maximale pour ce quiz") # <-- CHAMP AJOUTÉ
+    total_points = models.PositiveSmallIntegerField(default=10, help_text="La note maximale pour ce quiz")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

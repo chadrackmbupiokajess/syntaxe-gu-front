@@ -12,7 +12,7 @@ import Unauthorized from '../shared/Unauthorized';
 // Pages
 import Login from '../screens/Login';
 import Register from '../screens/Register';
-import UserList from '../screens/UserList'; // <-- Nouvelle importation
+import UserList from '../screens/UserList';
 import RoleLanding from '../screens/RoleLanding';
 import PDGDashboard from '../screens/PDGDashboard';
 import DgDashboard from '../screens/DgDashboard';
@@ -67,7 +67,7 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route path="/" element={<RoleLanding />} />
-          <Route path="/users" element={<UserList />} /> {/* <-- Nouvelle route */}
+          <Route path="/users" element={<UserList />} />
 
           <Route path="/etudiant" element={<RoleRoute allowedRoles={['etudiant']} />}>
             <Route element={<StudentLayout />}>
