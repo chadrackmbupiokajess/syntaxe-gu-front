@@ -7,14 +7,16 @@ export default function Login() {
   const dispatch = useDispatch();
   const { access, status } = useSelector(s => s.auth);
   const location = useLocation();
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin1234');
+  // On renomme username en matricule pour plus de clarté
+  const [matricule, setMatricule] = useState('testshell'); // On peut mettre une valeur par défaut pour le dev
+  const [password, setPassword] = useState('testpassword123');
 
   const handleLogin = () => {
-    dispatch(loginThunk({ username, password }))
+    // On passe matricule au thunk
+    dispatch(loginThunk({ matricule, password }))
       .unwrap()
       .then(() => {
-        // Charger le profil tout de suite aprs un login r3ussi
+        // Charger le profil tout de suite après un login réussi
         dispatch(fetchMe());
       })
       .catch((error) => {
@@ -40,8 +42,8 @@ export default function Login() {
           <p className="text-sm text-slate-400">Connexion</p>
         </div>
         <div className="space-y-3">
-          <label className="block text-sm">Utilisateur
-            <input className="mt-1 w-full rounded-lg bg-slate-800/60 border border-slate-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-600" value={username} onChange={e => setUsername(e.target.value)} />
+          <label className="block text-sm">Matricule
+            <input className="mt-1 w-full rounded-lg bg-slate-800/60 border border-slate-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-600" value={matricule} onChange={e => setMatricule(e.target.value)} />
           </label>
           <label className="block text-sm">Mot de passe
             <input type="password" className="mt-1 w-full rounded-lg bg-slate-800/60 border border-slate-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-600" value={password} onChange={e => setPassword(e.target.value)} />

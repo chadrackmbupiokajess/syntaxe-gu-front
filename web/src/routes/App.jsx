@@ -11,7 +11,8 @@ import Unauthorized from '../shared/Unauthorized';
 
 // Pages
 import Login from '../screens/Login';
-import Register from '../screens/Register'; // <-- Nouvelle importation
+import Register from '../screens/Register';
+import UserList from '../screens/UserList'; // <-- Nouvelle importation
 import RoleLanding from '../screens/RoleLanding';
 import PDGDashboard from '../screens/PDGDashboard';
 import DgDashboard from '../screens/DgDashboard';
@@ -56,16 +57,17 @@ import AssistantQuizDetails from '../screens/AssistantQuizDetails';
 import AssistantToGrade from '../screens/AssistantToGrade';
 import AssistantProfile from '../screens/AssistantProfile';
 import AssistantStudentProfile from '../screens/AssistantStudentProfile';
-import AssistantSubmissionDetail from '../screens/AssistantSubmissionDetail'; // <-- Nouvelle importation
+import AssistantSubmissionDetail from '../screens/AssistantSubmissionDetail';
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} /> {/* <-- Nouvelle route */}
+      <Route path="/register" element={<Register />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
           <Route path="/" element={<RoleLanding />} />
+          <Route path="/users" element={<UserList />} /> {/* <-- Nouvelle route */}
 
           <Route path="/etudiant" element={<RoleRoute allowedRoles={['etudiant']} />}>
             <Route element={<StudentLayout />}>
@@ -85,7 +87,7 @@ export default function App() {
             </Route>
           </Route>
 
-          <Route path="/assistant" element={<RoleRoute allowedRoles={['assistant', 'enseignant']} />}>
+          <Route path="/assistant" element={<RoleRoute allowedRoles={['assistant', 'professeur']} />}>
             <Route element={<AssistantLayout />}>
               <Route index element={<AssistantDashboard />} />
               <Route path="auditoires" element={<AssistantAuditoriums />} />
@@ -98,11 +100,11 @@ export default function App() {
               <Route path="notes" element={<AssistantGrades />} />
               <Route path="tptd" element={<AssistantTPTD />} />
               <Route path="tptd/:id" element={<AssistantTPTDDetails />} />
-              <Route path="tptd/:assignmentId/submission/:submissionId" element={<AssistantSubmissionDetail />} /> {/* <-- Nouvelle route */}
+              <Route path="tptd/:assignmentId/submission/:submissionId" element={<AssistantSubmissionDetail />} />
               <Route path="quizzes" element={<AssistantQuizzes />} />
               <Route path="quizzes/new" element={<AssistantNewQuiz />} />
               <Route path="quizzes/:id" element={<AssistantQuizDetails />} />
-              <Route path="quizzes/:quizId/submission/:submissionId" element={<AssistantSubmissionDetail />} /> {/* <-- Nouvelle route pour les soumissions de quiz */}
+              <Route path="quizzes/:quizId/submission/:submissionId" element={<AssistantSubmissionDetail />} />
               <Route path="notifications" element={<StudentNotifications />} />
               <Route path="a-corriger" element={<AssistantToGrade />} />
               <Route path="profil" element={<AssistantProfile />} />
@@ -112,7 +114,7 @@ export default function App() {
           <Route path="/pdg" element={<RoleRoute allowedRoles={['pdg']} />}> 
             <Route index element={<PDGDashboard />} />
           </Route>
-          <Route path="/dg" element={<RoleRoute allowedRoles={['directeur_general']} />}> 
+          <Route path="/dg" element={<RoleRoute allowedRoles={['dg']} />}> 
             <Route index element={<DgDashboard />} />
           </Route>
           <Route path="/sga" element={<RoleRoute allowedRoles={['sga']} />}> 

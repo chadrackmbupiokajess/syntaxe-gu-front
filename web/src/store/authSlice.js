@@ -1,14 +1,14 @@
 import { createSlice, createAsyncThunk, configureStore } from '@reduxjs/toolkit';
-// On importe notre client Axios configuré, pas l'axios de base
 import apiClient from '../api/axiosConfig';
 
 const accessKey = 'access_token';
 const refreshKey = 'refresh_token';
 
-export const loginThunk = createAsyncThunk('auth/login', async ({ username, password }, { rejectWithValue }) => {
+// On change 'username' en 'matricule' pour correspondre au backend
+export const loginThunk = createAsyncThunk('auth/login', async ({ matricule, password }, { rejectWithValue }) => {
   try {
-    // On utilise apiClient, qui a déjà la bonne baseURL
-    const { data } = await apiClient.post('/auth/login/', { username, password });
+    // On envoie 'matricule' au lieu de 'username'
+    const { data } = await apiClient.post('/accounts/login/', { matricule, password });
     return data;
   } catch (e) {
     return rejectWithValue(e.response?.data || { detail: 'Erreur de connexion' });
@@ -17,8 +17,8 @@ export const loginThunk = createAsyncThunk('auth/login', async ({ username, pass
 
 export const fetchMe = createAsyncThunk('auth/me', async (_, { rejectWithValue }) => {
   try {
-    // On utilise apiClient, qui ajoutera automatiquement le token d'authentification
-    const { data } = await apiClient.get('/auth/me/');
+    // Le backend renvoie maintenant le profil unifié avec le rôle
+    const { data } = await apiClient.get('/accounts/me/');
     return data;
   } catch (e) {
     return rejectWithValue(e.response?.data || { detail: 'Erreur profil' });
@@ -30,7 +30,7 @@ const slice = createSlice({
   initialState: {
     access: localStorage.getItem(accessKey) || null,
     refresh: localStorage.getItem(refreshKey) || null,
-    me: null,
+    me: null, // `me` contiendra toutes les infos utilisateur, y compris le rôle
     status: 'idle',
     error: null,
   },
@@ -55,11 +55,14 @@ const slice = createSlice({
       })
       .addCase(loginThunk.rejected, (state, action) => { state.status = 'failed'; state.error = action.payload; })
       .addCase(fetchMe.pending, (state) => { state.status = 'loading'; })
-      .addCase(fetchMe.fulfilled, (state, action) => { state.status = 'succeeded'; state.me = action.payload; })
+      .addCase(fetchMe.fulfilled, (state, action) => { 
+        state.status = 'succeeded'; 
+        // L'objet `me` contient maintenant toutes les infos, y compris le rôle
+        state.me = action.payload; 
+      })
       .addCase(fetchMe.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
-        // Si fetchMe échoue, c'est que le token est probablement invalide. On déconnecte.
         state.access = null;
         state.refresh = null;
         state.me = null;
@@ -71,7 +74,5 @@ const slice = createSlice({
 
 export const { logout } = slice.actions;
 
-// Note: La configuration du store est généralement dans un fichier séparé (store.js)
-// mais on la laisse ici si c'est votre structure actuelle.
 const store = configureStore({ reducer: { auth: slice.reducer } });
 export default store;

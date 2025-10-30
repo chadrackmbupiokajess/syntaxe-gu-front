@@ -37,12 +37,16 @@ from .views import (
     assistant_submission_detail, assistant_grade_submission,
     # New student messages endpoint
     student_messages,
+    user_list, # Ajout de la vue user_list
 )
 
 urlpatterns = [
     re_path(r"^health/?$", health, name="health"),
     re_path(r"^auth/token/?$", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     re_path(r"^auth/token/refresh/?$", TokenRefreshView.as_view(), name="token_refresh"),
+
+    # User list endpoint
+    re_path(r"^users/?$", user_list, name="user_list"),
 
     # Student endpoints
     re_path(r"^student/summary/?$", student_summary, name="student_summary"),
@@ -117,6 +121,6 @@ urlpatterns = [
     re_path(r"^library/summary/?$", library_summary, name="library_summary"),
     re_path(r"^library/gestion/reservations/?$", library_gestion_reservations, name="library_gestion_reservations"),
 
-    path("", include("accounts.urls")),
+    path("accounts/", include("accounts.urls")),
     path("messaging/", include("messaging.urls")),
 ]

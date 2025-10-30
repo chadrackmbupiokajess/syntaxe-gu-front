@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 import uuid
 import re
 
@@ -103,21 +104,21 @@ class Calendrier(models.Model):
         return self.title
 
 class CourseAssignment(models.Model):
-    assistant = models.ForeignKey('accounts.AcademicProfile', on_delete=models.CASCADE, related_name='course_assignments', limit_choices_to={'user__role__role': 'assistant'})
+    assistant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='course_assignments', limit_choices_to={'role__in': ['assistant', 'professeur']})
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='assignments_by_assistant')
 
     class Meta:
-        unique_together = ('assistant', 'course')
+        unique_together = ('course',) # CHANGEMENT ICI
         verbose_name = 'Assignation de cours'
         verbose_name_plural = 'Assignations de cours'
 
     def __str__(self):
-        return f"{self.assistant.nom} {self.assistant.prenom} - {self.course.name}"
+        return f"{self.assistant.get_full_name()} - {self.course.name}"
 
 
 class CourseMessage(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='messages')
-    sender = models.ForeignKey('accounts.AcademicProfile', on_delete=models.SET_NULL, null=True, blank=True, related_name='sent_course_messages')
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='sent_course_messages')
     title = models.CharField(max_length=255)
     body = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -127,3 +128,13 @@ class CourseMessage(models.Model):
 
     def __str__(self):
         return f"[{self.course.name}] {self.title}"
+
+class Paiement(models.Model):
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='payments', limit_choices_to={'role': 'etudiant'})
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    tranche_number = models.PositiveSmallIntegerField(choices=[(1, '1ère tranche'), (2, '2ème tranche'), (3, '3ème tranche')], default=1)
+    date_paid = models.DateTimeField(auto_now_add=True)
+    academic_year = models.CharField(max_length=9)
+
+    def __str__(self):
+        return f"Payment of {self.amount} by {self.student} for tranche {self.tranche_number}"

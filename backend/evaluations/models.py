@@ -1,6 +1,6 @@
 from django.db import models
+from django.conf import settings
 from academics.models import Course, Auditoire
-from accounts.models import StudentProfile, AcademicProfile
 
 # --- TP/TD Models ---
 
@@ -11,11 +11,11 @@ class Assignment(models.Model):
     )
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='assignments')
     assistant = models.ForeignKey(
-        AcademicProfile, 
+        settings.AUTH_USER_MODEL, 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True, 
-        limit_choices_to={'user__role__role': 'assistant'}
+        limit_choices_to={'role__in': ['assistant', 'enseignant']}
     )
     title = models.CharField(max_length=255)
     type = models.CharField(max_length=2, choices=ASSIGNMENT_TYPES, default='TP')
@@ -29,7 +29,7 @@ class Assignment(models.Model):
 
 class Submission(models.Model):
     assignment = models.ForeignKey(Assignment, on_delete=models.CASCADE, related_name='submissions')
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='submissions')
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='submissions', limit_choices_to={'role': 'etudiant'})
     content = models.TextField(blank=True, help_text="Contenu de la soumission de l'étudiant")
     status = models.CharField(max_length=20, choices=[('soumis', 'Soumis'), ('non_soumis', 'Non soumis')], default='non_soumis')
     grade = models.FloatField(null=True, blank=True)
@@ -44,11 +44,11 @@ class Submission(models.Model):
 class Quiz(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='quizzes')
     assistant = models.ForeignKey(
-        AcademicProfile, 
+        settings.AUTH_USER_MODEL, 
         on_delete=models.SET_NULL, 
         null=True, 
         blank=True, 
-        limit_choices_to={'user__role__role': 'assistant'}
+        limit_choices_to={'role__in': ['assistant', 'enseignant']}
     )
     title = models.CharField(max_length=255)
     duration = models.PositiveIntegerField(default=30, help_text="Durée du quiz en minutes")
@@ -90,7 +90,7 @@ class QuizAttempt(models.Model):
         ('manual', 'Manuel'),
         ('pending', 'En attente'),
     )
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='quiz_attempts')
+    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='quiz_attempts', limit_choices_to={'role': 'etudiant'})
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='attempts')
     score = models.FloatField(null=True, blank=True)
     total_questions = models.PositiveIntegerField(default=0)

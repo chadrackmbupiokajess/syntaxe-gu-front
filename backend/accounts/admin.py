@@ -1,115 +1,74 @@
-from django import forms
 from django.contrib import admin, messages
-from django.contrib.auth.models import User, Group
-from .models import StudentProfile, AcademicProfile, Paiement, Role
-from academics.models import CourseAssignment
+from .models import User
+import uuid
 import random
 import string
 
-# --- Inlines ---
-class CourseAssignmentInline(admin.TabularInline):
-    model = CourseAssignment
-    extra = 1
-    verbose_name_plural = 'Assignations de cours'
+@admin.register(User)
+class CustomUserAdmin(admin.ModelAdmin):
+    # --- Configuration de la liste d'affichage ---
+    list_display = (
+        'matricule',
+        'get_full_name',
+        'email',
+        'role',
+        'is_active',
+        'status', # Ajout du champ status
+    )
+    list_filter = ('role', 'is_active', 'status') # Ajout du filtre sur status
+    search_fields = ('matricule', 'first_name', 'last_name', 'email')
+    ordering = ('matricule',)
 
-
-# --- Configurations de l'Admin ---
-
-@admin.register(StudentProfile)
-class StudentProfileAdmin(admin.ModelAdmin):
-    list_display = ('nom', 'postnom', 'prenom', 'matricule', 'current_auditoire', 'academic_status', 'status')
-    readonly_fields = ('matricule',)
-    exclude = ('user',)
-
-    def save_model(self, request, obj, form, change):
-        if not change:
-            base_username = f"{obj.prenom.lower()}{obj.nom.lower()}".replace(' ', '')
-            username = base_username
-            counter = 1
-            while User.objects.filter(username=username).exists():
-                username = f"{base_username}{counter}"
-                counter += 1
-
-            password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
-            
-            # Méthode de création standard et garantie de Django
-            user = User.objects.create_user(username=username, password=password)
-
-            obj.user = user
-            Role.objects.create(user=user, role='etudiant')
-
-            self.message_user(request, f"L'utilisateur '{username}' a été créé avec le mot de passe : {password}", messages.SUCCESS)
-        
-        super().save_model(request, obj, form, change)
-
-
-# --- Formulaire pour AcademicProfile ---
-class AcademicProfileForm(forms.ModelForm):
-    role_selection = forms.ChoiceField(
-        choices=[choice for choice in Role.ROLE_CHOICES if choice[0] != 'etudiant'],
-        label="Rôle"
+    # --- Configuration des formulaires ---
+    
+    # Définir les fieldsets pour la page de MODIFICATION
+    fieldsets = (
+        (None, {'fields': ('matricule', 'password')}),
+        ('Informations Personnelles', {'fields': ('first_name', 'last_name', 'post_name', 'email', 'sexe', 'profile_picture', 'description')}),
+        ('Permissions & Rôle', {'fields': ('role', 'is_active', 'is_staff', 'is_superuser')}),
+        ('Informations Académiques', {'fields': ('current_auditoire', 'academic_status', 'office', 'phone', 'address')}),
+        ('Statut', {'fields': ('status', 'team_status')}),
+    )
+    
+    # Définir les fieldsets pour la page de CRÉATION (tous les champs sauf matricule et password)
+    add_fieldsets = (
+        ('Informations Personnelles', {'fields': ('first_name', 'last_name', 'post_name', 'email', 'sexe', 'profile_picture', 'description')}),
+        ('Permissions & Rôle', {'fields': ('role', 'is_active', 'is_staff', 'is_superuser')}),
+        ('Informations Académiques', {'fields': ('current_auditoire', 'academic_status', 'office', 'phone', 'address')}),
+        ('Statut', {'fields': ('status', 'team_status')}),
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Préremplir le champ avec le rôle actuel de l'utilisateur si on édite
-        try:
-            user = getattr(self.instance, 'user', None)
-            if user and hasattr(user, 'role') and user.role and user.role.role:
-                self.fields['role_selection'].initial = user.role.role
-        except Exception:
-            pass
-    class Meta:
-        model = AcademicProfile
-        fields = ('nom', 'postnom', 'prenom', 'sexe', 'status', 'profile_picture', 'description')
+    # Rendre le champ matricule non-modifiable sur la page de modification
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields + ('matricule',)
+        return self.readonly_fields
 
+    # Utiliser des fieldsets différents pour l'ajout et la modification
+    def get_fieldsets(self, request, obj=None):
+        if not obj:
+            return self.add_fieldsets
+        return super().get_fieldsets(request, obj)
 
-@admin.register(AcademicProfile)
-class AcademicProfileAdmin(admin.ModelAdmin):
-    form = AcademicProfileForm
-    list_display = ('nom', 'postnom', 'prenom', 'matricule', 'status')
-    readonly_fields = ('matricule',)
-    search_fields = ('nom', 'postnom', 'prenom', 'matricule')
-    inlines = [CourseAssignmentInline]
-
+    # Surcharger la méthode save_model pour la génération automatique
     def save_model(self, request, obj, form, change):
-        if not change:
-            base_username = f"{obj.prenom.lower()}{obj.nom.lower()}".replace(' ', '')
-            username = base_username
-            counter = 1
-            while User.objects.filter(username=username).exists():
-                username = f"{base_username}{counter}"
-                counter += 1
-
-            password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
-
-            # Méthode de création standard et garantie de Django
-            user = User.objects.create_user(username=username, password=password)
+        if not change: # Création
+            random_hex = uuid.uuid4().hex.upper()
+            part1 = random_hex[:4]
+            part2 = random_hex[4:8]
+            obj.matricule = f"MAT-{part1}-{part2}"
             
-            obj.user = user
-            selected_role = form.cleaned_data.get('role_selection')
-            Role.objects.create(user=user, role=selected_role)
-
-            self.message_user(request, f"L'utilisateur '{username}' a été créé avec le mot de passe : {password}", messages.SUCCESS)
-
-        else:
-            # Mise à jour du rôle si on édite le profil académique
-            selected_role = form.cleaned_data.get('role_selection')
-            if selected_role:
-                role_obj, created = Role.objects.get_or_create(user=obj.user, defaults={'role': selected_role})
-                if not created and role_obj.role != selected_role:
-                    role_obj.role = selected_role
-                    role_obj.save()
+            password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
+            obj.set_password(password)
+            
+            self.message_user(request, f"L'utilisateur a été créé avec le matricule {obj.matricule} et le mot de passe : {password}", messages.SUCCESS)
+        else: # Modification
+            if 'password' in form.changed_data:
+                obj.set_password(form.cleaned_data["password"])
+                self.message_user(request, "Le mot de passe a été mis à jour avec succès.", messages.SUCCESS)
 
         super().save_model(request, obj, form, change)
 
-
-@admin.register(Paiement)
-class PaiementAdmin(admin.ModelAdmin):
-    list_display = ('student', 'amount', 'tranche_number', 'date_paid', 'academic_year')
-    list_filter = ('tranche_number', 'academic_year', 'student')
-    search_fields = ('student__nom', 'student__matricule')
-
-
-# On désenregistre le modèle Group pour le cacher de l'admin
+# On désenregistre le modèle Group si on ne l'utilise pas
+from django.contrib.auth.models import Group
 admin.site.unregister(Group)
