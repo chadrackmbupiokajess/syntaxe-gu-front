@@ -20,6 +20,7 @@ export default function AssistantSubmissionDetail() {
         setGrade(response.data.grade || '');
         setFeedback(response.data.feedback || '');
         setLoading(false);
+        console.log("Questionnaire data received:", response.data.assignment_questionnaire); // Ligne de débogage
       })
       .catch(error => {
         console.error("Error fetching submission details:", error);
@@ -117,7 +118,6 @@ export default function AssistantSubmissionDetail() {
             <div className="space-y-4">
               {submission.assignment_questionnaire.map((q, index) => (
                 <div key={index} className="border-b border-slate-200 dark:border-slate-700 pb-4 last:border-b-0">
-                  {/* Utilise q.text si disponible, sinon q.question pour la compatibilité */}
                   <p className="font-medium text-slate-700 dark:text-slate-300">Question {index + 1}: {q.text || q.question}</p>
                   {q.type !== 'text' && q.choices && q.choices.length > 0 && (
                     <ul className="list-disc list-inside ml-4 text-slate-600 dark:text-slate-400">

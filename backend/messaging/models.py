@@ -11,4 +11,4 @@ class UserMessage(models.Model):
         ordering = ['created_at']
 
     def __str__(self):
-        return f'Message from {self.user.username} in {self.course.name} at {self.created_at.strftime("%Y-%m-%d %H:%M")}' 
+        return f'Message from {self.user.get_full_name()} in {self.course.name} at {self.created_at.strftime("%Y-%m-%d %H:%M")}' 

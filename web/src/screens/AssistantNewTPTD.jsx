@@ -98,8 +98,8 @@ export default function AssistantNewTPTD() {
         deadline: form.deadline,
         total_points: form.total_points,
         questionnaire: form.questions.map(q => ({ // Assurer la cohérence des clés
-          text: q.text, 
-          type: q.type, 
+          text: q.text,
+          type: q.type,
           choices: q.choices,
           // Si vous avez d'autres champs comme 'points' pour chaque question, ajoutez-les ici
         })), 

@@ -18,7 +18,7 @@ def course_chat_messages(request, course_code: str):
         messages = UserMessage.objects.filter(course=course).select_related('user').order_by('created_at')
         data = [{
             "id": msg.id,
-            "user": msg.user.username,
+            "user": msg.user.get_full_name(), # Changement ici
             "text": msg.text,
             "at": msg.created_at.isoformat(),
         } for msg in messages]
@@ -33,7 +33,7 @@ def course_chat_messages(request, course_code: str):
         
         return Response({
             "id": msg.id,
-            "user": request.user.username,
+            "user": request.user.get_full_name(), # Changement ici
             "text": msg.text,
             "at": msg.created_at.isoformat(),
         }, status=201)
