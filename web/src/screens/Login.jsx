@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginThunk, fetchMe } from '../store/authSlice';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, Link } from 'react-router-dom';
 
 export default function Login() {
   const dispatch = useDispatch();
@@ -53,6 +53,12 @@ export default function Login() {
           >
             {status === 'loading' ? 'Connexion...' : 'Se connecter'}
           </button>
+        </div>
+        <div className="mt-6 text-center text-sm text-slate-400">
+          Vous n'avez pas de compte?{' '}
+          <Link to="/register" className="font-medium text-blue-500 hover:text-blue-400">
+            S'inscrire
+          </Link>
         </div>
       </div>
     </div>
