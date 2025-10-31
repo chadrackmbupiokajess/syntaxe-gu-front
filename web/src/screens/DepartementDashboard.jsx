@@ -80,10 +80,10 @@ export default function DepartementDashboard() {
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <KpiCard label="Étudiants" value={sum?.students || 0} />
-                <KpiCard label="Enseignants" value={sum?.teachers || 0} />
-                <KpiCard label="Cours" value={sum?.courses || 0} />
-                <KpiCard label="Taux de réussite (%)" value={sum?.kpis?.successRate || 'N/A'} />
+                <KpiCard label="Étudiants" value={sum?.students || 0} color="bg-blue-500" />
+                <KpiCard label="Enseignants" value={sum?.teachers || 0} color="bg-green-500" />
+                <KpiCard label="Cours" value={sum?.courses || 0} color="bg-orange-500" />
+                <KpiCard label="Taux de réussite (%)" value={sum?.kpis?.successRate || 'N/A'} color="bg-purple-500" />
               </div>
             )}
 

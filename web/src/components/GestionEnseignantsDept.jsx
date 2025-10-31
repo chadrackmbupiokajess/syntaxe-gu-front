@@ -2,13 +2,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import Skeleton from './Skeleton';
 
-// --- Re-styled Teacher Card Component ---
+// --- Teacher Card Component (Plain) ---
 const TeacherCard = ({ teacher, onAssignClick }) => (
     <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
         <div className="p-6">
             <div className="flex items-center">
                 <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-                    {/* Placeholder for a photo */}
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                 </div>
                 <div className="ml-4">
@@ -19,7 +18,7 @@ const TeacherCard = ({ teacher, onAssignClick }) => (
             
             <div className="mt-4 border-t pt-4">
                 <p className="text-sm text-gray-600"><span className="font-semibold">Statut:</span> 
-                    <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${teacher.status === 'Actif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${teacher.status === 'Actif' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                         {teacher.status}
                     </span>
                 </p>
@@ -32,7 +31,7 @@ const TeacherCard = ({ teacher, onAssignClick }) => (
     </div>
 );
 
-// --- Modal Component (already defined, can be kept as is or improved) ---
+// --- Modal Component ---
 const AssignCourseModal = ({ teacher, courses, onClose, onAssign }) => {
     const [selectedCourse, setSelectedCourse] = useState('');
     if (!teacher) return null;
@@ -64,7 +63,6 @@ export default function GestionEnseignantsDept() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // In a real app, fetch teachers and available courses
       setTeachers([
         { id: 1, name: 'Dr. Ada Lovelace', rank: 'Professeur', courses: 'PROG101, DBAS401', status: 'Actif' },
         { id: 2, name: 'Dr. Alan Turing', rank: 'Professeur', courses: 'PROG201', status: 'Actif' },
@@ -117,10 +115,19 @@ export default function GestionEnseignantsDept() {
         <div>
             <h2 className="text-3xl font-bold text-gray-800">Gestion des Enseignants</h2>
             <p className="text-gray-600 mt-1">Gérez les enseignants, leur statut et l\'attribution des cours.</p>
-            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white p-4 rounded-lg shadow-sm"><p className="text-sm font-medium text-gray-500">Total Enseignants</p><p className="text-2xl font-bold text-gray-800">{loading ? '-' : stats.total}</p></div>
-                <div className="bg-white p-4 rounded-lg shadow-sm"><p className="text-sm font-medium text-gray-500">Actifs</p><p className="text-2xl font-bold text-green-600">{loading ? '-' : stats.active}</p></div>
-                <div className="bg-white p-4 rounded-lg shadow-sm"><p className="text-sm font-medium text-gray-500">En Congé</p><p className="text-2xl font-bold text-red-600">{loading ? '-' : stats.onLeave}</p></div>
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="bg-white p-4 rounded-lg shadow-sm border-t-4 border-blue-500">
+                    <p className="text-sm font-medium text-gray-500">Total Enseignants</p>
+                    <p className="text-2xl font-bold text-gray-800">{loading ? '-' : stats.total}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm border-t-4 border-green-500">
+                    <p className="text-sm font-medium text-gray-500">Actifs</p>
+                    <p className="text-2xl font-bold text-gray-800">{loading ? '-' : stats.active}</p>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow-sm border-t-4 border-yellow-500">
+                    <p className="text-sm font-medium text-gray-500">En Congé</p>
+                    <p className="text-2xl font-bold text-gray-800">{loading ? '-' : stats.onLeave}</p>
+                </div>
             </div>
         </div>
 
