@@ -1,60 +1,121 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import ListWithFilters from './ListWithFilters';
+import React, { useState, useEffect, useMemo } from 'react';
+import Skeleton from './Skeleton';
+import KpiCard from './KpiCard';
+
+const getPromotionColor = (promotion) => {
+    if (promotion.startsWith('G')) return 'bg-sky-200 text-sky-800';
+    if (promotion.startsWith('L')) return 'bg-amber-200 text-amber-800';
+    return 'bg-gray-200 text-gray-800';
+};
+
+const StudentCard = ({ student }) => (
+    <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden">
+        <div className="p-5">
+            <div className="flex items-center space-x-4">
+                <img className="w-16 h-16 rounded-full object-cover" src={`https://i.pravatar.cc/150?u=${student.matricule}`} alt={student.name} />
+                <div>
+                    <h3 className="text-lg font-bold text-gray-900">{student.name}</h3>
+                    <p className="text-sm text-gray-500">{student.matricule}</p>
+                </div>
+            </div>
+            <div className="mt-4 flex justify-between items-center">
+                <span className={`text-xs font-semibold px-3 py-1 rounded-full ${getPromotionColor(student.promotion)}`}>{student.promotion}</span>
+                <p className="text-sm font-medium text-gray-700">{student.department}</p>
+            </div>
+            <div className="mt-4">
+                <p className="text-xs text-gray-500">Progression Académique</p>
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                    <div className="bg-green-500 h-2 rounded-full" style={{ width: `${student.progress}%` }}></div>
+                </div>
+            </div>
+        </div>
+        <div className="bg-gray-50 px-5 py-3 flex justify-end space-x-2">
+            <button className="text-xs font-semibold text-gray-600 hover:text-gray-900">Dossier</button>
+            <button className="text-xs font-semibold text-sky-600 hover:text-sky-800">Message</button>
+        </div>
+    </div>
+);
 
 export default function GestionEtudiants() {
-  const [students, setStudents] = useState([]);
-  const [loading, setLoading] = useState(true);
+    const [students, setStudents] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [filters, setFilters] = useState({ name: '', promotion: '', department: '' });
 
-  const loadStudents = async () => {
-    setLoading(true);
-    try {
-      // Hypothetical API endpoint
-      const response = await axios.get('/api/section/students');
-      setStudents(response.data);
-    } catch (error) {
-      console.error("Failed to load students, using dummy data", error);
-      setStudents([
-        { id: 1, name: 'Alice Martin', matricule: '18A001', promotion: 'G1', department: 'Programmation' },
-        { id: 2, name: 'Bob Durand', matricule: '18A002', promotion: 'G2', department: 'Réseaux' },
-        { id: 3, name: 'Charlie Dupont', matricule: '17B003', promotion: 'L1', department: 'Systèmes' },
-        { id: 4, name: 'David Bernard', matricule: '19C004', promotion: 'G1', department: 'Programmation' },
-        { id: 5, name: 'Eve Petit', matricule: '16D005', promotion: 'L2', department: 'Réseaux' },
-        { id: 6, name: 'Frank Moreau', matricule: '18E006', promotion: 'G2', department: 'Programmation' },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const loadStudents = async () => {
+        setLoading(true);
+        try {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            setStudents([
+                { id: 1, name: 'Alice Martin', matricule: '18A001', promotion: 'G1', department: 'Programmation', progress: 85 },
+                { id: 2, name: 'Bob Durand', matricule: '18A002', promotion: 'G2', department: 'Réseaux', progress: 70 },
+                { id: 3, name: 'Charlie Dupont', matricule: '17B003', promotion: 'L1', department: 'Systèmes', progress: 92 },
+                { id: 4, name: 'David Bernard', matricule: '19C004', promotion: 'G1', department: 'Programmation', progress: 60 },
+                { id: 5, name: 'Eve Petit', matricule: '16D005', promotion: 'L2', department: 'Réseaux', progress: 78 },
+                { id: 6, name: 'Frank Moreau', matricule: '18E006', promotion: 'G2', department: 'Programmation', progress: 88 },
+            ]);
+        } catch (error) {
+            console.error("Failed to load students", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  useEffect(() => {
-    loadStudents();
-  }, []);
+    useEffect(() => { loadStudents(); }, []);
 
-  return (
-    <div className="grid gap-6">
-      <h2 className="text-2xl font-semibold text-gray-700">Gestion des Étudiants</h2>
-      <p className="text-gray-600">
-        Accéder à la liste complète des étudiants de la section et connaître leur répartition par promotion.
-      </p>
-      <ListWithFilters
-        title="Étudiants de la Section"
-        data={students}
-        loading={loading}
-        onRefresh={loadStudents}
-        columns={[
-          { key: 'name', header: 'Nom Complet' },
-          { key: 'matricule', header: 'Matricule' },
-          { key: 'promotion', header: 'Promotion' },
-          { key: 'department', header: 'Département' },
-        ]}
-        filters={[
-          { key: 'name', label: 'Nom', type: 'text' },
-          { key: 'matricule', label: 'Matricule', type: 'text' },
-          { key: 'promotion', label: 'Promotion', type: 'text' },
-          { key: 'department', label: 'Département', type: 'text' },
-        ]}
-      />
-    </div>
-  );
+    const filteredStudents = useMemo(() =>
+        students.filter(s =>
+            s.name.toLowerCase().includes(filters.name.toLowerCase()) &&
+            (filters.promotion === '' || s.promotion === filters.promotion) &&
+            (filters.department === '' || s.department === filters.department)
+        ), [students, filters]);
+
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+    };
+
+    const uniquePromotions = useMemo(() => [...new Set(students.map(s => s.promotion))], [students]);
+    const uniqueDepartments = useMemo(() => [...new Set(students.map(s => s.department))], [students]);
+
+    return (
+        <div className="space-y-8">
+            <div>
+                <h2 className="text-3xl font-bold text-gray-800">Gestion des Étudiants</h2>
+                <p className="mt-2 text-lg text-gray-600">Suivez la progression et gérez les dossiers de vos étudiants.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <KpiCard label="Total Étudiants" value={loading ? '...' : filteredStudents.length} />
+                <KpiCard label="Étudiants au Graduat" value={loading ? '...' : filteredStudents.filter(s => s.promotion.startsWith('G')).length} />
+                <KpiCard label="Étudiants en Licence" value={loading ? '...' : filteredStudents.filter(s => s.promotion.startsWith('L')).length} />
+            </div>
+
+            <div className="bg-white p-4 rounded-lg shadow-sm flex flex-wrap justify-between items-center gap-4">
+                <div className="flex gap-4">
+                    <input type="text" name="name" placeholder="Rechercher par nom..." onChange={handleFilterChange} className="border p-2 rounded-md"/>
+                    <select name="promotion" onChange={handleFilterChange} className="border p-2 rounded-md">
+                        <option value="">Toutes les promotions</option>
+                        {uniquePromotions.map(promo => <option key={promo} value={promo}>{promo}</option>)}
+                    </select>
+                    <select name="department" onChange={handleFilterChange} className="border p-2 rounded-md">
+                        <option value="">Tous les départements</option>
+                        {uniqueDepartments.map(dep => <option key={dep} value={dep}>{dep}</option>)}
+                    </select>
+                </div>
+                <button className="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-lg">
+                    + Inscrire un Étudiant
+                </button>
+            </div>
+
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-48" />)}
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredStudents.map(student => <StudentCard key={student.id} student={student} />)}
+                </div>
+            )}
+        </div>
+    );
 }
