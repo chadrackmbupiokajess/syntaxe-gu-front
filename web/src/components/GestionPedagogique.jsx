@@ -69,8 +69,8 @@ export default function GestionPedagogique() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <KpiCard label="Nombre Total de Cours" value={loading ? '...' : filteredCourses.length} />
-        <KpiCard label="Total Crédits de la Sélection" value={loading ? '...' : totalCredits} />
+        <KpiCard label="Nombre Total de Cours" value={loading ? '...' : filteredCourses.length} color="bg-blue-600" />
+        <KpiCard label="Total Crédits de la Sélection" value={loading ? '...' : totalCredits} color="bg-green-600" />
         <div className="bg-gray-100 p-4 rounded-lg flex items-center justify-center">
             <button className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">
                 Valider les Emplois du Temps

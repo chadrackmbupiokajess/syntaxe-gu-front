@@ -80,20 +80,20 @@ export default function GestionEtudiants() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <KpiCard label="Total Étudiants" value={loading ? '...' : filteredStudents.length} />
-                <KpiCard label="Étudiants en Licence" value={loading ? '...' : filteredStudents.filter(s => s.promotion.toLowerCase().includes('licence')).length} />
-                <KpiCard label="Étudiants en Master" value={loading ? '...' : filteredStudents.filter(s => s.promotion.toLowerCase().includes('master')).length} />
+                <KpiCard label="Total Étudiants" value={loading ? '...' : filteredStudents.length} color="bg-blue-600" />
+                <KpiCard label="Étudiants en Licence" value={loading ? '...' : filteredStudents.filter(s => s.promotion.toLowerCase().includes('licence')).length} color="bg-green-600" />
+                <KpiCard label="Étudiants en Master" value={loading ? '...' : filteredStudents.filter(s => s.promotion.toLowerCase().includes('master')).length} color="bg-purple-600" />
             </div>
 
             <div className="bg-white p-4 rounded-lg shadow-sm flex flex-wrap justify-between items-center gap-4">
                 <div className="flex gap-4">
                     <input type="text" name="name" placeholder="Rechercher par nom..." onChange={handleFilterChange} className="border p-2 rounded-md"/>
                     <select name="promotion" onChange={handleFilterChange} className="border p-2 rounded-md">
-                        <option value="">Toutes les promotions</option>
+                        <option key="all-promotions" value="">Toutes les promotions</option>
                         {uniquePromotions.map(promo => <option key={promo} value={promo}>{promo}</option>)}
                     </select>
                     <select name="department" onChange={handleFilterChange} className="border p-2 rounded-md">
-                        <option value="">Tous les départements</option>
+                        <option key="all-departments" value="">Tous les départements</option>
                         {uniqueDepartments.map(dep => <option key={dep} value={dep}>{dep}</option>)}
                     </select>
                 </div>

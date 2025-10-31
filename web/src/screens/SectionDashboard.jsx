@@ -95,10 +95,10 @@ export default function SectionDashboard() {
                 [...Array(4)].map((_, i) => <Skeleton key={i} className="h-28" />)
             ) : (
               <>
-                <KpiCard label="Étudiants" value={sum.students.val}><Sparkline data={sum.students.trend} /></KpiCard>
-                <KpiCard label="Enseignants" value={sum.teachers.val}><Sparkline data={sum.teachers.trend} /></KpiCard>
-                <KpiCard label="Taux de Réussite" value={sum.successRate.val}><Sparkline data={sum.successRate.trend} color="#10b981" /></KpiCard>
-                <KpiCard label="Départements" value={sum.departments} />
+                <KpiCard label="Étudiants" value={sum.students.val} color="bg-blue-600"><Sparkline data={sum.students.trend} /></KpiCard>
+                <KpiCard label="Enseignants" value={sum.teachers.val} color="bg-green-600"><Sparkline data={sum.teachers.trend} /></KpiCard>
+                <KpiCard label="Taux de Réussite" value={sum.successRate.val} color="bg-purple-600"><Sparkline data={sum.successRate.trend} color="#10b981" /></KpiCard>
+                <KpiCard label="Départements" value={sum.departments} color="bg-yellow-600" />
               </>
             )}
             <div className="md:col-span-2"><QuickActions onNavigate={setActiveTab} /></div>
