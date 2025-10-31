@@ -4,8 +4,9 @@ import Skeleton from './Skeleton';
 import KpiCard from './KpiCard';
 
 const getPromotionColor = (promotion) => {
-    if (promotion.startsWith('G')) return 'bg-sky-200 text-sky-800';
-    if (promotion.startsWith('L')) return 'bg-amber-200 text-amber-800';
+    const promoLower = promotion.toLowerCase();
+    if (promoLower.includes('licence')) return 'bg-sky-200 text-sky-800';
+    if (promoLower.includes('master')) return 'bg-purple-200 text-purple-800';
     return 'bg-gray-200 text-gray-800';
 };
 
@@ -80,8 +81,8 @@ export default function GestionEtudiants() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <KpiCard label="Total Étudiants" value={loading ? '...' : filteredStudents.length} />
-                <KpiCard label="Étudiants au Graduat" value={loading ? '...' : filteredStudents.filter(s => s.promotion.startsWith('G')).length} />
-                <KpiCard label="Étudiants en Licence" value={loading ? '...' : filteredStudents.filter(s => s.promotion.startsWith('L')).length} />
+                <KpiCard label="Étudiants en Licence" value={loading ? '...' : filteredStudents.filter(s => s.promotion.toLowerCase().includes('licence')).length} />
+                <KpiCard label="Étudiants en Master" value={loading ? '...' : filteredStudents.filter(s => s.promotion.toLowerCase().includes('master')).length} />
             </div>
 
             <div className="bg-white p-4 rounded-lg shadow-sm flex flex-wrap justify-between items-center gap-4">
