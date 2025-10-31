@@ -71,13 +71,9 @@ export default function GestionEnseignantsDept() {
   const loadData = async () => {
     setLoading(true);
     try {
-      setTeachers([
-        { id: 1, name: 'Dr. Ada Lovelace', rank: 'Professeur', courses: 'PROG101, DBAS401', status: 'Actif' },
-        { id: 2, name: 'Dr. Alan Turing', rank: 'Professeur', courses: 'PROG201', status: 'Actif' },
-        { id: 3, name: 'Dr. Grace Hopper', rank: 'Chargé de cours', courses: 'PROG301', status: 'Actif' },
-        { id: 4, name: 'Mr. John Doe', rank: 'Assistant', courses: 'TP PROG101', status: 'Congé' },
-        { id: 5, name: 'Dr. Marie Curie', rank: 'Professeur', courses: 'PHY101', status: 'Actif' },
-      ]);
+      const teachersResponse = await axios.get('/api/department/teachers');
+      setTeachers(teachersResponse.data);
+      // Keep dummy courses for now, as no specific API for them was requested
       setAvailableCourses([
         { id: 'CS101', name: 'Introduction to Computer Science' },
         { id: 'CS202', name: 'Data Structures' },
@@ -86,7 +82,9 @@ export default function GestionEnseignantsDept() {
         { id: 'PHY101', name: 'Physics for Engineers' },
       ]);
     } catch (error) {
-      console.error("Failed to load data", error);
+      console.error("Failed to load teachers data", error);
+      setTeachers([]); // Set to empty array on error
+      setAvailableCourses([]);
     } finally {
       setLoading(false);
     }
@@ -120,14 +118,16 @@ export default function GestionEnseignantsDept() {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
     return teachers.filter(teacher =>
       teacher.name.toLowerCase().includes(lowerCaseSearchTerm) ||
-      teacher.rank.toLowerCase().includes(lowerCaseSearchTerm)
+      teacher.rank.toLowerCase().includes(lowerCaseSearchTerm) ||
+      teacher.courses.toLowerCase().includes(lowerCaseSearchTerm)
     );
   }, [teachers, searchTerm]);
 
   const stats = useMemo(() => {
-      const activeTeachers = teachers.filter(t => t.status === 'Actif').length;
-      const onLeave = teachers.filter(t => t.status !== 'Actif').length;
-      return { total: teachers.length, active: activeTeachers, onLeave };
+      const total = teachers.length;
+      const active = teachers.filter(t => t.status === 'Actif').length;
+      const onLeave = total - active;
+      return { total, active, onLeave };
   }, [teachers]);
 
   return (

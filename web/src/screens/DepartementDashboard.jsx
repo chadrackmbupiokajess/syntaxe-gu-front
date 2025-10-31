@@ -18,21 +18,6 @@ const CalendarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-
 const DocumentReportIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
 const BellIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 01-6 0v-1m6 0H9" /></svg>;
 
-// --- Mock Data (will be removed) --- 
-// const dummyTeachers = [
-//     { id: 1, name: 'Dr. Ada Lovelace', rank: 'Professeur', courses: 'PROG101, DBAS401', status: 'Actif' },
-//     { id: 2, name: 'Dr. Alan Turing', rank: 'Professeur', courses: 'PROG201', status: 'Actif' },
-//     { id: 3, name: 'Dr. Grace Hopper', rank: 'Chargé de cours', courses: 'PROG301', status: 'Actif' },
-//     { id: 4, name: 'Mr. John Doe', rank: 'Assistant', courses: 'TP PROG101', status: 'Congé' },
-// ];
-
-// const dummyRecentActivities = [
-//     { id: 1, text: 'Dr. Ada Lovelace a soumis les notes de PROG101.', type: 'success', date: '2023-11-20' },
-//     { id: 2, text: 'Nouvelle demande de congé de Mr. John Doe.', type: 'warning', date: '2023-11-19' },
-//     { id: 3, text: 'L\'emploi du temps du semestre 2 est prêt pour validation.', type: 'info', date: '2023-11-18' },
-//     { id: 4, text: 'Rappel: Réunion des chefs de département le 25/11.', type: 'alert', date: '2023-11-17' },
-// ];
-
 // --- New Components for a more professional look ---
 
 const QuickActions = ({ onNavigate }) => {
@@ -98,15 +83,20 @@ export default function DepartementDashboard() {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const summaryResponse = await axios.get('/api/department/summary');
+      const [summaryResponse, teachersResponse, activitiesResponse] = await Promise.all([
+        axios.get('/api/department/summary'),
+        axios.get('/api/department/teachers'),
+        axios.get('/api/department/activities'),
+      ]);
       setSum(summaryResponse.data);
-      setTeachers(dummyTeachers); // Using dummy data for now
-      setRecentActivities(dummyRecentActivities); // Using dummy data for now
+      setTeachers(teachersResponse.data);
+      setRecentActivities(activitiesResponse.data);
     } catch (error) {
       console.error("Failed to load department data", error);
-      setSum({ students: 150, teachers: 12, courses: 25, kpis: { successRate: 88 } });
-      setTeachers(dummyTeachers);
-      setRecentActivities(dummyRecentActivities);
+      // Fallback to dummy data or empty arrays on error
+      setSum({ students: 0, teachers: 0, courses: 0, kpis: { successRate: 0 } });
+      setTeachers([]);
+      setRecentActivities([]);
     } finally {
       setLoading(false);
     }
@@ -145,7 +135,7 @@ export default function DepartementDashboard() {
                 <KpiCard label="Étudiants" value={sum?.students || 0} color="bg-blue-500" icon={<UsersIcon />} />
                 <KpiCard label="Enseignants" value={sum?.teachers || 0} color="bg-green-500" icon={<AcademicCapIcon />} />
                 <KpiCard label="Cours" value={sum?.courses || 0} color="bg-orange-500" icon={<BookOpenIcon />} />
-                <KpiCard label="Taux de réussite (%)" value={sum?.kpis?.successRate || 'N/A'} color="bg-purple-500" icon={<ChartBarIcon />} />
+                <KpiCard label="Taux de réussite (%)" value={sum?.successRate || 'N/A'} color="bg-purple-500" icon={<ChartBarIcon />} />
               </div>
             )}
 

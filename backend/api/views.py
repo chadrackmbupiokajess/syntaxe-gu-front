@@ -1675,6 +1675,82 @@ def department_students_list(request):
     return Response(data)
 
 
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def department_teachers_list(request):
+    user = request.user
+    try:
+        department = user.department_head_of
+    except AttributeError:
+        department = Departement.objects.first()
+        if not department:
+            return Response({"error": "No departments found."}, status=404)
+
+    teachers = User.objects.filter(
+        Q(role='professeur') | Q(role='assistant'),
+        course_assignments__course__auditoire__departement=department
+    ).distinct().select_related('current_auditoire')
+
+    data = []
+    for teacher in teachers:
+        courses_assigned = CourseAssignment.objects.filter(assistant=teacher, course__auditoire__departement=department).select_related('course')
+        course_names = ", ".join([ca.course.name for ca in courses_assigned])
+
+        data.append({
+            "id": teacher.id,
+            "name": teacher.get_full_name(),
+            "rank": teacher.get_role_display(), # Assuming rank is equivalent to role
+            "courses": course_names,
+            "status": teacher.get_status_display(), # Assuming a status field exists
+        })
+    return Response(data)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def department_activities_list(request):
+    user = request.user
+    try:
+        department = user.department_head_of
+    except AttributeError:
+        department = Departement.objects.first()
+        if not department:
+            return Response({"error": "No departments found."}, status=404)
+
+    activities = []
+
+    # Fetch recent course messages related to the department
+    messages = CourseMessage.objects.filter(
+        course__auditoire__departement=department
+    ).order_by('-created_at')[:5] # Limit to 5 recent messages
+
+    for msg in messages:
+        activities.append({
+            "id": f"msg-{msg.id}",
+            "text": f"{msg.sender.get_full_name()} a posté un message dans {msg.course.name}: {msg.body[:50]}...",
+            "type": "info",
+            "date": msg.created_at.strftime("%Y-%m-%d %H:%M"),
+        })
+
+    # Fetch recent assignment submissions/creations related to the department
+    assignments = Assignment.objects.filter(
+        course__auditoire__departement=department
+    ).order_by('-created_at')[:5] # Limit to 5 recent assignments
+
+    for assign in assignments:
+        activities.append({
+            "id": f"assign-{assign.id}",
+            "text": f"Nouvel {assign.type} \"{assign.title}\" pour {assign.course.name} (échéance: {assign.deadline.strftime("%Y-%m-%d")}).",
+            "type": "warning",
+            "date": assign.created_at.strftime("%Y-%m-%d %H:%M"),
+        })
+    
+    # Sort activities by date, most recent first
+    activities.sort(key=lambda x: x['date'], reverse=True)
+
+    return Response(activities[:10]) # Return top 10 most recent activities
+
+
 # ---- Endpoints Département (placeholders)
 
 @api_view(["GET"])
