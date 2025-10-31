@@ -22,9 +22,9 @@ const TeacherCard = ({ teacher, onAssignClick }) => (
                     <p className="text-gray-600">{teacher.rank}</p>
                 </div>
             </div>
-            
+
             <div className="mt-4 border-t pt-4">
-                <p className="text-sm text-gray-600"><span className="font-semibold">Statut:</span> 
+                <p className="text-sm text-gray-600"><span className="font-semibold">Statut:</span>
                     <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${teacher.status === 'Actif' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                         {teacher.status}
                     </span>

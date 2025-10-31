@@ -93,7 +93,7 @@ export default function GestionEtudiants() {
                         {uniquePromotions.map(promo => <option key={promo} value={promo}>{promo}</option>)}
                     </select>
                     <select name="department" onChange={handleFilterChange} className="border p-2 rounded-md">
-                        <option key="all-departments" value="">Tous les départements</option>
+                        <option key="all-departments" value="" className="text-black">Tous les départements</option>
                         {uniqueDepartments.map(dep => <option key={dep} value={dep}>{dep}</option>)}
                     </select>
                 </div>
