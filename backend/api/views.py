@@ -10,8 +10,9 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
 from django.db.models import Q, Count
+import uuid
 
-from academics.models import Course, Auditoire, Calendrier, CourseAssignment, CourseMessage, Section, Departement
+from academics.models import Course, Auditoire, Calendrier, CourseAssignment, Section, Departement, CourseMessage
 from evaluations.models import Assignment, Submission, Quiz, Question, Choice, Answer, QuizAttempt
 
 User = get_user_model()
@@ -1062,8 +1063,8 @@ def quizzes_student_detail(request, id):
             choices = []
             if q.question_type in ['single', 'multiple']:
                 for c in q.choices.all():
-                    choices.append({"id": c.id, "text": c.choice_text})
-            questions.append({"id": q.id, "text": q.question_text, "type": q.question_type, "choices": choices})
+                    choices.append({"text": c.choice_text, "is_correct": c.is_correct})
+            questions.append({"text": q.question_text, "type": q.question_type, "choices": choices})
 
         assistant_name = quiz.assistant.get_full_name() if quiz.assistant else "N/A"
         deadline = (quiz.created_at or timezone.now()) + timedelta(days=7)
@@ -1459,6 +1460,19 @@ def section_summary(request):
     }
     return Response(data)
 
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def section_list(request):
+    sections = Section.objects.all()
+    data = []
+    for section in sections:
+        data.append({
+            "id": section.id,
+            "name": section.name,
+            "description": section.description, # Assuming a description field exists
+        })
+    return Response(data)
+
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
@@ -1519,11 +1533,11 @@ def section_students_list(request):
             "name": student.get_full_name(),
             "matricule": student.matricule,
             "promotion": promotion,
-            "department": department,
             "progress": 75,  # Dummy progress
         })
 
     return Response(data)
+
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
@@ -1536,31 +1550,15 @@ def section_departments_list(request):
         if not section:
             return Response({"error": "No sections found."}, status=404)
 
-    departments = Departement.objects.filter(section=section).prefetch_related('head')
-
+    departments = Departement.objects.filter(section=section)
     data = []
-    for dept in departments:
-        head_name = dept.head.get_full_name() if hasattr(dept, 'head') and dept.head else "Non assigné"
-        
-        teacher_count = User.objects.filter(
-            Q(role='professeur') | Q(role='assistant'),
-            course_assignments__course__auditoire__departement=dept
-        ).distinct().count()
-
-        student_count = User.objects.filter(
-            role='etudiant',
-            current_auditoire__departement=dept
-        ).count()
-
+    for department in departments:
         data.append({
-            "id": dept.id,
-            "name": dept.name,
-            "head": head_name,
-            "teachers": teacher_count,
-            "students": student_count,
+            "id": department.id,
+            "name": department.name,
         })
-
     return Response(data)
+
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
@@ -1573,34 +1571,25 @@ def section_courses_list(request):
         if not section:
             return Response({"error": "No sections found."}, status=404)
 
-    courses = Course.objects.filter(
-        auditoire__departement__section=section
-    ).select_related('auditoire__departement')
-
+    courses = Course.objects.filter(auditoire__departement__section=section).select_related('auditoire__departement')
     data = []
     for course in courses:
+        teacher_name = "Non assigné"
+        assignment = CourseAssignment.objects.filter(course=course).select_related('assistant').first()
+        if assignment and assignment.assistant:
+            teacher_name = assignment.assistant.get_full_name()
+
         data.append({
+            "id": course.id,
             "code": course.code,
             "intitule": course.name,
             "departement": course.auditoire.departement.name,
             "credits": course.credits,
-            "semestre": course.session_type, # Assuming session_type can be S1/S2
+            "semestre": course.session_type,
+            "teacher": teacher_name,
         })
-
     return Response(data)
 
-@api_view(["GET"])
-@permission_classes(DEV_PERMS)
-def section_list(request):
-    rows = [
-        {"code": "G1 INFO", "intitule": "Informatique 1", "effectif": 210},
-        {"code": "G2 INFO", "intitule": "Informatique 2", "effectif": 190},
-        {"code": "G3 INFO", "intitule": "Informatique 3", "effectif": 160},
-    ]
-    return Response(rows)
-
-
-# ---- Department Head Dashboard ----
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
@@ -1611,7 +1600,7 @@ def department_summary(request):
     except AttributeError:
         department = Departement.objects.first()
         if not department:
-            return Response({"error": "No departments found."}, status=404)
+            return Response({"error": "No departments found in the database."}, status=404)
 
     student_count = User.objects.filter(
         role='etudiant',
@@ -1623,18 +1612,24 @@ def department_summary(request):
         course_assignments__course__auditoire__departement=department
     ).distinct().count()
 
-    course_count = Course.objects.filter(
-        auditoire__departement=department
-    ).count()
+    course_count = Course.objects.filter(auditoire__departement=department).count()
 
     data = {
-        "students": student_count,
-        "teachers": teacher_count,
+        "students": {
+            "val": student_count,
+            "trend": [50, 55, 60, 58, student_count / 5]
+        },
+        "teachers": {
+            "val": teacher_count,
+            "trend": [10, 12, 11, 13, teacher_count / 2]
+        },
         "courses": course_count,
-        "successRate": "88%", # Dummy value
+        "successRate": {
+            "val": "80%",
+            "trend": [65, 70, 80, 78, 80]
+        }
     }
     return Response(data)
-
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
@@ -1643,7 +1638,6 @@ def department_students_list(request):
     try:
         department = user.department_head_of
     except AttributeError:
-        # Fallback for demonstration if the user is not explicitly linked
         department = Departement.objects.first()
         if not department:
             return Response({"error": "No departments found."}, status=404)
@@ -1651,25 +1645,20 @@ def department_students_list(request):
     students = User.objects.filter(
         role='etudiant',
         current_auditoire__departement=department
-    ).select_related('current_auditoire__departement')
+    ).select_related('current_auditoire')
 
     data = []
     for student in students:
-        department_name = "N/A"
         promotion = "N/A"
         if student.current_auditoire:
             promotion = student.current_auditoire.name
-            if student.current_auditoire.departement:
-                department_name = student.current_auditoire.departement.name
 
         data.append({
             "id": student.id,
             "name": student.get_full_name(),
             "matricule": student.matricule,
             "promotion": promotion,
-            "department": department_name,
-            "status": student.get_status_display(), # Assuming a status field exists
-            # Add other relevant student details here
+            "progress": 75,  # Dummy progress
         })
 
     return Response(data)
@@ -1749,6 +1738,129 @@ def department_activities_list(request):
     activities.sort(key=lambda x: x['date'], reverse=True)
 
     return Response(activities[:10]) # Return top 10 most recent activities
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def department_courses_list(request):
+    user = request.user
+    try:
+        department = user.department_head_of
+    except AttributeError:
+        department = Departement.objects.first()
+        if not department:
+            return Response({"error": "No departments found."}, status=404)
+
+    courses_queryset = Course.objects.filter(
+        auditoire__departement=department
+    ).select_related('auditoire__departement')
+
+    session_type_filter = request.query_params.get('session_type')
+    auditoire_id_filter = request.query_params.get('auditoire_id')
+
+    if session_type_filter:
+        courses_queryset = courses_queryset.filter(session_type=session_type_filter)
+    if auditoire_id_filter:
+        courses_queryset = courses_queryset.filter(auditoire__id=auditoire_id_filter)
+
+    data = []
+    for course in courses_queryset:
+        teacher_name = "Non assigné"
+        assignment = CourseAssignment.objects.filter(course=course).select_related('assistant').first()
+        if assignment and assignment.assistant:
+            teacher_name = assignment.assistant.get_full_name()
+
+        data.append({
+            "id": course.id,
+            "code": course.code,
+            "intitule": course.name,
+            "departement": course.auditoire.departement.name,
+            "credits": course.credits,
+            "semestre": course.session_type, # Assuming session_type can be S1/S2
+            "teacher": teacher_name,
+            "auditoire_id": course.auditoire.id,
+            "auditoire_name": course.auditoire.name,
+        })
+
+    return Response(data)
+
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def department_auditoriums_list(request):
+    user = request.user
+    try:
+        department = user.department_head_of
+    except AttributeError:
+        department = Departement.objects.first()
+        if not department:
+            return Response({"error": "No departments found."}, status=404)
+
+    auditoriums = Auditoire.objects.filter(departement=department)
+
+    data = []
+    for auditoire in auditoriums:
+        data.append({
+            "id": auditoire.id,
+            "name": auditoire.name,
+        })
+    return Response(data)
+
+
+@api_view(["POST"])
+@permission_classes(DEV_PERMS)
+def department_course_create(request):
+    user = request.user
+    try:
+        department = user.department_head_of
+    except AttributeError:
+        department = Departement.objects.first()
+        if not department:
+            return Response({"error": "No departments found."}, status=404)
+
+    intitule = request.data.get("intitule")
+    semestre = request.data.get("semestre")
+    credits = request.data.get("credits")
+    teacher_id = request.data.get("teacher") # This will be the teacher's ID
+    auditoire_id = request.data.get("auditoire_id") # Assuming auditoire is passed for course creation
+
+    if not all([intitule, semestre, credits, teacher_id, auditoire_id]):
+        return Response({"detail": "Intitulé, semestre, crédits, enseignant et auditoire sont requis."}, status=400)
+
+    try:
+        teacher = User.objects.get(id=teacher_id, role__in=['professeur', 'assistant'])
+        auditoire = Auditoire.objects.get(id=auditoire_id, departement=department)
+    except User.DoesNotExist:
+        return Response({"detail": "Enseignant non trouvé."}, status=404)
+    except Auditoire.DoesNotExist:
+        return Response({"detail": "Auditoire non trouvé dans ce département."}, status=404)
+
+    # Generate a unique 8-character hexadecimal code
+    code = uuid.uuid4().hex[:8].upper()
+    while Course.objects.filter(code=code, auditoire=auditoire).exists():
+        code = uuid.uuid4().hex[:8].upper()
+
+    with transaction.atomic():
+        course = Course.objects.create(
+            code=code,
+            name=intitule,
+            session_type=semestre,
+            credits=credits,
+            auditoire=auditoire,
+        )
+        CourseAssignment.objects.create(course=course, assistant=teacher)
+
+    return Response({
+        "id": course.id,
+        "code": course.code,
+        "intitule": course.name,
+        "departement": course.auditoire.departement.name,
+        "credits": course.credits,
+        "semestre": course.session_type,
+        "teacher": teacher.get_full_name(),
+        "auditoire_id": course.auditoire.id,
+        "auditoire_name": course.auditoire.name,
+    }, status=201)
 
 
 # ---- Endpoints Département (placeholders)

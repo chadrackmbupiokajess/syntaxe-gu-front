@@ -94,7 +94,7 @@ export default function DepartementDashboard() {
     } catch (error) {
       console.error("Failed to load department data", error);
       // Fallback to dummy data or empty arrays on error
-      setSum({ students: 0, teachers: 0, courses: 0, kpis: { successRate: 0 } });
+      setSum({ students: { val: 0, trend: [] }, teachers: { val: 0, trend: [] }, courses: 0, successRate: { val: 'N/A', trend: [] } });
       setTeachers([]);
       setRecentActivities([]);
     } finally {
@@ -132,10 +132,10 @@ export default function DepartementDashboard() {
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <KpiCard label="Étudiants" value={sum?.students || 0} color="bg-blue-500" icon={<UsersIcon />} />
-                <KpiCard label="Enseignants" value={sum?.teachers || 0} color="bg-green-500" icon={<AcademicCapIcon />} />
+                <KpiCard label="Étudiants" value={sum?.students?.val || 0} color="bg-blue-500" icon={<UsersIcon />} />
+                <KpiCard label="Enseignants" value={sum?.teachers?.val || 0} color="bg-green-500" icon={<AcademicCapIcon />} />
                 <KpiCard label="Cours" value={sum?.courses || 0} color="bg-orange-500" icon={<BookOpenIcon />} />
-                <KpiCard label="Taux de réussite (%)" value={sum?.successRate || 'N/A'} color="bg-purple-500" icon={<ChartBarIcon />} />
+                <KpiCard label="Taux de réussite (%)" value={sum?.successRate?.val || 'N/A'} color="bg-purple-500" icon={<ChartBarIcon />} />
               </div>
             )}
 

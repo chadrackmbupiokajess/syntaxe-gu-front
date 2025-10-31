@@ -2,14 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import Skeleton from './Skeleton';
 
-// Dummy data for available teachers for course assignment
-const dummyTeachersList = [
-  { id: 'T1', name: 'Dr. Ada Lovelace' },
-  { id: 'T2', name: 'Dr. Alan Turing' },
-  { id: 'T3', name: 'Dr. Grace Hopper' },
-  { id: 'T4', name: 'Dr. Tim Berners-Lee' },
-];
-
 // --- Course Card Component ---
 const CourseCard = ({ course }) => (
     <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
@@ -23,6 +15,7 @@ const CourseCard = ({ course }) => (
             <div className="mt-4 border-t pt-4">
                 <p className="text-sm text-gray-600"><span className="font-semibold">Enseignant:</span> {course.teacher}</p>
                 <p className="text-sm text-gray-600"><span className="font-semibold">Crédits:</span> {course.credits}</p>
+                <p className="text-sm text-gray-600"><span className="font-semibold">Auditoire:</span> {course.auditoire_name}</p>
             </div>
         </div>
         <div className="bg-gray-50 px-6 py-3 flex justify-end gap-3">
@@ -33,10 +26,11 @@ const CourseCard = ({ course }) => (
 );
 
 // --- Create Course Modal Component ---
-const CreateCourseModal = ({ isOpen, onClose, onCreateCourse, teachers }) => {
+const CreateCourseModal = ({ isOpen, onClose, onCreateCourse, teachers, auditoires }) => {
   const [newCourse, setNewCourse] = useState({
-    code: '', intitule: '', semestre: '', credits: '', teacher: ''
+    intitule: '', semestre: '', credits: '', teacher: '', auditoire_id: ''
   });
+  const [generatedCode, setGeneratedCode] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -46,7 +40,8 @@ const CreateCourseModal = ({ isOpen, onClose, onCreateCourse, teachers }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     onCreateCourse(newCourse);
-    setNewCourse({ code: '', intitule: '', semestre: '', credits: '', teacher: '' }); // Reset form
+    setNewCourse({ intitule: '', semestre: '', credits: '', teacher: '', auditoire_id: '' }); // Reset form
+    setGeneratedCode('');
   };
 
   if (!isOpen) return null;
@@ -56,18 +51,31 @@ const CreateCourseModal = ({ isOpen, onClose, onCreateCourse, teachers }) => {
       <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
         <h3 className="text-xl font-semibold mb-4">Créer un nouveau cours</h3>
         <form onSubmit={handleSubmit} className="grid gap-4">
-          <input type="text" name="code" value={newCourse.code} onChange={handleChange} placeholder="Code du cours" className="p-2 border rounded-md" required />
+          <input
+            type="text"
+            name="code"
+            value={generatedCode}
+            readOnly
+            placeholder="Code du cours (généré automatiquement)"
+            className="p-2 border rounded-md bg-gray-100"
+          />
           <input type="text" name="intitule" value={newCourse.intitule} onChange={handleChange} placeholder="Intitulé du cours" className="p-2 border rounded-md" required />
-          <select name="semestre" value={newCourse.semestre} onChange={handleChange} className="p-2 border rounded-md" required>
+          <select name="semestre" value={newCourse.semestre} onChange={handleChange} className="w-full p-2 border rounded-md" required>
             <option value="" disabled>Sélectionnez un semestre</option>
-            <option value="S1">S1</option>
-            <option value="S2">S2</option>
+            <option value="mi-session">Mi-session</option>
+            <option value="session">Session</option>
           </select>
           <input type="number" name="credits" value={newCourse.credits} onChange={handleChange} placeholder="Crédits" className="p-2 border rounded-md" required />
-          <select name="teacher" value={newCourse.teacher} onChange={handleChange} className="p-2 border rounded-md" required>
+          <select name="teacher" value={newCourse.teacher} onChange={handleChange} className="w-full p-2 border rounded-md" required>
             <option value="" disabled>Sélectionnez un enseignant</option>
             {teachers.map(t => (
-              <option key={t.id} value={t.name}>{t.name}</option>
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+          <select name="auditoire_id" value={newCourse.auditoire_id} onChange={handleChange} className="w-full p-2 border rounded-md" required>
+            <option value="" disabled>Sélectionnez un auditoire</option>
+            {auditoires.map(aud => (
+              <option key={aud.id} value={aud.id}>{aud.name}</option>
             ))}
           </select>
           <div className="flex justify-end gap-4 mt-4">
@@ -85,35 +93,83 @@ export default function GestionPedagogiqueDept() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [teachersList, setTeachersList] = useState([]);
+  const [auditoires, setAuditoires] = useState([]);
+  const [selectedSessionType, setSelectedSessionType] = useState('');
+  const [selectedAuditoireId, setSelectedAuditoireId] = useState('');
+  const [generatedCode, setGeneratedCode] = React.useState('');
 
-  const loadCourses = async () => {
+  const loadCourses = async (sessionType = selectedSessionType, auditoireId = selectedAuditoireId) => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/department/courses');
+      const params = {};
+      if (sessionType) params.session_type = sessionType;
+      if (auditoireId) params.auditoire_id = auditoireId;
+
+      const response = await axios.get('/api/department/courses', { params });
       setCourses(response.data);
     } catch (error) {
-      console.error("Failed to load department courses, using dummy data", error);
-      setCourses([
-        { code: 'PROG101', intitule: 'Introduction à la Programmation', semestre: 'S1', credits: 5, teacher: 'Dr. Ada Lovelace' },
-        { code: 'PROG201', intitule: 'Structures de Données', semestre: 'S2', credits: 6, teacher: 'Dr. Alan Turing' },
-        { code: 'PROG301', intitule: 'Algorithmique Avancée', semestre: 'S1', credits: 5, teacher: 'Dr. Grace Hopper' },
-        { code: 'PROG401', intitule: 'Développement Web', semestre: 'S2', credits: 7, teacher: 'Dr. Tim Berners-Lee' },
-      ]);
+      console.error("Failed to load department courses", error);
+      setCourses([]);
     } finally {
       setLoading(false);
     }
   };
 
+  const loadTeachersAndAuditoires = async () => {
+    try {
+      const [teachersRes, auditoiresRes] = await Promise.all([
+        axios.get('/api/department/teachers'),
+        axios.get('/api/department/auditoriums'),
+      ]);
+      setTeachersList(teachersRes.data);
+      setAuditoires(auditoiresRes.data);
+    } catch (error) {
+      console.error("Failed to load teachers or auditoriums", error);
+      setTeachersList([]);
+      setAuditoires([]);
+    }
+  };
+
   useEffect(() => {
-    loadCourses();
+    loadTeachersAndAuditoires();
   }, []);
 
-  const handleCreateCourse = (newCourse) => {
-    // In a real app, you would make an API call to create the course
-    console.log("Nouveau cours créé (simulation):", newCourse);
-    alert(`Cours '${newCourse.intitule}' créé (simulation).`);
-    setCourses(prevCourses => [...prevCourses, { ...newCourse, id: Date.now() }]); // Add with a unique ID
-    setIsModalOpen(false);
+  useEffect(() => {
+    loadCourses();
+  }, [selectedSessionType, selectedAuditoireId]); // Reload courses when filters change
+
+  const generateCode = () => {
+    const randomHex = () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0');
+    let code = '';
+    for (let i = 0; i < 4; i++) {
+      code += randomHex();
+    }
+    setGeneratedCode(code.toUpperCase());
+    return code.toUpperCase();
+  };
+
+  const handleCreateCourse = async (newCourseData) => {
+    try {
+      await axios.post('/api/department/courses/create', {
+        intitule: newCourseData.intitule,
+        semestre: newCourseData.semestre,
+        credits: parseInt(newCourseData.credits),
+        teacher: newCourseData.teacher,
+        auditoire_id: newCourseData.auditoire_id,
+      });
+      alert(`Cours '${newCourseData.intitule}' créé avec succès.`);
+      setIsModalOpen(false);
+      loadCourses(); // Reload courses after creation
+    } catch (error) {
+      console.error("Failed to create course", error);
+      alert("Erreur lors de la création du cours.");
+    }
+  };
+
+  const handleOpenModal = () => {
+    generateCode();
+    setIsModalOpen(true);
   };
 
   // Memoized stats for performance
@@ -126,7 +182,7 @@ export default function GestionPedagogiqueDept() {
   return (
     <div className="grid gap-8">
         {/* Header and Stats */}
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
                 <h2 className="text-3xl font-bold text-gray-800">Gestion Pédagogique</h2>
                 <p className="text-gray-600 mt-1">
@@ -134,11 +190,34 @@ export default function GestionPedagogiqueDept() {
                 </p>
             </div>
             <button
-                onClick={() => setIsModalOpen(true)}
+                onClick={handleOpenModal}
                 className="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300 shadow-md"
             >
                 Ajouter un nouveau cours
             </button>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row gap-4">
+            <select
+                value={selectedSessionType}
+                onChange={(e) => setSelectedSessionType(e.target.value)}
+                className="p-2 border rounded-md shadow-sm"
+            >
+                <option value="">Toutes les sessions</option>
+                <option value="mi-session">Mi-session</option>
+                <option value="session">Session</option>
+            </select>
+            <select
+                value={selectedAuditoireId}
+                onChange={(e) => setSelectedAuditoireId(e.target.value)}
+                className="p-2 border rounded-md shadow-sm"
+            >
+                <option value="">Tous les auditoires</option>
+                {auditoires.map(aud => (
+                    <option key={aud.id} value={aud.id}>{aud.name}</option>
+                ))}
+            </select>
         </div>
 
         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -161,9 +240,13 @@ export default function GestionPedagogiqueDept() {
             </div>
         ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.map(course => (
-                    <CourseCard key={course.code} course={course} />
-                ))}
+                {courses.length > 0 ? (
+                    courses.map(course => (
+                        <CourseCard key={course.id} course={course} />
+                    ))
+                ) : (
+                    <p className="text-gray-600 col-span-full text-center">Aucun cours trouvé avec les filtres actuels.</p>
+                )}
             </div>
         )}
 
@@ -171,7 +254,8 @@ export default function GestionPedagogiqueDept() {
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             onCreateCourse={handleCreateCourse}
-            teachers={dummyTeachersList} // Pass dummy teachers for selection
+            teachers={teachersList}
+            auditoires={auditoires}
         />
     </div>
   );

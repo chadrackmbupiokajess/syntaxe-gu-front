@@ -1,43 +1,83 @@
 from django.urls import include, re_path, path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import (
-    health, student_summary, student_meta, student_grades_recent, student_profile,
-    # Vues ajoutées
-    assistant_summary, auditoriums_assistant_my, tptd_my, quizzes_my, assistant_tograde,
-    assistant_auditorium_courses, assistant_auditorium_students, assistant_auditorium_activities, assistant_auditorium_stats,
-    assistant_auditorium_create_tptd, assistant_auditorium_create_quiz,
-    student_notifications, 
-    # Endpoints manquants (student/library/payments)
-    quizzes_student_available, tptd_student_available, quizzes_student_my_attempts, tptd_student_my_submissions,
-    student_courses, student_calendar, library_catalog, library_myloans, student_grades_all,
-    student_documents, payments_mine,
-    # PDG / DG / SGA
-    pdg_summary, pdg_activities, dg_summary, dg_actions, sga_summary, sga_demandes,
-    # SGAD / Section / Departement / Jury / Apparitorat / Finance / IT / Library
-    sgad_summary, sgad_paie,
-    section_summary, section_list, section_teachers_list, section_students_list, section_departments_list, section_courses_list,
-    department_summary, department_list, department_students_list, department_teachers_list, department_activities_list, # Added department_students_list, department_teachers_list, department_activities_list
-    jury_summary, jury_defenses,
-    apparitorat_summary, apparitorat_presences,
-    finance_summary, finance_operations,
-    it_summary, it_incidents,
-    library_summary, library_gestion_reservations,
-    # Student actions
-    quizzes_student_start, quizzes_student_attempt_submit, tptd_student_submit,
-    tptd_student_detail, quizzes_student_detail,
-    # Assistant student details
-    assistant_student_detail, assistant_student_grades, assistant_student_submissions,
-    # Assistant messages
+    health,
+    student_summary,
+    student_meta,
+    student_grades_recent,
+    student_profile,
+    assistant_summary,
+    auditoriums_assistant_my,
+    tptd_my,
+    quizzes_my,
+    assistant_tograde,
+    assistant_auditorium_courses,
+    assistant_auditorium_students,
+    assistant_auditorium_activities,
+    assistant_auditorium_stats,
+    assistant_auditorium_create_tptd,
+    assistant_auditorium_create_quiz,
+    student_notifications,
+    quizzes_student_available,
+    tptd_student_available,
+    quizzes_student_my_attempts,
+    tptd_student_my_submissions,
+    student_courses,
+    student_calendar,
+    library_catalog,
+    library_myloans,
+    student_grades_all,
+    student_documents,
+    payments_mine,
+    pdg_summary,
+    pdg_activities,
+    dg_summary,
+    dg_actions,
+    sga_summary,
+    sga_demandes,
+    sgad_summary,
+    sgad_paie,
+    section_summary,
+    section_list,
+    section_teachers_list,
+    section_students_list,
+    section_departments_list,
+    section_courses_list,
+    department_summary,
+    department_list,
+    department_students_list,
+    department_teachers_list,
+    department_activities_list,
+    department_courses_list,
+    department_course_create,
+    department_auditoriums_list,
+    jury_summary,
+    jury_defenses,
+    apparitorat_summary,
+    apparitorat_presences,
+    finance_summary,
+    finance_operations,
+    it_summary,
+    it_incidents,
+    library_summary,
+    library_gestion_reservations,
+    quizzes_student_start,
+    quizzes_student_attempt_submit,
+    tptd_student_submit,
+    tptd_student_detail,
+    quizzes_student_detail,
+    assistant_student_detail,
+    assistant_student_grades,
+    assistant_student_submissions,
     assistant_my_courses,
     tptd_my_detail,
     quizzes_my_detail,
     assistant_profile,
     assistant_grades,
-    # New Assistant TPTD Submission endpoints
-    assistant_submission_detail, assistant_grade_submission,
-    # New student messages endpoint
+    assistant_submission_detail,
+    assistant_grade_submission,
     student_messages,
-    user_list, # Ajout de la vue user_list
+    user_list,
 )
 
 urlpatterns = [
@@ -92,7 +132,7 @@ urlpatterns = [
     re_path(r"^quizzes/my/(?P<id>\d+)/?$", quizzes_my_detail, name="quizzes_my_detail"),
     re_path(r"^assistant/tograde/?$", assistant_tograde, name="assistant_tograde"),
     re_path(r'^assistant/grades/(?P<auditorium_id>\d+)/(?P<course_code>[^/]+)/?$', assistant_grades, name='assistant_grades'),
-    
+
     # New Assistant TPTD Submission endpoints
     re_path(r"^assistant/tptd/(?P<assignment_id>\d+)/submission/(?P<submission_id>\d+)/?$", assistant_submission_detail, name="assistant_submission_detail"),
     re_path(r"^assistant/tptd/(?P<assignment_id>\d+)/submission/(?P<submission_id>\d+)/grade/?$", assistant_grade_submission, name="assistant_grade_submission"),
@@ -117,6 +157,9 @@ urlpatterns = [
     re_path(r"^department/students/?$", department_students_list, name="department_students_list"), # New endpoint
     re_path(r"^department/teachers/?$", department_teachers_list, name="department_teachers_list"), # New endpoint
     re_path(r"^department/activities/?$", department_activities_list, name="department_activities_list"), # New endpoint
+    re_path(r"^department/courses/?$", department_courses_list, name="department_courses_list"), # New endpoint
+    re_path(r"^department/courses/create/?$", department_course_create, name="department_course_create"), # New endpoint
+    re_path(r"^department/auditoriums/?$", department_auditoriums_list, name="department_auditoriums_list"), # New endpoint
     re_path(r"^jury/summary/?$", jury_summary, name="jury_summary"),
     re_path(r"^jury/defenses/?$", jury_defenses, name="jury_defenses"),
     re_path(r"^apparitorat/summary/?$", apparitorat_summary, name="apparitorat_summary"),
