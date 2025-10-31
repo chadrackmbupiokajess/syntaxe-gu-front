@@ -31,24 +31,43 @@ function formatDateSeparator(dateStr) {
 // --- Components ---
 
 function CourseSidebar({ courses, onSelectCourse, selectedCourse }) {
+  // Group courses by auditorium
+  const groupedCourses = courses.reduce((acc, course) => {
+    const auditoriumKey = `${course.auditorium_id}-${course.auditorium}`;
+    if (!acc[auditoriumKey]) {
+      acc[auditoriumKey] = {
+        id: course.auditorium_id,
+        name: course.auditorium,
+        courses: []
+      };
+    }
+    acc[auditoriumKey].courses.push(course);
+    return acc;
+  }, {});
+
   return (
     <div className="flex flex-col bg-slate-800 text-white w-1/4 min-h-screen p-4">
-      <h2 className="text-xl font-bold mb-4">Mes Cours</h2>
-      <nav className="flex flex-col gap-2">
-        {courses.map(course => (
-          <button
-            key={course.code}
-            onClick={() => onSelectCourse(course)}
-            className={`text-left p-2 rounded-md transition-colors duration-200 ${
-              selectedCourse?.code === course.code
-                ? 'bg-blue-600 font-semibold'
-                : 'hover:bg-slate-700'
-            }`}
-          >
-            <p className="font-medium">{course.title}</p>
-            <p className="text-sm text-white/60">{course.auditorium}</p>
-            <p className="text-xs text-white/50">{course.department}</p>
-          </button>
+      <h2 className="text-xl font-bold mb-4">Discussions par Cours</h2>
+      <nav className="flex flex-col gap-4">
+        {Object.values(groupedCourses).map(auditorium => (
+          <div key={auditorium.id} className="mb-2">
+            <h3 className="text-lg font-semibold text-indigo-400 mb-2">{auditorium.name}</h3>
+            {auditorium.courses.map(course => (
+              <button
+                key={course.id}
+                onClick={() => onSelectCourse(course)}
+                className={`w-full text-left p-2 rounded-md transition-colors duration-200 mb-1 ${
+                  selectedCourse?.id === course.id
+                    ? 'bg-blue-600 font-semibold'
+                    : 'hover:bg-slate-700'
+                }`}
+              >
+                <p className="font-medium">{course.title}</p>
+                <p className="text-sm text-white/60">{course.auditorium}</p>
+                <p className="text-xs text-white/50">{course.department}</p>
+              </button>
+            ))}
+          </div>
         ))}
       </nav>
     </div>
@@ -67,11 +86,12 @@ function ChatArea({ course }) {
   }
 
   useEffect(() => {
-    if (!course) return;
+    if (!course || !course.code || !course.auditorium_id) return;
     const fetchMessages = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`/api/messaging/chat/${course.code}/messages`);
+        // Updated API call to include course_code and auditorium_id
+        const response = await axios.get(`/api/messaging/chat/${course.code}/${course.auditorium_id}/messages`);
         setMessages(response.data);
         scrollToBottom();
       } catch (error) {
@@ -86,9 +106,10 @@ function ChatArea({ course }) {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !course) return;
+    if (!newMessage.trim() || !course || !course.code || !course.auditorium_id) return;
     try {
-      const response = await axios.post(`/api/messaging/chat/${course.code}/messages`, { text: newMessage });
+      // Updated API call to include course_code and auditorium_id
+      const response = await axios.post(`/api/messaging/chat/${course.code}/${course.auditorium_id}/messages`, { text: newMessage });
       setMessages(prev => [...prev, response.data]);
       setNewMessage('');
       if (textareaRef.current) {
@@ -126,7 +147,11 @@ function ChatArea({ course }) {
       lastDate = msgDate;
     }
 
-    const isSelf = msg.user === 'Vous';
+    // Assuming the backend response for messages includes sender_id and the current user's ID is available
+    // For AssistantMessages, we don't have currentUser prop, so we'll assume 'You' for now or fetch current user if needed
+    // For now, let's assume the assistant is always 'You' in this view for simplicity, or we need to pass current user info.
+    // A more robust solution would involve fetching the current user's ID in AssistantMessages component.
+    const isSelf = msg.user === 'Vous'; // This logic needs to be refined if actual user identification is required
     const avatar = (
       <div className={`w-8 h-8 rounded-full ${isSelf ? 'bg-blue-500' : 'bg-slate-600'} flex-shrink-0 flex items-center justify-center font-bold text-white`}>
         {isSelf ? 'V' : msg.user.charAt(0).toUpperCase()}
@@ -154,7 +179,7 @@ function ChatArea({ course }) {
   return (
     <div className="flex-1 flex flex-col bg-slate-900">
       <div className="p-4 bg-slate-800 border-b border-slate-700">
-        <h3 className="text-xl font-bold">{course.title}</h3>
+        <h3 className="text-xl font-bold">{course.title} ({course.auditorium})</h3>
         <p className="text-sm text-white/60">{course.auditorium} - {course.department}</p>
       </div>
       <div className="flex-1 p-6 overflow-y-auto">
@@ -195,13 +220,15 @@ export default function AssistantMessages() {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
+        // The /api/assistant/courses endpoint should return auditorium_id and auditorium_name
         const response = await axios.get('/api/assistant/courses');
         const fetchedCourses = response.data;
         setCourses(fetchedCourses);
 
         const auditoriumCode = searchParams.get('auditorium');
         if (auditoriumCode) {
-          const courseToSelect = fetchedCourses.find(c => c.auditorium === auditoriumCode);
+          // Find course by auditorium ID, not just auditorium name
+          const courseToSelect = fetchedCourses.find(c => c.auditorium_id === parseInt(auditoriumCode));
           if (courseToSelect) {
             setSelectedCourse(courseToSelect);
           }
@@ -220,7 +247,7 @@ export default function AssistantMessages() {
         onSelectCourse={setSelectedCourse}
         selectedCourse={selectedCourse}
       />
-      <ChatArea key={selectedCourse?.code} course={selectedCourse} />
+      <ChatArea key={selectedCourse?.id} course={selectedCourse} />
     </div>
   );
 }

@@ -30,30 +30,49 @@ function formatDateSeparator(dateStr) {
 // --- Components ---
 
 function CourseSidebar({ courses, onSelectCourse, selectedCourse }) {
+  // Group courses by auditorium
+  const groupedCourses = courses.reduce((acc, course) => {
+    const auditoriumKey = `${course.auditorium_id}-${course.auditorium_name}`;
+    if (!acc[auditoriumKey]) {
+      acc[auditoriumKey] = {
+        id: course.auditorium_id,
+        name: course.auditorium_name,
+        courses: []
+      };
+    }
+    acc[auditoriumKey].courses.push(course);
+    return acc;
+  }, {});
+
   return (
     <div className="flex flex-col bg-slate-100 dark:bg-slate-800 w-1/4 min-h-screen p-4 border-r border-slate-200 dark:border-slate-700">
-      <h2 className="text-xl font-bold mb-4">Mes Cours</h2>
-      <nav className="flex flex-col gap-2">
-        {courses.map(course => (
-          <button
-            key={course.id}
-            onClick={() => onSelectCourse(course)}
-            className={`text-left p-2 rounded-md transition-colors duration-200 ${
-              selectedCourse?.id === course.id
-                ? 'bg-blue-500 text-white font-semibold'
-                : 'hover:bg-slate-200 dark:hover:bg-slate-700'
-            }`}
-          >
-            <p className="font-medium">{course.title}</p>
-            <p className="text-sm text-slate-400">{course.session_type}</p>
-          </button>
+      <h2 className="text-xl font-bold mb-4">Discussions par Cours</h2>
+      <nav className="flex flex-col gap-4">
+        {Object.values(groupedCourses).map(auditorium => (
+          <div key={auditorium.id} className="mb-2">
+            <h3 className="text-lg font-semibold text-indigo-400 mb-2">{auditorium.name}</h3>
+            {auditorium.courses.map(course => (
+              <button
+                key={course.id}
+                onClick={() => onSelectCourse(course)}
+                className={`w-full text-left p-2 rounded-md transition-colors duration-200 mb-1 ${
+                  selectedCourse?.id === course.id
+                    ? 'bg-blue-500 text-white font-semibold'
+                    : 'hover:bg-slate-200 dark:hover:bg-slate-700'
+                }`}
+              >
+                <p className="font-medium">{course.title}</p>
+                <p className="text-sm text-slate-400">{course.session_type}</p>
+              </button>
+            ))}
+          </div>
         ))}
       </nav>
     </div>
   );
 }
 
-function ChatArea({ course, studentMeta, currentUser }) {
+function ChatArea({ course, currentUser }) { // Removed studentMeta as it's not used
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -65,7 +84,7 @@ function ChatArea({ course, studentMeta, currentUser }) {
   }
 
   useEffect(() => {
-    if (!course) {
+    if (!course || !course.code || !course.auditorium_id) {
         setMessages([]);
         return;
     }
@@ -73,12 +92,10 @@ function ChatArea({ course, studentMeta, currentUser }) {
     const fetchMessages = async () => {
       setLoading(true);
       try {
-        const response = await safeGet(`/api/student/messages`);
+        // Updated API call to include course_code and auditorium_id
+        const response = await safeGet(`/api/messaging/chat/${course.code}/${course.auditorium_id}/messages`);
         if (response) {
-            const filteredMessages = response.filter(msg => 
-                msg.courseId === course.id
-            );
-            setMessages(filteredMessages);
+            setMessages(response); // No client-side filtering needed now
         } else {
             setMessages([]);
         }
@@ -96,11 +113,19 @@ function ChatArea({ course, studentMeta, currentUser }) {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !course) return;
+    if (!newMessage.trim() || !course || !course.code || !course.auditorium_id) return;
     try {
-      const response = await safePost(`/api/student/messages`, { course_id: course.id, body: newMessage });
+      // Updated API call to include course_code and auditorium_id
+      const response = await safePost(`/api/messaging/chat/${course.code}/${course.auditorium_id}/messages`, { text: newMessage }); // Changed body to text as per backend
       if(response) {
-        setMessages(prev => [...prev, response]);
+        setMessages(prev => [...prev, {
+          id: response.id,
+          user: response.user,
+          text: response.text,
+          at: response.at,
+          sender_id: currentUser.id, // Assuming currentUser.id is available
+          sender_type: currentUser.roles[0], // Assuming currentUser.roles is an array of strings
+        }]);
       }
       setNewMessage('');
       if (textareaRef.current) {
@@ -128,28 +153,28 @@ function ChatArea({ course, studentMeta, currentUser }) {
   let lastDate = null;
 
   messages.forEach((msg, index) => {
-    const msgDate = new Date(msg.created_at).toDateString();
+    const msgDate = new Date(msg.at).toDateString(); // Changed created_at to at
     if (msgDate !== lastDate) {
       chatElements.push(
         <div key={`date-${msgDate}`} className="text-center text-sm text-slate-400 my-4">
-          {formatDateSeparator(msg.created_at)}
+          {formatDateSeparator(msg.at)} // Changed created_at to at
         </div>
       );
       lastDate = msgDate;
     }
 
-    const isSelf = msg.sender_id === currentUser.id;
+    const isSelf = msg.sender_id === currentUser.id; // Assuming sender_id is available in msg
     const avatar = (
       <div className={`w-8 h-8 rounded-full ${isSelf ? 'bg-blue-500' : 'bg-slate-600'} flex-shrink-0 flex items-center justify-center font-bold text-white`}>
-        {isSelf ? 'Moi' : msg.sender.charAt(0).toUpperCase()}
+        {isSelf ? 'Moi' : msg.user.charAt(0).toUpperCase()} // Changed msg.sender to msg.user
       </div>
     );
     const messageBubble = (
       <div className={`max-w-lg px-3 pt-2 pb-1 rounded-2xl ${isSelf ? 'bg-blue-600 text-white rounded-br-none' : 'bg-slate-200 dark:bg-slate-700 rounded-bl-none'}`}>
-        {!isSelf && <p className="text-sm font-semibold text-slate-800 dark:text-white/80 mb-1">{msg.sender}</p>}
-        <p className="whitespace-pre-wrap break-words">{msg.body}</p>
+        {!isSelf && <p className="text-sm font-semibold text-slate-800 dark:text-white/80 mb-1">{msg.user}</p>} // Changed msg.sender to msg.user
+        <p className="whitespace-pre-wrap break-words">{msg.text}</p> // Changed msg.body to msg.text
         <div className="text-right text-xs text-slate-500 dark:text-white/60 mt-1">
-          {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          {new Date(msg.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} // Changed created_at to at
         </div>
       </div>
     );
@@ -166,7 +191,7 @@ function ChatArea({ course, studentMeta, currentUser }) {
   return (
     <div className="flex-1 flex flex-col bg-white dark:bg-slate-900">
       <div className="p-4 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-        <h3 className="text-xl font-bold">{course.title}</h3>
+        <h3 className="text-xl font-bold">{course.title} ({course.auditorium_name})</h3> {/* Added auditorium_name */}
       </div>
       <div className="flex-1 p-6 overflow-y-auto">
         <div className="flex flex-col gap-4">

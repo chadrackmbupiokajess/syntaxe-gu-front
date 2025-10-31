@@ -111,19 +111,19 @@ export default function App() {
             </Route>
           </Route>
 
-          <Route path="/pdg" element={<RoleRoute allowedRoles={['pdg']} />}> 
+          <Route path="/pdg" element={<RoleRoute allowedRoles={['pdg']} />}>
             <Route index element={<PDGDashboard />} />
           </Route>
-          <Route path="/dg" element={<RoleRoute allowedRoles={['dg']} />}> 
+          <Route path="/dg" element={<RoleRoute allowedRoles={['dg']} />}>
             <Route index element={<DgDashboard />} />
           </Route>
-          <Route path="/sga" element={<RoleRoute allowedRoles={['sga']} />}> 
+          <Route path="/sga" element={<RoleRoute allowedRoles={['sga']} />}>
             <Route index element={<SgaDashboard />} />
           </Route>
-          <Route path="/sgad" element={<RoleRoute allowedRoles={['sgad']} />}> 
+          <Route path="/sgad" element={<RoleRoute allowedRoles={['sgad']} />}>
             <Route index element={<SgadDashboard />} />
           </Route>
-          <Route path="/section" element={<RoleRoute allowedRoles={['chef_section']} />}> 
+          <Route path="/section" element={<RoleRoute allowedRoles={['chef_section']} />}>
             <Route index element={<SectionDashboard />} />
           </Route>
           <Route path="/departement" element={<RoleRoute allowedRoles={['chef_departement']} />}> 

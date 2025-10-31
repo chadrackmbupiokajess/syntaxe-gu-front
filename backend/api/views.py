@@ -199,7 +199,7 @@ def quizzes_my(request):
             if q_data['type'] in ['single', 'multiple']:
                 for choice_data in q_data['choices']:
                     Choice.objects.create(question=question, choice_text=choice_data['text'], is_correct=choice_data['is_correct'])
-        
+
         return Response({"id": quiz.id, "title": quiz.title}, status=201)
 
     # GET request
@@ -270,7 +270,7 @@ def assistant_grades(request, auditorium_id, course_code):
 
         if request.method == 'GET':
             students = User.objects.filter(current_auditoire=auditorium, role='etudiant').order_by('last_name', 'first_name')
-            
+
             submissions = Submission.objects.filter(
                 assignment__course=course,
                 student__in=students
@@ -281,8 +281,8 @@ def assistant_grades(request, auditorium_id, course_code):
                 student_id = sub.student.id
                 if student_id not in grades_map or sub.submitted_at > grades_map[student_id]['submitted_at']:
                     grades_map[student_id] = {
-                        'grade': sub.grade, 
-                        'submitted_at': sub.submitted_at, 
+                        'grade': sub.grade,
+                        'submitted_at': sub.submitted_at,
                         'total_points': getattr(sub.assignment, 'total_points', 10)
                     }
 
@@ -291,7 +291,7 @@ def assistant_grades(request, auditorium_id, course_code):
                 student_grade_info = grades_map.get(student.id)
                 grade = student_grade_info['grade'] if student_grade_info else None
                 total_points = student_grade_info['total_points'] if student_grade_info else 10
-                
+
                 grades_data.append({
                     "student_id": student.id,
                     "student_name": student.get_full_name(),
@@ -308,7 +308,7 @@ def assistant_grades(request, auditorium_id, course_code):
 
             if student_id is None or grade is None:
                 return Response({"detail": "student_id et grade sont requis pour la mise à jour."}, status=400)
-            
+
             student = User.objects.filter(id=student_id, role='etudiant').first()
             if not student:
                 return Response({"detail": "Étudiant non trouvé."}, status=404)
@@ -481,7 +481,7 @@ def assistant_profile(request):
             if not user.check_password(current_password):
                 return Response({"detail": "Mot de passe actuel incorrect."}, status=400)
             user.set_password(new_password)
-        
+
         user.save()
 
     # GET or after PATCH
@@ -610,7 +610,7 @@ def student_profile(request):
             if not user.check_password(current_password):
                 return Response({"detail": "Mot de passe actuel incorrect."}, status=400)
             user.set_password(new_password)
-        
+
         user.save()
 
     # GET or after PATCH
@@ -849,7 +849,7 @@ def student_messages(request):
     user = request.user
     if not user.current_auditoire:
         return Response({"detail": "L'étudiant n'est pas assigné à un auditoire."}, status=403)
-    
+
     aud = user.current_auditoire
 
     if request.method == "GET":
@@ -903,7 +903,7 @@ def assistant_auditorium_create_tptd(request, code: str):
         aud = Auditoire.objects.filter(pk=auditorium_id).first()
         if not aud:
             return Response({"detail": "Auditoire introuvable"}, status=404)
-        
+
         course_id = request.data.get("course_id")
         title = (request.data.get("title") or "").strip()
         deadline_s = request.data.get("deadline")
@@ -912,11 +912,11 @@ def assistant_auditorium_create_tptd(request, code: str):
 
         if not (course_id and title and deadline_s):
             return Response({"detail": "course_id, title, deadline requis"}, status=400)
-        
+
         course = Course.objects.filter(id=course_id, auditoire=aud).first()
         if not course:
             return Response({"detail": "Cours introuvable dans cet auditoire"}, status=404)
-        
+
         deadline = parse_datetime(deadline_s) or timezone.now() + timedelta(days=7)
         a = Assignment.objects.create(course=course, assistant=request.user, title=title, questionnaire=questionnaire, total_points=total_points, deadline=deadline)
         return Response({"id": a.id, "title": a.title, "deadline": a.deadline.isoformat()}, status=201)
@@ -934,7 +934,7 @@ def assistant_auditorium_create_quiz(request, code: str):
         aud = Auditoire.objects.filter(pk=auditorium_id).first()
         if not aud:
             return Response({"detail": "Auditoire introuvable"}, status=404)
-        
+
         course_id = request.data.get("course_id")
         title = (request.data.get("title") or "").strip()
         duration = int(request.data.get("duration") or 0)
@@ -942,11 +942,11 @@ def assistant_auditorium_create_quiz(request, code: str):
 
         if not (course_id and title and duration and questions_data):
             return Response({"detail": "course_id, title, duration et questions requis"}, status=400)
-        
+
         course = Course.objects.filter(id=course_id, auditoire=aud).first()
         if not course:
             return Response({"detail": "Cours introuvable dans cet auditoire"}, status=404)
-        
+
         q = Quiz.objects.create(course=course, assistant=request.user, title=title, duration=duration)
 
         for q_data in questions_data:
@@ -959,7 +959,7 @@ def assistant_auditorium_create_quiz(request, code: str):
     except (ValueError, TypeError):
         return Response({"detail": "Code d'auditoire invalide"}, status=400)
     except Exception as e:
-        return Response({"detail": f"Erreur de création du quiz: {e}"}, status=500)
+        return Response({"detail": f"Erreur de création du quiz: {e}"}, status=400)
 
 
 @api_view(["GET"])
@@ -1152,7 +1152,7 @@ def student_courses(request):
             title = c.name
             credits = c.credits
             assign = CourseAssignment.objects.filter(course=c).select_related("assistant").first()
-            
+
             instructor = assign.assistant.get_full_name() if assign and assign.assistant else "N/A"
 
             rows.append({
@@ -1162,6 +1162,8 @@ def student_courses(request):
                 "credits": credits,
                 "instructor": instructor,
                 "session_type": c.get_session_type_display(),
+                "auditorium_id": user.current_auditoire.id,
+                "auditorium_name": user.current_auditoire.name,
             })
     return Response(rows)
 
@@ -1208,13 +1210,13 @@ def quizzes_student_start(request, id: int):
     try:
         user = request.user
         quiz = Quiz.objects.get(id=id)
-        
+
         attempt, created = QuizAttempt.objects.get_or_create(
-            student=user, 
+            student=user,
             quiz=quiz,
             defaults={'total_questions': quiz.questions.count(), 'submission_reason': 'manual'}
         )
-        
+
         return Response({"status": "ok", "attempt_id": attempt.id})
     except Quiz.DoesNotExist:
         return Response({"detail": "Quiz ou profil introuvable."}, status=404)
@@ -1253,22 +1255,22 @@ def quizzes_student_attempt_submit(request, id: int):
                         if isinstance(answer_value, list) and set(answer_value) == correct_choices:
                             points = 1
 
-                answer = Answer.objects.create(
-                    attempt=attempt,
-                    question=question,
-                    answer_text=str(answer_value) if question.question_type == 'text' else '',
-                    points_obtained=points
-                )
+                    answer = Answer.objects.create(
+                        attempt=attempt,
+                        question=question,
+                        answer_text=str(answer_value) if question.question_type == 'text' else '',
+                        points_obtained=points
+                    )
 
-                if question.question_type in ['single', 'multiple'] and answer_value:
-                    if isinstance(answer_value, list):
-                        answer.selected_choices.set(answer_value)
-                    else:
-                        answer.selected_choices.set([answer_value])
-                
-                if should_auto_grade and points is not None:
-                    total_score += points
-            
+                    if question.question_type in ['single', 'multiple'] and answer_value:
+                        if isinstance(answer_value, list):
+                            answer.selected_choices.set(answer_value)
+                        else:
+                            answer.selected_choices.set([answer_value])
+
+                    if should_auto_grade and points is not None:
+                        total_score += points
+
             attempt.score = total_score if should_auto_grade else None
             attempt.submitted_at = timezone.now()
             attempt.save()

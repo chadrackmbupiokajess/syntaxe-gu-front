@@ -33,7 +33,7 @@ class Submission(models.Model):
     content = models.TextField(blank=True, help_text="Contenu de la soumission de l'étudiant")
     status = models.CharField(max_length=20, choices=[('soumis', 'Soumis'), ('non_soumis', 'Non soumis')], default='non_soumis')
     grade = models.FloatField(null=True, blank=True)
-    feedback = models.TextField(blank=True, null=True) # AJOUT DU CHAMP FEEDBACK
+    feedback = models.TextField(blank=True, null=True)
     submitted_at = models.DateTimeField(null=True, blank=True)
     graded_at = models.DateTimeField(null=True, blank=True)
 
@@ -94,6 +94,7 @@ class QuizAttempt(models.Model):
     student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='quiz_attempts', limit_choices_to={'role': 'etudiant'})
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='attempts')
     score = models.FloatField(null=True, blank=True)
+    feedback = models.TextField(blank=True, null=True) # AJOUT DU CHAMP FEEDBACK
     total_questions = models.PositiveIntegerField(default=0)
     submitted_at = models.DateTimeField(auto_now_add=True)
     submission_reason = models.CharField(max_length=10, choices=SUBMISSION_REASONS, default='left-page')
