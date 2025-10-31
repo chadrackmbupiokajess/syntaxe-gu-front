@@ -1462,6 +1462,35 @@ def section_summary(request):
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
+def section_teachers_list(request):
+    user = request.user
+    # TEMPORARY: Fetch all teachers to ensure frontend connectivity.
+    # TODO: Refine this to only fetch teachers from the user's section.
+    teachers = User.objects.filter(
+        Q(role='professeur') | Q(role='assistant')
+    ).distinct()
+
+    data = []
+    for teacher in teachers:
+        # Try to find a department, but don't require it.
+        assignment = teacher.course_assignments.select_related('course__auditoire__departement').first()
+        department = "Non assigné"
+        if assignment and assignment.course and assignment.course.auditoire and assignment.course.auditoire.departement:
+            department = assignment.course.auditoire.departement.name
+
+        data.append({
+            "id": teacher.id,
+            "name": teacher.get_full_name(),
+            "email": teacher.email,
+            "role": teacher.get_role_display(),
+            "department": department,
+            "available": teacher.status == 'active',
+        })
+
+    return Response(data)
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
 def section_list(request):
     rows = [
         {"code": "G1 INFO", "intitule": "Informatique 1", "effectif": 210},

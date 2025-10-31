@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import axios from 'axios';
 import Skeleton from './Skeleton';
 
 const TeacherCard = ({ teacher }) => (
@@ -29,15 +30,8 @@ export default function GestionEnseignants() {
   const loadTeachers = async () => {
     setLoading(true);
     try {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setTeachers([
-            { id: 1, name: 'Dr. Ada Lovelace', department: 'Programmation', role: 'Professeur', email: 'ada.l@univ.edu', available: true },
-            { id: 2, name: 'Dr. Vint Cerf', department: 'Réseaux', role: 'Professeur', email: 'vint.c@univ.edu', available: false },
-            { id: 3, name: 'Dr. Linus Torvalds', department: 'Systèmes', role: 'Professeur', email: 'linus.t@univ.edu', available: true },
-            { id: 4, name: 'Mr. John Doe', department: 'Programmation', role: 'Assistant', email: 'john.d@univ.edu', available: true },
-            { id: 5, name: 'Ms. Jane Smith', department: 'Réseaux', role: 'Assistante', email: 'jane.s@univ.edu', available: false },
-            { id: 6, name: 'Dr. Grace Hopper', department: 'Programmation', role: 'Professeur', email: 'grace.h@univ.edu', available: true },
-        ]);
+        const response = await axios.get('/api/section/teachers');
+        setTeachers(response.data);
     } catch (error) {
         console.error("Failed to load teachers", error);
     } finally {
