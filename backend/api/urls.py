@@ -15,7 +15,7 @@ from .views import (
     pdg_summary, pdg_activities, dg_summary, dg_actions, sga_summary, sga_demandes,
     # SGAD / Section / Departement / Jury / Apparitorat / Finance / IT / Library
     sgad_summary, sgad_paie,
-    section_summary, section_list, section_teachers_list, section_students_list, section_departments_list,
+    section_summary, section_list, section_teachers_list, section_students_list, section_departments_list, section_courses_list,
     department_summary, department_list,
     jury_summary, jury_defenses,
     apparitorat_summary, apparitorat_presences,
@@ -111,6 +111,7 @@ urlpatterns = [
     re_path(r"^section/teachers/?$", section_teachers_list, name="section_teachers_list"),
     re_path(r"^section/students/?$", section_students_list, name="section_students_list"),
     re_path(r"^section/departments/?$", section_departments_list, name="section_departments_list"),
+    re_path(r"^section/courses/?$", section_courses_list, name="section_courses_list"),
     re_path(r"^department/summary/?$", department_summary, name="department_summary"),
     re_path(r"^department/list/?$", department_list, name="department_list"),
     re_path(r"^jury/summary/?$", jury_summary, name="jury_summary"),

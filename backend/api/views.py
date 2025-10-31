@@ -1527,7 +1527,7 @@ def section_departments_list(request):
         if not section:
             return Response({"error": "No sections found."}, status=404)
 
-    departments = Departement.objects.filter(section=section).prefetch_related('head', 'auditoires__current_users', 'auditoires__courses__assignments_by_assistant__assistant')
+    departments = Departement.objects.filter(section=section).prefetch_related('head')
 
     data = []
     for dept in departments:
@@ -1549,6 +1549,33 @@ def section_departments_list(request):
             "head": head_name,
             "teachers": teacher_count,
             "students": student_count,
+        })
+
+    return Response(data)
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def section_courses_list(request):
+    user = request.user
+    try:
+        section = user.section_head_of
+    except AttributeError:
+        section = Section.objects.first()
+        if not section:
+            return Response({"error": "No sections found."}, status=404)
+
+    courses = Course.objects.filter(
+        auditoire__departement__section=section
+    ).select_related('auditoire__departement')
+
+    data = []
+    for course in courses:
+        data.append({
+            "code": course.code,
+            "intitule": course.name,
+            "departement": course.auditoire.departement.name,
+            "credits": course.credits,
+            "semestre": course.session_type, # Assuming session_type can be S1/S2
         })
 
     return Response(data)

@@ -36,19 +36,12 @@ export default function GestionPedagogique() {
   const loadCourses = async () => {
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-      setCourses([
-        { code: 'INFO101', intitule: 'Introduction à la programmation', departement: 'Programmation', credits: 5, semestre: 'S1' },
-        { code: 'NETW201', intitule: 'Réseaux informatiques', departement: 'Réseaux', credits: 4, semestre: 'S2' },
-        { code: 'SYST301', intitule: 'Systèmes d\'exploitation', departement: 'Systèmes', credits: 4, semestre: 'S1' },
-        { code: 'DBAS401', intitule: 'Bases de données avancées', departement: 'Programmation', credits: 4, semestre: 'S2' },
-        { code: 'ALGO202', intitule: 'Algorithmique et Complexité', departement: 'Programmation', credits: 5, semestre: 'S1' },
-        { code: 'SECU301', intitule: 'Sécurité des Systèmes', departement: 'Réseaux', credits: 3, semestre: 'S2' },
-      ]);
+        const response = await axios.get('/api/section/courses');
+        setCourses(response.data);
     } catch (error) {
-      console.error("Failed to load courses", error);
+        console.error("Failed to load courses", error);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 
