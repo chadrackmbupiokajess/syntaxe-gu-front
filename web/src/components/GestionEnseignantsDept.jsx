@@ -164,7 +164,11 @@ export default function GestionEnseignantsDept() {
       loadData(); // Reload data to reflect the changes
     } catch (error) {
       console.error("Failed to assign course", error);
-      alert("Échec de l'affectation du cours.");
+      if (error.response && error.response.data && error.response.data.detail) {
+        alert(`Échec de l'affectation du cours: ${error.response.data.detail}`);
+      } else {
+        alert("Échec de l'affectation du cours. Une erreur inattendue est survenue.");
+      }
     } finally {
       handleCloseModal();
     }
