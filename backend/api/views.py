@@ -1636,6 +1636,45 @@ def department_summary(request):
     return Response(data)
 
 
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def department_students_list(request):
+    user = request.user
+    try:
+        department = user.department_head_of
+    except AttributeError:
+        # Fallback for demonstration if the user is not explicitly linked
+        department = Departement.objects.first()
+        if not department:
+            return Response({"error": "No departments found."}, status=404)
+
+    students = User.objects.filter(
+        role='etudiant',
+        current_auditoire__departement=department
+    ).select_related('current_auditoire__departement')
+
+    data = []
+    for student in students:
+        department_name = "N/A"
+        promotion = "N/A"
+        if student.current_auditoire:
+            promotion = student.current_auditoire.name
+            if student.current_auditoire.departement:
+                department_name = student.current_auditoire.departement.name
+
+        data.append({
+            "id": student.id,
+            "name": student.get_full_name(),
+            "matricule": student.matricule,
+            "promotion": promotion,
+            "department": department_name,
+            "status": student.get_status_display(), # Assuming a status field exists
+            # Add other relevant student details here
+        })
+
+    return Response(data)
+
+
 # ---- Endpoints Département (placeholders)
 
 @api_view(["GET"])

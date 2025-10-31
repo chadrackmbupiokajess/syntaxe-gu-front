@@ -56,7 +56,7 @@ export default function AdministrationDept() {
         <div>
             <h2 className="text-3xl font-bold text-gray-800">Administration</h2>
             <p className="text-gray-600 mt-1">Gérez les documents officiels et générez les rapports périodiques.</p>
-            
+
             <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-white p-4 rounded-lg shadow-sm border-t-4 border-blue-500">
                     <p className="text-sm font-medium text-gray-500">Total Documents</p>

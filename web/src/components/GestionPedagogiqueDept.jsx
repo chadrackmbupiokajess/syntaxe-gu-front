@@ -19,7 +19,7 @@ const CourseCard = ({ course }) => (
                 <span className="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full">{course.semestre}</span>
             </div>
             <p className="text-gray-500 mt-1">Code: {course.code}</p>
-            
+
             <div className="mt-4 border-t pt-4">
                 <p className="text-sm text-gray-600"><span className="font-semibold">Enseignant:</span> {course.teacher}</p>
                 <p className="text-sm text-gray-600"><span className="font-semibold">Crédits:</span> {course.credits}</p>
@@ -133,7 +133,7 @@ export default function GestionPedagogiqueDept() {
                     Supervisez le programme des cours, les crédits et les enseignants responsables.
                 </p>
             </div>
-            <button 
+            <button
                 onClick={() => setIsModalOpen(true)}
                 className="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-300 shadow-md"
             >
@@ -167,9 +167,9 @@ export default function GestionPedagogiqueDept() {
             </div>
         )}
 
-        <CreateCourseModal 
-            isOpen={isModalOpen} 
-            onClose={() => setIsModalOpen(false)} 
+        <CreateCourseModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
             onCreateCourse={handleCreateCourse}
             teachers={dummyTeachersList} // Pass dummy teachers for selection
         />

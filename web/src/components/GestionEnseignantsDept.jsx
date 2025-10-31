@@ -2,6 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import Skeleton from './Skeleton';
 
+// SVG Search Icon
+const SearchIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+);
+
 // --- Teacher Card Component (Plain) ---
 const TeacherCard = ({ teacher, onAssignClick }) => (
     <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
@@ -44,8 +51,8 @@ const AssignCourseModal = ({ teacher, courses, onClose, onAssign }) => {
                     {courses.map(course => <option key={course.id} value={course.id}>{course.name}</option>)}
                 </select>
                 <div className="flex justify-end gap-4">
-                    <button onClick={onClose} className="text-gray-600 hover:text-gray-800">Annuler</button>
-                    <button onClick={() => onAssign(teacher.id, selectedCourse)} disabled={!selectedCourse} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 disabled:bg-gray-300">Assigner</button>
+                    <button type="button" onClick={onClose} className="text-gray-600 hover:text-gray-800">Annuler</button>
+                    <button type="button" onClick={() => onAssign(teacher.id, selectedCourse)} disabled={!selectedCourse} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 disabled:bg-gray-300">Assigner</button>
                 </div>
             </div>
         </div>
@@ -59,6 +66,7 @@ export default function GestionEnseignantsDept() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [availableCourses, setAvailableCourses] = useState([]);
+  const [searchTerm, setSearchTerm] = useState(''); // New state for search term
 
   const loadData = async () => {
     setLoading(true);
@@ -68,11 +76,14 @@ export default function GestionEnseignantsDept() {
         { id: 2, name: 'Dr. Alan Turing', rank: 'Professeur', courses: 'PROG201', status: 'Actif' },
         { id: 3, name: 'Dr. Grace Hopper', rank: 'Chargé de cours', courses: 'PROG301', status: 'Actif' },
         { id: 4, name: 'Mr. John Doe', rank: 'Assistant', courses: 'TP PROG101', status: 'Congé' },
+        { id: 5, name: 'Dr. Marie Curie', rank: 'Professeur', courses: 'PHY101', status: 'Actif' },
       ]);
       setAvailableCourses([
         { id: 'CS101', name: 'Introduction to Computer Science' },
         { id: 'CS202', name: 'Data Structures' },
         { id: 'CS303', name: 'Algorithms' },
+        { id: 'MA201', name: 'Discrete Mathematics' },
+        { id: 'PHY101', name: 'Physics for Engineers' },
       ]);
     } catch (error) {
       console.error("Failed to load data", error);
@@ -98,11 +109,20 @@ export default function GestionEnseignantsDept() {
   const handleAssignCourse = (teacherId, courseId) => {
     console.log(`Assigning course ${courseId} to teacher ${teacherId}`);
     alert(`Cours ${courseId} assigné (simulation).`);
-    setTeachers(teachers.map(t => 
+    setTeachers(teachers.map(t =>
       t.id === teacherId ? { ...t, courses: t.courses ? `${t.courses}, ${courseId}` : courseId } : t
     ));
     handleCloseModal();
   };
+
+  const filteredTeachers = useMemo(() => {
+    if (!searchTerm) return teachers;
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+    return teachers.filter(teacher =>
+      teacher.name.toLowerCase().includes(lowerCaseSearchTerm) ||
+      teacher.rank.toLowerCase().includes(lowerCaseSearchTerm)
+    );
+  }, [teachers, searchTerm]);
 
   const stats = useMemo(() => {
       const activeTeachers = teachers.filter(t => t.status === 'Actif').length;
@@ -112,22 +132,36 @@ export default function GestionEnseignantsDept() {
 
   return (
     <div className="grid gap-8">
-        <div>
-            <h2 className="text-3xl font-bold text-gray-800">Gestion des Enseignants</h2>
-            <p className="text-gray-600 mt-1">Gérez les enseignants, leur statut et l\'attribution des cours.</p>
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="bg-white p-4 rounded-lg shadow-sm border-t-4 border-blue-500">
-                    <p className="text-sm font-medium text-gray-500">Total Enseignants</p>
-                    <p className="text-2xl font-bold text-gray-800">{loading ? '-' : stats.total}</p>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div>
+                <h2 className="text-3xl font-bold text-gray-800">Gestion des Enseignants</h2>
+                <p className="text-gray-600 mt-1">Gérez les enseignants, leur statut et l\'attribution des cours.</p>
+            </div>
+            <div className="relative w-full sm:w-auto flex-grow sm:flex-grow-0 max-w-xs">
+                <input
+                    type="text"
+                    placeholder="Rechercher un enseignant..."
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <SearchIcon />
                 </div>
-                <div className="bg-white p-4 rounded-lg shadow-sm border-t-4 border-green-500">
-                    <p className="text-sm font-medium text-gray-500">Actifs</p>
-                    <p className="text-2xl font-bold text-gray-800">{loading ? '-' : stats.active}</p>
-                </div>
-                <div className="bg-white p-4 rounded-lg shadow-sm border-t-4 border-yellow-500">
-                    <p className="text-sm font-medium text-gray-500">En Congé</p>
-                    <p className="text-2xl font-bold text-gray-800">{loading ? '-' : stats.onLeave}</p>
-                </div>
+            </div>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-white p-4 rounded-lg shadow-sm border-t-4 border-blue-500">
+                <p className="text-sm font-medium text-gray-500">Total Enseignants</p>
+                <p className="text-2xl font-bold text-gray-800">{loading ? '-' : stats.total}</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-sm border-t-4 border-green-500">
+                <p className="text-sm font-medium text-gray-500">Actifs</p>
+                <p className="text-2xl font-bold text-gray-800">{loading ? '-' : stats.active}</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg shadow-sm border-t-4 border-yellow-500">
+                <p className="text-2xl font-bold text-gray-800">{loading ? '-' : stats.onLeave}</p>
             </div>
         </div>
 
@@ -136,10 +170,14 @@ export default function GestionEnseignantsDept() {
                 <Skeleton className="h-60" /><Skeleton className="h-60" /><Skeleton className="h-60" />
             </div>
         ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {teachers.map(teacher => (
-                    <TeacherCard key={teacher.id} teacher={teacher} onAssignClick={handleOpenModal} />
-                ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+                {filteredTeachers.length > 0 ? (
+                    filteredTeachers.map(teacher => (
+                        <TeacherCard key={teacher.id} teacher={teacher} onAssignClick={handleOpenModal} />
+                    ))
+                ) : (
+                    <p className="text-gray-600 col-span-full text-center">Aucun enseignant trouvé.</p>
+                )}
             </div>
         )}
 
