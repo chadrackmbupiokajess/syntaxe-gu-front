@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import KpiCard from '../components/KpiCard';
 import Skeleton from '../components/Skeleton';
+import GestionPedagogique from '../components/GestionPedagogique';
+import SupervisionDepartements from '../components/SupervisionDepartements';
+import GestionEnseignants from '../components/GestionEnseignants';
 
 // Placeholder components for the new features
-const GestionPedagogique = () => <div className="p-4 bg-gray-100 rounded-lg">Fonctionnalités de gestion pédagogique à venir.</div>;
-const SupervisionDepartements = () => <div className="p-4 bg-gray-100 rounded-lg">Fonctionnalités de supervision des départements à venir.</div>;
-const GestionEnseignants = () => <div className="p-4 bg-gray-100 rounded-lg">Fonctionnalités de gestion des enseignants à venir.</div>;
 const GestionEtudiants = () => <div className="p-4 bg-gray-100 rounded-lg">Fonctionnalités de gestion des étudiants à venir.</div>;
 const CoordinationAdministrative = () => <div className="p-4 bg-gray-100 rounded-lg">Fonctionnalités de coordination administrative à venir.</div>;
 
@@ -38,8 +38,10 @@ export default function SectionDashboard() {
   };
 
   useEffect(() => {
-    loadSummary();
-  }, []);
+    if (activeTab === TABS.DASHBOARD) {
+        loadSummary();
+    }
+  }, [activeTab]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -55,29 +57,33 @@ export default function SectionDashboard() {
         return <CoordinationAdministrative />;
       case TABS.DASHBOARD:
       default:
-        return <p>Vue d'ensemble du tableau de bord à venir.</p>;
+        return (
+            <div className="grid gap-8">
+                {loading ? (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <Skeleton className="h-24" />
+                    <Skeleton className="h-24" />
+                    <Skeleton className="h-24" />
+                    <Skeleton className="h-24" />
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <KpiCard label="Étudiants" value={sum?.students || 0} />
+                    <KpiCard label="Enseignants" value={sum?.teachers || 0} />
+                    <KpiCard label="Départements" value={sum?.departments || 0} />
+                    <KpiCard label="Taux de réussite (%)" value={sum?.kpis?.successRate || 'N/A'} />
+                    </div>
+                )}
+                 {/* You can add more dashboard-specific content here */}
+                 <p>Vue d'ensemble du tableau de bord à venir.</p>
+            </div>
+        );
     }
   };
 
   return (
     <div className="grid gap-8">
       <h1 className="text-3xl font-bold text-gray-800">Tableau de Bord du Chef de Section</h1>
-
-      {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          <KpiCard label="Étudiants" value={sum?.students || 0} />
-          <KpiCard label="Enseignants" value={sum?.teachers || 0} />
-          <KpiCard label="Départements" value={sum?.departments || 0} />
-          <KpiCard label="Taux de réussite (%)" value={sum?.kpis?.successRate || 'N/A'} />
-        </div>
-      )}
 
       <div className="flex border-b">
         {Object.values(TABS).map((tab) => (
