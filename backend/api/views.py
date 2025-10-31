@@ -1491,6 +1491,42 @@ def section_teachers_list(request):
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
+def section_students_list(request):
+    user = request.user
+    try:
+        section = user.section_head_of
+    except AttributeError:
+        section = Section.objects.first()
+        if not section:
+            return Response({"error": "No sections found."}, status=404)
+
+    students = User.objects.filter(
+        role='etudiant',
+        current_auditoire__departement__section=section
+    ).select_related('current_auditoire__departement')
+
+    data = []
+    for student in students:
+        department = "N/A"
+        promotion = "N/A"
+        if student.current_auditoire:
+            promotion = student.current_auditoire.name
+            if student.current_auditoire.departement:
+                department = student.current_auditoire.departement.name
+
+        data.append({
+            "id": student.id,
+            "name": student.get_full_name(),
+            "matricule": student.matricule,
+            "promotion": promotion,
+            "department": department,
+            "progress": 75,  # Dummy progress
+        })
+
+    return Response(data)
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
 def section_list(request):
     rows = [
         {"code": "G1 INFO", "intitule": "Informatique 1", "effectif": 210},

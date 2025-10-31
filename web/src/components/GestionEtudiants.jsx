@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import axios from 'axios';
 import Skeleton from './Skeleton';
 import KpiCard from './KpiCard';
 
@@ -44,15 +45,8 @@ export default function GestionEtudiants() {
     const loadStudents = async () => {
         setLoading(true);
         try {
-            await new Promise(resolve => setTimeout(resolve, 500));
-            setStudents([
-                { id: 1, name: 'Alice Martin', matricule: '18A001', promotion: 'G1', department: 'Programmation', progress: 85 },
-                { id: 2, name: 'Bob Durand', matricule: '18A002', promotion: 'G2', department: 'Réseaux', progress: 70 },
-                { id: 3, name: 'Charlie Dupont', matricule: '17B003', promotion: 'L1', department: 'Systèmes', progress: 92 },
-                { id: 4, name: 'David Bernard', matricule: '19C004', promotion: 'G1', department: 'Programmation', progress: 60 },
-                { id: 5, name: 'Eve Petit', matricule: '16D005', promotion: 'L2', department: 'Réseaux', progress: 78 },
-                { id: 6, name: 'Frank Moreau', matricule: '18E006', promotion: 'G2', department: 'Programmation', progress: 88 },
-            ]);
+            const response = await axios.get('/api/section/students');
+            setStudents(response.data);
         } catch (error) {
             console.error("Failed to load students", error);
         } finally {
