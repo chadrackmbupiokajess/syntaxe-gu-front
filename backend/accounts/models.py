@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from academics.models import Auditoire
+from academics.models import Auditoire, Section
 import uuid
 import datetime
 
@@ -74,6 +74,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     academic_status = models.CharField(max_length=20, choices=ACADEMIC_STATUS_CHOICES, default='en_cours') # Pour les étudiants
     current_auditoire = models.ForeignKey(Auditoire, on_delete=models.SET_NULL, null=True, blank=True, related_name='current_users') # Pour les étudiants
     previous_auditoires = models.ManyToManyField(Auditoire, related_name='previous_users', blank=True) # Pour les étudiants
+
+    # Relation for Section Head
+    section_head_of = models.OneToOneField(Section, on_delete=models.SET_NULL, null=True, blank=True, related_name='head')
 
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)

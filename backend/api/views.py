@@ -9,9 +9,9 @@ from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Count
 
-from academics.models import Course, Auditoire, Calendrier, CourseAssignment, CourseMessage
+from academics.models import Course, Auditoire, Calendrier, CourseAssignment, CourseMessage, Section, Departement
 from evaluations.models import Assignment, Submission, Quiz, Question, Choice, Answer, QuizAttempt
 
 User = get_user_model()
@@ -1408,15 +1408,54 @@ def sgad_paie(request):
     return Response(rows)
 
 
-# ---- Endpoints Section (placeholders)
+# ---- Section Head Dashboard ----
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def section_summary(request):
+    user = request.user
+    # We assume the user is a Section Head and is linked to a Section.
+    # This link is not in the models, so we'll get the first section for demonstration.
+    try:
+        section = user.section_head_of
+    except AttributeError:
+        # If the user is not a section head, or the relation is not defined,
+        # we'll use the first Section as a fallback for demonstration.
+        section = Section.objects.first()
+        if not section:
+            return Response({"error": "No sections found in the database."}, status=404)
+
+    # Count students in the section
+    student_count = User.objects.filter(
+        role='etudiant',
+        current_auditoire__departement__section=section
+    ).count()
+
+    # Count teachers (Professeurs and Assistants) in the section
+    teacher_count = User.objects.filter(
+        Q(role='professeur') | Q(role='assistant'),
+        course_assignments__course__auditoire__departement__section=section
+    ).distinct().count()
+
+    # Count departments in the section
+    department_count = Departement.objects.filter(section=section).count()
+
+    # Mock data for trends and success rate
+    # In a real app, you would calculate this from historical data.
     data = {
-        "sections": 6,
-        "heads": 6,
-        "kpis": {"fillRate": 78},
+        "students": {
+            "val": student_count,
+            "trend": [60, 70, 80, 75, student_count / 5] # Dummy trend
+        },
+        "teachers": {
+            "val": teacher_count,
+            "trend": [80, 75, 78, 85, teacher_count / 2] # Dummy trend
+        },
+        "departments": department_count,
+        "successRate": {
+            "val": "85%", # Dummy value
+            "trend": [70, 75, 85, 82, 85] # Dummy trend
+        }
     }
     return Response(data)
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios'; // Import axios
 import KpiCard from '../components/KpiCard';
 import Skeleton from '../components/Skeleton';
 import GestionPedagogique from '../components/GestionPedagogique';
@@ -65,10 +66,11 @@ export default function SectionDashboard() {
   const loadSummary = async () => {
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setSum({ students: { val: 355, trend: [60, 70, 80, 75, 85] }, teachers: { val: 27, trend: [80, 75, 78, 85, 90] }, departments: 3, successRate: { val: '85%', trend: [70, 75, 85, 82, 85] } });
+      const response = await axios.get('/api/section/summary');
+      setSum(response.data);
     } catch (error) {
-      console.error("Failed to load summary data", error);
+      console.error("Erreur lors du chargement du résumé de la section:", error);
+      // Optionnel: afficher un message d'erreur à l'utilisateur
     } finally {
       setLoading(false);
     }
@@ -89,14 +91,14 @@ export default function SectionDashboard() {
       default:
         return (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {loading ? (
+            {loading || !sum ? (
                 [...Array(4)].map((_, i) => <Skeleton key={i} className="h-28" />)
             ) : (
               <>
-                <KpiCard label="Étudiants" value={sum?.students.val}><Sparkline data={sum?.students.trend} /></KpiCard>
-                <KpiCard label="Enseignants" value={sum?.teachers.val}><Sparkline data={sum?.teachers.trend} /></KpiCard>
-                <KpiCard label="Taux de Réussite" value={sum?.successRate.val}><Sparkline data={sum?.successRate.trend} color="#10b981" /></KpiCard>
-                <KpiCard label="Départements" value={sum?.departments} />
+                <KpiCard label="Étudiants" value={sum.students.val}><Sparkline data={sum.students.trend} /></KpiCard>
+                <KpiCard label="Enseignants" value={sum.teachers.val}><Sparkline data={sum.teachers.trend} /></KpiCard>
+                <KpiCard label="Taux de Réussite" value={sum.successRate.val}><Sparkline data={sum.successRate.trend} color="#10b981" /></KpiCard>
+                <KpiCard label="Départements" value={sum.departments} />
               </>
             )}
             <div className="md:col-span-2"><QuickActions onNavigate={setActiveTab} /></div>
