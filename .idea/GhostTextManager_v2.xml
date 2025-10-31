@@ -749,9 +749,10 @@
         <entry key="salut">
           <value>
             <GhostTextMetaData>
-              <option name="count" value="9.0" />
+              <option name="count" value="10.0" />
               <option name="timestamps">
                 <list>
+                  <option value="1761920119497" />
                   <option value="1761826054100" />
                   <option value="1761826017888" />
                   <option value="1761825853327" />

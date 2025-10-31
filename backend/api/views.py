@@ -1600,18 +1600,43 @@ def section_list(request):
     return Response(rows)
 
 
-# ---- Endpoints Département (placeholders)
+# ---- Department Head Dashboard ----
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def department_summary(request):
+    user = request.user
+    try:
+        department = user.department_head_of
+    except AttributeError:
+        department = Departement.objects.first()
+        if not department:
+            return Response({"error": "No departments found."}, status=404)
+
+    student_count = User.objects.filter(
+        role='etudiant',
+        current_auditoire__departement=department
+    ).count()
+
+    teacher_count = User.objects.filter(
+        Q(role='professeur') | Q(role='assistant'),
+        course_assignments__course__auditoire__departement=department
+    ).distinct().count()
+
+    course_count = Course.objects.filter(
+        auditoire__departement=department
+    ).count()
+
     data = {
-        "departments": 4,
-        "courses": 52,
-        "auditoriums": 18,
+        "students": student_count,
+        "teachers": teacher_count,
+        "courses": course_count,
+        "successRate": "88%", # Dummy value
     }
     return Response(data)
 
+
+# ---- Endpoints Département (placeholders)
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
