@@ -1521,7 +1521,6 @@ def section_students_list(request):
 
     data = []
     for student in students:
-        department = "N/A"
         promotion = "N/A"
         if student.current_auditoire:
             promotion = student.current_auditoire.name
@@ -1861,6 +1860,80 @@ def department_course_create(request):
         "auditoire_id": course.auditoire.id,
         "auditoire_name": course.auditoire.name,
     }, status=201)
+
+
+# ---- New Department Endpoints ----
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def department_auditoires_with_courses(request):
+    user = request.user
+    try:
+        department = user.department_head_of
+    except AttributeError:
+        department = Departement.objects.first()
+        if not department:
+            return Response({"error": "No departments found."}, status=404)
+
+    auditoires_data = []
+    auditoires = Auditoire.objects.filter(departement=department).prefetch_related('courses') # Corrected related_name
+
+    for auditoire in auditoires:
+        courses_data = []
+        for course in auditoire.courses.all(): # Corrected related_name
+            courses_data.append({
+                "id": course.id,
+                "name": course.name,
+            })
+        auditoires_data.append({
+            "id": auditoire.id,
+            "name": auditoire.name,
+            "courses": courses_data,
+        })
+    return Response(auditoires_data)
+
+
+@api_view(["POST"])
+@permission_classes(DEV_PERMS)
+def department_assign_course(request):
+    user = request.user
+    try:
+        department = user.department_head_of
+    except AttributeError:
+        department = Departement.objects.first()
+        if not department:
+            return Response({"error": "No departments found."}, status=404)
+
+    teacher_id = request.data.get("teacherId")
+    auditoire_id = request.data.get("auditoireId")
+    course_id = request.data.get("courseId")
+
+    if not all([teacher_id, auditoire_id, course_id]):
+        return Response({"detail": "teacherId, auditoireId et courseId sont requis."}, status=400)
+
+    try:
+        teacher = User.objects.get(id=teacher_id, role='assistant')
+    except User.DoesNotExist:
+        return Response({"detail": "Assistant non trouvé."}, status=404)
+
+    try:
+        auditoire = Auditoire.objects.get(id=auditoire_id, departement=department)
+    except Auditoire.DoesNotExist:
+        return Response({"detail": "Auditoire non trouvé dans ce département."}, status=404)
+
+    try:
+        course = Course.objects.get(id=course_id, auditoire=auditoire)
+    except Course.DoesNotExist:
+        return Response({"detail": "Cours non trouvé dans cet auditoire."}, status=404)
+
+    # Check if assignment already exists
+    if CourseAssignment.objects.filter(assistant=teacher, course=course).exists():
+        return Response({"detail": "Cet assistant est déjà assigné à ce cours."}, status=409)
+
+    with transaction.atomic():
+        CourseAssignment.objects.create(assistant=teacher, course=course)
+
+    return Response({"detail": "Cours assigné avec succès."}, status=201)
 
 
 # ---- Endpoints Département (placeholders)

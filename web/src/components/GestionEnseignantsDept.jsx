@@ -39,20 +39,67 @@ const TeacherCard = ({ teacher, onAssignClick }) => (
 );
 
 // --- Modal Component ---
-const AssignCourseModal = ({ teacher, courses, onClose, onAssign }) => {
+const AssignCourseModal = ({ teacher, auditoiresWithCourses, onClose, onAssign }) => {
+    const [selectedAuditoire, setSelectedAuditoire] = useState('');
     const [selectedCourse, setSelectedCourse] = useState('');
+
+    useEffect(() => {
+        // Reset selected course when auditoire changes
+        setSelectedCourse('');
+    }, [selectedAuditoire]);
+
     if (!teacher) return null;
+
+    const coursesForSelectedAuditoire = selectedAuditoire
+        ? auditoiresWithCourses.find(aud => aud.id === parseInt(selectedAuditoire))?.courses || [] // Parse to int
+        : [];
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
                 <h3 className="text-xl font-semibold mb-4">Assigner un cours à {teacher.name}</h3>
-                <select value={selectedCourse} onChange={(e) => setSelectedCourse(e.target.value)} className="w-full p-2 border rounded-md mb-4">
-                    <option value="" disabled>Sélectionnez un cours</option>
-                    {courses.map(course => <option key={course.id} value={course.id}>{course.name}</option>)}
-                </select>
+                
+                <div className="mb-4">
+                    <label htmlFor="auditoire-select" className="block text-sm font-medium text-gray-700 mb-1">Sélectionnez un auditoire</label>
+                    <select
+                        id="auditoire-select"
+                        value={selectedAuditoire}
+                        onChange={(e) => setSelectedAuditoire(e.target.value)}
+                        className="w-full p-2 border rounded-md"
+                    >
+                        <option value="" disabled>Sélectionnez un auditoire</option>
+                        {auditoiresWithCourses.map(aud => (
+                            <option key={aud.id} value={aud.id}>{aud.name}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="mb-4">
+                    <label htmlFor="course-select" className="block text-sm font-medium text-gray-700 mb-1">Sélectionnez un cours</label>
+                    <select
+                        id="course-select"
+                        value={selectedCourse}
+                        onChange={(e) => setSelectedCourse(e.target.value)}
+                        className="w-full p-2 border rounded-md"
+                        disabled={!selectedAuditoire}
+                    >
+                        <option value="" disabled>Sélectionnez un cours</option>
+                        {coursesForSelectedAuditoire.map(course => (
+                            <option key={course.id} value={course.id}>{course.name}</option>
+                        ))}
+                    </select>
+                </div>
+
                 <div className="flex justify-end gap-4">
                     <button type="button" onClick={onClose} className="text-gray-600 hover:text-gray-800">Annuler</button>
-                    <button type="button" onClick={() => onAssign(teacher.id, selectedCourse)} disabled={!selectedCourse} className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 disabled:bg-gray-300">Assigner</button>
+                    <button
+                        type="button"
+                        onClick={() => onAssign(teacher.id, selectedAuditoire, selectedCourse)}
+                        disabled={!selectedCourse || !selectedAuditoire}
+                        className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 disabled:bg-gray-300"
+                    >
+                        Assigner
+                    </button>
                 </div>
             </div>
         </div>
@@ -65,7 +112,7 @@ export default function GestionEnseignantsDept() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
-  const [availableCourses, setAvailableCourses] = useState([]);
+  const [auditoiresWithCourses, setAuditoiresWithCourses] = useState([]); // New state for auditoires and their courses
   const [searchTerm, setSearchTerm] = useState(''); // New state for search term
 
   const loadData = async () => {
@@ -73,18 +120,15 @@ export default function GestionEnseignantsDept() {
     try {
       const teachersResponse = await axios.get('/api/department/teachers');
       setTeachers(teachersResponse.data);
-      // Keep dummy courses for now, as no specific API for them was requested
-      setAvailableCourses([
-        { id: 'CS101', name: 'Introduction to Computer Science' },
-        { id: 'CS202', name: 'Data Structures' },
-        { id: 'CS303', name: 'Algorithms' },
-        { id: 'MA201', name: 'Discrete Mathematics' },
-        { id: 'PHY101', name: 'Physics for Engineers' },
-      ]);
+      
+      // Fetch real data for auditoires with courses
+      const auditoiresResponse = await axios.get('/api/department/auditoires-with-courses');
+      setAuditoiresWithCourses(auditoiresResponse.data);
+
     } catch (error) {
-      console.error("Failed to load teachers data", error);
+      console.error("Failed to load data", error);
       setTeachers([]); // Set to empty array on error
-      setAvailableCourses([]);
+      setAuditoiresWithCourses([]);
     } finally {
       setLoading(false);
     }
@@ -95,6 +139,11 @@ export default function GestionEnseignantsDept() {
   }, []);
 
   const handleOpenModal = (teacher) => {
+    // Assuming 'Assistant' is the rank for assistants
+    if (teacher.rank !== 'Assistant') {
+      alert('Seuls les assistants peuvent se voir attribuer des cours.');
+      return;
+    }
     setSelectedTeacher(teacher);
     setIsModalOpen(true);
   };
@@ -104,13 +153,21 @@ export default function GestionEnseignantsDept() {
     setSelectedTeacher(null);
   };
 
-  const handleAssignCourse = (teacherId, courseId) => {
-    console.log(`Assigning course ${courseId} to teacher ${teacherId}`);
-    alert(`Cours ${courseId} assigné (simulation).`);
-    setTeachers(teachers.map(t =>
-      t.id === teacherId ? { ...t, courses: t.courses ? `${t.courses}, ${courseId}` : courseId } : t
-    ));
-    handleCloseModal();
+  const handleAssignCourse = async (teacherId, auditoireId, courseId) => {
+    try {
+      await axios.post('/api/department/assign-course', {
+        teacherId: parseInt(teacherId), // Convert to integer
+        auditoireId: parseInt(auditoireId), // Convert to integer
+        courseId: parseInt(courseId), // Convert to integer
+      });
+      alert(`Cours ${courseId} de l'auditoire ${auditoireId} assigné à ${teacherId} avec succès.`);
+      loadData(); // Reload data to reflect the changes
+    } catch (error) {
+      console.error("Failed to assign course", error);
+      alert("Échec de l'affectation du cours.");
+    } finally {
+      handleCloseModal();
+    }
   };
 
   const filteredTeachers = useMemo(() => {
@@ -119,7 +176,7 @@ export default function GestionEnseignantsDept() {
     return teachers.filter(teacher =>
       teacher.name.toLowerCase().includes(lowerCaseSearchTerm) ||
       teacher.rank.toLowerCase().includes(lowerCaseSearchTerm) ||
-      teacher.courses.toLowerCase().includes(lowerCaseSearchTerm)
+      (teacher.courses && teacher.courses.toLowerCase().includes(lowerCaseSearchTerm))
     );
   }, [teachers, searchTerm]);
 
@@ -135,7 +192,7 @@ export default function GestionEnseignantsDept() {
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <div>
                 <h2 className="text-3xl font-bold text-gray-800">Gestion des Enseignants</h2>
-                <p className="text-gray-600 mt-1">Gérez les enseignants, leur statut et l\'attribution des cours.</p>
+                <p className="text-gray-600 mt-1">Gérez les enseignants, leur statut et l'attribution des cours.</p>
             </div>
             <div className="relative w-full sm:w-auto flex-grow sm:flex-grow-0 max-w-xs">
                 <input
@@ -182,7 +239,7 @@ export default function GestionEnseignantsDept() {
         )}
 
         {isModalOpen && (
-            <AssignCourseModal teacher={selectedTeacher} courses={availableCourses} onClose={handleCloseModal} onAssign={handleAssignCourse} />
+            <AssignCourseModal teacher={selectedTeacher} auditoiresWithCourses={auditoiresWithCourses} onClose={handleCloseModal} onAssign={handleAssignCourse} />
         )}
     </div>
   );
