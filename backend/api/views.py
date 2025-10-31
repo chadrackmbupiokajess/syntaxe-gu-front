@@ -1492,18 +1492,9 @@ def section_teachers_list(request):
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def section_students_list(request):
-    user = request.user
-    try:
-        section = user.section_head_of
-    except AttributeError:
-        section = Section.objects.first()
-        if not section:
-            return Response({"error": "No sections found."}, status=404)
-
-    students = User.objects.filter(
-        role='etudiant',
-        current_auditoire__departement__section=section
-    ).select_related('current_auditoire__departement')
+    # TEMPORARY: Fetch all students to ensure frontend connectivity.
+    # TODO: Refine this to only fetch students from the user's section.
+    students = User.objects.filter(role='etudiant').select_related('current_auditoire__departement')
 
     data = []
     for student in students:
