@@ -25,7 +25,7 @@ class CustomUserAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {'fields': ('matricule', 'password')}),
         ('Informations Personnelles', {'fields': ('first_name', 'last_name', 'post_name', 'email', 'sexe', 'profile_picture', 'description')}),
-        ('Permissions & Rôle', {'fields': ('role', 'is_active', 'is_staff', 'is_superuser')}),
+        ('Permissions & Rôle', {'fields': ('role', 'section_head_of', 'department_head_of', 'is_active', 'is_staff', 'is_superuser')}),
         ('Informations Académiques', {'fields': ('current_auditoire', 'academic_status', 'office', 'phone', 'address')}),
         ('Statut', {'fields': ('status', 'team_status')}),
     )
@@ -33,7 +33,7 @@ class CustomUserAdmin(admin.ModelAdmin):
     # Définir les fieldsets pour la page de CRÉATION (tous les champs sauf matricule et password)
     add_fieldsets = (
         ('Informations Personnelles', {'fields': ('first_name', 'last_name', 'post_name', 'email', 'sexe', 'profile_picture', 'description')}),
-        ('Permissions & Rôle', {'fields': ('role', 'is_active', 'is_staff', 'is_superuser')}),
+        ('Permissions & Rôle', {'fields': ('role', 'section_head_of', 'department_head_of', 'is_active', 'is_staff', 'is_superuser')}),
         ('Informations Académiques', {'fields': ('current_auditoire', 'academic_status', 'office', 'phone', 'address')}),
         ('Statut', {'fields': ('status', 'team_status')}),
     )

@@ -1518,6 +1518,43 @@ def section_students_list(request):
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
+def section_departments_list(request):
+    user = request.user
+    try:
+        section = user.section_head_of
+    except AttributeError:
+        section = Section.objects.first()
+        if not section:
+            return Response({"error": "No sections found."}, status=404)
+
+    departments = Departement.objects.filter(section=section).prefetch_related('head', 'auditoires__current_users', 'auditoires__courses__assignments_by_assistant__assistant')
+
+    data = []
+    for dept in departments:
+        head_name = dept.head.get_full_name() if hasattr(dept, 'head') and dept.head else "Non assigné"
+        
+        teacher_count = User.objects.filter(
+            Q(role='professeur') | Q(role='assistant'),
+            course_assignments__course__auditoire__departement=dept
+        ).distinct().count()
+
+        student_count = User.objects.filter(
+            role='etudiant',
+            current_auditoire__departement=dept
+        ).count()
+
+        data.append({
+            "id": dept.id,
+            "name": dept.name,
+            "head": head_name,
+            "teachers": teacher_count,
+            "students": student_count,
+        })
+
+    return Response(data)
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
 def section_list(request):
     rows = [
         {"code": "G1 INFO", "intitule": "Informatique 1", "effectif": 210},

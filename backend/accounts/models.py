@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from academics.models import Auditoire, Section
+from academics.models import Auditoire, Section, Departement
 import uuid
 import datetime
 
@@ -77,6 +77,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     # Relation for Section Head
     section_head_of = models.OneToOneField(Section, on_delete=models.SET_NULL, null=True, blank=True, related_name='head')
+    # Relation for Department Head
+    department_head_of = models.OneToOneField(Departement, on_delete=models.SET_NULL, null=True, blank=True, related_name='head')
 
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import axios from 'axios';
 import Skeleton from './Skeleton';
 
 // Dummy Icon Components
@@ -6,7 +7,7 @@ const UsersIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w
 const AcademicCapIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M6.5 9a.5.5 0 000 1h3a.5.5 0 000-1h-3zM6 11.5a.5.5 0 01.5-.5h5a.5.5 0 010 1h-5a.5.5 0 01-.5-.5zM2 7a2 2 0 012-2h12a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V7zm3 0a1 1 0 00-1 1v1a1 1 0 001 1h10a1 1 0 001-1V8a1 1 0 00-1-1H5z" clipRule="evenodd" /></svg>;
 
 const DepartmentCard = ({ department }) => {
-  const studentTeacherRatio = department.students / department.teachers;
+  const studentTeacherRatio = department.students > 0 ? department.students / department.teachers : 0;
 
   return (
     <div className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
@@ -54,12 +55,8 @@ export default function SupervisionDepartements() {
   const loadDepartments = async () => {
     setLoading(true);
     try {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setDepartments([
-            { id: 1, name: 'Programmation', head: 'Dr. Ada Lovelace', teachers: 12, students: 150 },
-            { id: 2, name: 'Réseaux', head: 'Dr. Vint Cerf', teachers: 8, students: 110 },
-            { id: 3, name: 'Systèmes', head: 'Dr. Linus Torvalds', teachers: 7, students: 95 },
-        ]);
+        const response = await axios.get('/api/section/departments');
+        setDepartments(response.data);
     } catch (error) {
         console.error("Failed to load departments", error);
     } finally {
