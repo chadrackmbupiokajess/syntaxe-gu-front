@@ -2,11 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios'; // Import axios
 import KpiCard from '../components/KpiCard';
 import Skeleton from '../components/Skeleton';
-import GestionPedagogique from '../components/GestionPedagogique';
-import SupervisionDepartements from '../components/SupervisionDepartements';
-import GestionEnseignants from '../components/GestionEnseignants';
-import GestionEtudiants from '../components/GestionEtudiants';
-import CoordinationAdministrative from '../components/CoordinationAdministrative';
+// Removed: GestionPedagogique, SupervisionDepartements, GestionEnseignants, GestionEtudiants, CoordinationAdministrative
+import { Link } from 'react-router-dom'; // Import Link for QuickActions
 
 // --- Sub-components for the main dashboard ---
 
@@ -16,14 +13,14 @@ const Sparkline = ({ data, color = "#4f46e5" }) => (
     </svg>
 );
 
-const QuickActions = ({ onNavigate }) => (
+const QuickActions = () => (
     <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md text-black dark:text-white">
         <h3 className="font-bold text-lg mb-4">Actions Rapides</h3>
         <div className="grid grid-cols-2 gap-4">
-            <button onClick={() => onNavigate(TABS.PEDAGOGIE)} className="text-center py-4 bg-indigo-50 dark:bg-indigo-900 hover:bg-indigo-100 dark:hover:bg-indigo-800 rounded-lg text-black dark:text-white">Valider Horaires</button>
-            <button onClick={() => onNavigate(TABS.ADMINISTRATION)} className="text-center py-4 bg-teal-50 dark:bg-teal-900 hover:bg-teal-100 dark:hover:bg-teal-800 rounded-lg text-black dark:text-white">Envoyer Message</button>
-            <button onClick={() => onNavigate(TABS.ETUDIANTS)} className="text-center py-4 bg-sky-50 dark:bg-sky-900 hover:bg-sky-100 dark:hover:bg-sky-800 rounded-lg text-black dark:text-white">Gérer Étudiants</button>
-            <button onClick={() => onNavigate(TABS.ENSEIGNANTS)} className="text-center py-4 bg-amber-50 dark:bg-amber-900 hover:bg-amber-100 dark:hover:bg-amber-800 rounded-lg text-black dark:text-white">Voir Enseignants</button>
+            <Link to="/section/pedagogie" className="text-center py-4 bg-indigo-50 dark:bg-indigo-900 hover:bg-indigo-100 dark:hover:bg-indigo-800 rounded-lg text-black dark:text-white">Valider Horaires</Link>
+            <Link to="/section/administration" className="text-center py-4 bg-teal-50 dark:bg-teal-900 hover:bg-teal-100 dark:hover:bg-teal-800 rounded-lg text-black dark:text-white">Envoyer Message</Link>
+            <Link to="/section/etudiants" className="text-center py-4 bg-sky-50 dark:bg-sky-900 hover:bg-sky-100 dark:hover:bg-sky-800 rounded-lg text-black dark:text-white">Gérer Étudiants</Link>
+            <Link to="/section/enseignants" className="text-center py-4 bg-amber-50 dark:bg-amber-900 hover:bg-amber-100 dark:hover:bg-amber-800 rounded-lg text-black dark:text-white">Voir Enseignants</Link>
         </div>
     </div>
 );
@@ -49,19 +46,12 @@ const RecentActivity = () => (
     </div>
 );
 
-const TABS = {
-  DASHBOARD: 'Tableau de bord',
-  PEDAGOGIE: 'Gestion Pédagogique',
-  DEPARTEMENTS: 'Supervision des Départements',
-  ENSEIGNANTS: 'Gestion des Enseignants',
-  ETUDIANTS: 'Gestion des Étudiants',
-  ADMINISTRATION: 'Coordination Administrative',
-};
+// Removed: TABS object
 
 export default function SectionDashboard() {
   const [sum, setSum] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState(TABS.DASHBOARD);
+  // Removed: [activeTab, setActiveTab]
 
   const loadSummary = async () => {
     setLoading(true);
@@ -77,57 +67,30 @@ export default function SectionDashboard() {
   };
 
   useEffect(() => {
-    if (activeTab === TABS.DASHBOARD) { loadSummary(); }
-  }, [activeTab]);
+    loadSummary(); // Always load summary for the dashboard index
+  }, []); // Empty dependency array to run once on mount
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case TABS.PEDAGOGIE: return <GestionPedagogique />;
-      case TABS.DEPARTEMENTS: return <SupervisionDepartements />;
-      case TABS.ENSEIGNANTS: return <GestionEnseignants />;
-      case TABS.ETUDIANTS: return <GestionEtudiants />;
-      case TABS.ADMINISTRATION: return <CoordinationAdministrative />;
-      case TABS.DASHBOARD:
-      default:
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {loading || !sum ? (
-                [...Array(4)].map((_, i) => <Skeleton key={i} className="h-28" />)
-            ) : (
-              <>
-                <KpiCard label="Étudiants" value={sum.students.val} color="bg-blue-600"><Sparkline data={sum.students.trend} /></KpiCard>
-                <KpiCard label="Enseignants" value={sum.teachers.val} color="bg-green-600"><Sparkline data={sum.teachers.trend} /></KpiCard>
-                <KpiCard label="Taux de Réussite" value={sum.successRate.val} color="bg-purple-600"><Sparkline data={sum.successRate.trend} color="#10b981" /></KpiCard>
-                <KpiCard label="Départements" value={sum.departments} color="bg-yellow-600" />
-              </>
-            )}
-            <div className="md:col-span-2"><QuickActions onNavigate={setActiveTab} /></div>
-            <div className="md:col-span-2"><Alerts /></div>
-            <div className="md:col-span-4"><RecentActivity /></div>
-          </div>
-        );
-    }
-  };
+  // Removed: renderContent function
 
   return (
     <div className="space-y-8">
-      {/* Removed: <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Tableau de Bord du Chef de Section</h1> */}
-      <div className="flex border-b overflow-x-auto">
-        {Object.values(TABS).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`py-2 px-4 text-sm font-medium whitespace-nowrap ${
-              activeTab === tab
-                ? 'border-b-2 border-blue-500 text-blue-600'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+      {/* Removed: h1 title */}
+      {/* Removed: horizontal tabs div */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {loading || !sum ? (
+            [...Array(4)].map((_, i) => <Skeleton key={i} className="h-28" />)
+        ) : (
+          <>
+            <KpiCard label="Étudiants" value={sum.students.val} color="bg-blue-600"><Sparkline data={sum.students.trend} /></KpiCard>
+            <KpiCard label="Enseignants" value={sum.teachers.val} color="bg-green-600"><Sparkline data={sum.teachers.trend} /></KpiCard>
+            <KpiCard label="Taux de Réussite" value={sum.successRate.val} color="bg-purple-600"><Sparkline data={sum.successRate.trend} color="#10b981" /></KpiCard>
+            <KpiCard label="Départements" value={sum.departments} color="bg-yellow-600" />
+          </>
+        )}
+        <div className="md:col-span-2"><QuickActions /></div>
+        <div className="md:col-span-2"><Alerts /></div>
+        <div className="md:col-span-4"><RecentActivity /></div>
       </div>
-      <div className="mt-4">{renderContent()}</div>
     </div>
   );
 }
