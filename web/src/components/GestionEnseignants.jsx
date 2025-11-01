@@ -64,7 +64,7 @@ export default function GestionEnseignants({ currentRole }) {
 
   const isDepartmentRole = currentRole === 'chef_departement';
   const pageTitle = isDepartmentRole
-      ? 'Gestion des Enseignants du Département: Exemple Technique de maintenance'
+      ? 'Gestion des Enseignants du Département'
       : 'Gestion des Enseignants de la Section';
   const pageDescription = isDepartmentRole
       ? 'Gérez et suivez les enseignants de votre département.'

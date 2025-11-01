@@ -5,6 +5,7 @@ export default function SectionLayout() {
   const nav = [
     { to: '/section', label: 'Tableau de bord' },
     { to: '/section/pedagogie', label: 'Gestion Pédagogique' },
+    { to: '/section/horaires', label: 'Gestion des Horaires' },
     { to: '/section/departements', label: 'Supervision des Départements' },
     { to: '/section/enseignants', label: 'Gestion des Enseignants' },
     { to: '/section/etudiants', label: 'Gestion des Étudiants' },

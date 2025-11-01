@@ -64,6 +64,7 @@ import AssistantSubmissionDetail from '../screens/AssistantSubmissionDetail';
 
 // Section-specific components (for nested routes)
 import GestionPedagogique from '../components/GestionPedagogique';
+import GestionHoraires from '../components/GestionHoraires'; // New import
 import SupervisionDepartements from '../components/SupervisionDepartements';
 import GestionEnseignants from '../components/GestionEnseignants';
 import GestionEtudiants from '../components/GestionEtudiants';
@@ -155,6 +156,7 @@ export default function App() {
             <Route element={<SectionLayout />}>
               <Route index element={<SectionDashboard />} />
               <Route path="pedagogie" element={<GestionPedagogique currentRole="chef_section" />} />
+              <Route path="horaires" element={<GestionHoraires currentRole="chef_section" />} />
               <Route path="departements" element={<SupervisionDepartements />} />
               <Route path="enseignants" element={<GestionEnseignants currentRole="chef_section" />} />
               <Route path="etudiants" element={<GestionEtudiants currentRole="chef_section" />} />
@@ -166,6 +168,7 @@ export default function App() {
             <Route element={<DepartementLayout />}>
               <Route index element={<DepartementDashboard />} />
               <Route path="pedagogie" element={<GestionPedagogique currentRole="chef_departement" />} />
+              <Route path="horaires" element={<GestionHoraires currentRole="chef_departement" />} />
               <Route path="enseignants" element={<GestionEnseignants currentRole="chef_departement" />} />
               <Route path="etudiants" element={<GestionEtudiants currentRole="chef_departement" />} />
               <Route path="profil" element={<DepartementProfile />} />

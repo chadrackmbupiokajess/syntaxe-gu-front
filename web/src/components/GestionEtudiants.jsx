@@ -54,7 +54,7 @@ export default function GestionEtudiants({ currentRole }) {
     const isDepartmentRole = currentRole === 'chef_departement';
     // Dynamically set the page title based on the role
     const pageTitle = isDepartmentRole
-        ? 'Gestion des Étudiants du Département: Exemple Technique de maintenance' // Hardcoded for demonstration as requested
+        ? 'Gestion des Étudiants du Département' // Hardcoded for demonstration as requested
         : 'Gestion des Étudiants de la Section';
     const pageDescription = isDepartmentRole
         ? 'Gérez et suivez les étudiants de votre département.'
