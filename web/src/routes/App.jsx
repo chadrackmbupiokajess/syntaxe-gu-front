@@ -67,6 +67,8 @@ import SupervisionDepartements from '../components/SupervisionDepartements';
 import GestionEnseignants from '../components/GestionEnseignants';
 import GestionEtudiants from '../components/GestionEtudiants';
 import CoordinationAdministrative from '../components/CoordinationAdministrative';
+import SectionProfile from '../screens/SectionProfile'; // Import SectionProfile
+import DgProfile from '../screens/DgProfile'; // Import DgProfile
 
 export default function App() {
   return (
@@ -126,6 +128,7 @@ export default function App() {
           <Route path="/dg" element={<RoleRoute allowedRoles={['dg']} />}>
             <Route element={<DgLayout />}>
               <Route index element={<DgDashboard />} />
+              <Route path="profil" element={<DgProfile />} /> {/* Added Profil route for DG */}
             </Route>
           </Route>
           <Route path="/sga" element={<RoleRoute allowedRoles={['sga']} />}>
@@ -142,6 +145,7 @@ export default function App() {
               <Route path="enseignants" element={<GestionEnseignants />} />
               <Route path="etudiants" element={<GestionEtudiants />} />
               <Route path="administration" element={<CoordinationAdministrative />} />
+              <Route path="profil" element={<SectionProfile />} /> {/* Changed to SectionProfile */}
             </Route>
           </Route>
           <Route path="/departement" element={<RoleRoute allowedRoles={['chef_departement']} />}> 

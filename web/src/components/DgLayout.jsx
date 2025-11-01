@@ -9,6 +9,7 @@ export default function DgLayout() {
     { to: '/dg/personnel-management', label: 'Gestion du Personnel' },
     { to: '/dg/validation', label: 'Validation & Approbation' },
     { to: '/dg/communication', label: 'Communication Interne' },
+    { to: '/dg/profil', label: 'Profil' }, // Added Profil link
   ]
   return (
     <div className="min-h-[70vh] grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4">

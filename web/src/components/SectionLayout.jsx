@@ -1,5 +1,5 @@
-import React from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import React from 'react';
+import { NavLink, Outlet } from 'react-router-dom';
 
 export default function SectionLayout() {
   const nav = [
@@ -9,7 +9,8 @@ export default function SectionLayout() {
     { to: '/section/enseignants', label: 'Gestion des Enseignants' },
     { to: '/section/etudiants', label: 'Gestion des Étudiants' },
     { to: '/section/administration', label: 'Coordination Administrative' },
-  ]
+    { to: '/section/profil', label: 'Profil' }, // Added Profil link
+  ];
   return (
     <div className="min-h-[70vh] grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4">
       <aside className="card p-4 h-fit sticky top-20">
@@ -26,5 +27,5 @@ export default function SectionLayout() {
         <Outlet />
       </section>
     </div>
-  )
+  );
 }
