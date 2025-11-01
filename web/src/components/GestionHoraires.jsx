@@ -9,6 +9,7 @@ export default function GestionHoraires({ currentRole }) {
   const [selectedAuditoire, setSelectedAuditoire] = useState('');
   const [selectedSessionType, setSelectedSessionType] = useState('session'); // Changed to 'session' for consistency with backend
   const [newSchedule, setNewSchedule] = useState({ day: '', startTime: '', endTime: '', course: '', teacher: '' });
+  const [editingSchedule, setEditingSchedule] = useState(null); // New state for editing existing schedule
   const [availableCourses, setAvailableCourses] = useState([]);
   const [availableTeachers, setAvailableTeachers] = useState([]);
   const [loading, setLoading] = useState(false); // Added loading state for modal submission
@@ -75,10 +76,27 @@ export default function GestionHoraires({ currentRole }) {
     }
   }, [selectedAuditoire, selectedSessionType, isDepartmentRole]); // Added selectedSessionType to dependencies
 
-  const handleCreateScheduleClick = (day = '', time = '') => {
-    // Reset newSchedule state for a fresh form, optionally pre-filling day and time if clicked from a slot
-    setNewSchedule({ day: day, startTime: time, endTime: '', course: '', teacher: '' });
+  const handleOpenScheduleModal = (scheduleToEdit = null, day = '', startTime = '') => {
+    if (scheduleToEdit) {
+      setEditingSchedule(scheduleToEdit);
+      setNewSchedule({
+        day: scheduleToEdit.day,
+        startTime: scheduleToEdit.startTime,
+        endTime: scheduleToEdit.endTime,
+        course: scheduleToEdit.course?.id || '',
+        teacher: scheduleToEdit.teacher?.id || '',
+      });
+    } else {
+      setEditingSchedule(null);
+      setNewSchedule({ day: day, startTime: startTime, endTime: '', course: '', teacher: '' });
+    }
     setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingSchedule(null); // Clear editing schedule when modal closes
+    setNewSchedule({ day: '', startTime: '', endTime: '', course: '', teacher: '' }); // Clear new schedule
   };
 
   const handleInputChange = (e) => {
@@ -108,39 +126,57 @@ export default function GestionHoraires({ currentRole }) {
         session_type: selectedSessionType, // Use the selectedSessionType from state
       };
 
-      const schedulesApiEndpoint = isDepartmentRole
-        ? `/api/department/auditoriums/${selectedAuditoire}/schedules`
-        : `/api/section/auditoriums/${selectedAuditoire}/schedules`; // Assuming section also has this endpoint
-
-      await axios.post(schedulesApiEndpoint, payload);
-      toast.success("Horaire créé avec succès !");
-      setShowModal(false);
-      loadSchedules(); // Reload schedules after creation
+      if (editingSchedule) {
+        // Update existing schedule
+        const schedulesApiEndpoint = isDepartmentRole
+          ? `/api/department/auditoriums/${selectedAuditoire}/schedules/${editingSchedule.id}`
+          : `/api/section/auditoriums/${selectedAuditoire}/schedules/${editingSchedule.id}`;
+        await axios.put(schedulesApiEndpoint, payload);
+        toast.success("Horaire mis à jour avec succès !");
+      } else {
+        // Create new schedule
+        const schedulesApiEndpoint = isDepartmentRole
+          ? `/api/department/auditoriums/${selectedAuditoire}/schedules`
+          : `/api/section/auditoriums/${selectedAuditoire}/schedules`;
+        await axios.post(schedulesApiEndpoint, payload);
+        toast.success("Horaire créé avec succès !");
+      }
+      
+      handleCloseModal();
+      loadSchedules(); // Reload schedules after creation/update
     } catch (error) {
-      console.error("Error creating schedule:", error);
-      toast.error("Erreur lors de la création de l'horaire.");
+      console.error("Error submitting schedule:", error);
+      toast.error("Erreur lors de la soumission de l'horaire.");
     } finally {
       setLoading(false);
     }
   };
 
   const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-  const timeSlots = useMemo(() => {
-    // Generate time slots from 8:00 to 18:00 (inclusive)
-    const slots = [];
-    for (let i = 8; i <= 18; i++) { // Changed loop limit back to 18 for wider range
-      slots.push(`${i < 10 ? '0' : ''}${i}:00`);
-    }
-    return slots;
-  }, []); // No dependencies, so it runs once
+  // Generate 3 generic rows for the table
+  const genericTimeSlots = useMemo(() => {
+    return ['slot1', 'slot2', 'slot3']; // 3 generic slots
+  }, []);
 
-  const getCourseAndTeacherForSlot = (day, timeSlot) => {
-    const schedule = schedules.find(s => s.day === day && s.startTime === timeSlot);
-    if (schedule) {
-      return {
-        courseName: schedule.course?.name || 'N/A',
-        teacherName: schedule.teacher?.name || 'N/A',
-      };
+  const getScheduleForCell = (day, slotIdentifier) => {
+    // Find schedules that match the day and can fit into a generic slot
+    // This logic needs to be robust if multiple schedules can exist for the same day without fixed time slots
+    // For now, we'll assign schedules to generic slots based on their order of appearance for a given day
+    const schedulesForDay = schedules.filter(s => s.day === day).sort((a, b) => a.startTime.localeCompare(b.startTime));
+    const index = parseInt(slotIdentifier.replace('slot', '')) - 1;
+    if (schedulesForDay[index]) {
+        const schedule = schedulesForDay[index];
+        return {
+            id: schedule.id,
+            day: schedule.day,
+            startTime: schedule.startTime,
+            endTime: schedule.endTime,
+            course: schedule.course,
+            teacher: schedule.teacher,
+            session_type: schedule.session_type,
+            courseName: schedule.course?.name || 'N/A',
+            teacherName: schedule.teacher?.name || 'N/A',
+        };
     }
     return null;
   };
@@ -185,7 +221,7 @@ export default function GestionHoraires({ currentRole }) {
             <option value="session">Session</option>
           </select>
         </div>
-        <button onClick={handleCreateScheduleClick} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+        <button onClick={() => handleOpenScheduleModal()} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
           Ajouter une ligne
         </button>
       </div>
@@ -200,21 +236,25 @@ export default function GestionHoraires({ currentRole }) {
             </tr>
           </thead>
           <tbody>
-            {timeSlots.length > 0 ? (
-              timeSlots.map(slot => (
-                <tr key={slot} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                  <td className="py-4 px-6 font-medium text-gray-900 whitespace-nowrap dark:text-white">{`${slot} - ${parseInt(slot.split(':')[0]) + 1}:00`}</td>
+            {genericTimeSlots.map((slotIdentifier, index) => (
+                <tr key={slotIdentifier} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                  <td className="py-4 px-6 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                    {/* Display time only if a schedule exists in this row for any day */}
+                    {days.some(day => getScheduleForCell(day, slotIdentifier)) ? 
+                        getScheduleForCell(days.find(d => getScheduleForCell(d, slotIdentifier)), slotIdentifier)?.startTime + ' - ' + getScheduleForCell(days.find(d => getScheduleForCell(d, slotIdentifier)), slotIdentifier)?.endTime
+                        : ''}
+                  </td>
                   {days.map(day => {
-                    const scheduleInfo = getCourseAndTeacherForSlot(day, slot);
+                    const scheduleInfo = getScheduleForCell(day, slotIdentifier);
                     return (
-                      <td key={day} className="py-4 px-6">
+                      <td key={day} className="py-4 px-6 cursor-pointer" onClick={() => handleOpenScheduleModal(scheduleInfo, day, scheduleInfo?.startTime)}>
                         {scheduleInfo ? (
                           <div>
                             <p className="font-bold text-gray-900 dark:text-white">{scheduleInfo.courseName}</p>
                             <p className="text-gray-600 dark:text-gray-400">{scheduleInfo.teacherName}</p>
                           </div>
                         ) : (
-                          <button onClick={() => handleCreateScheduleClick(day, slot)} className="text-blue-500 hover:text-blue-700">
+                          <button onClick={() => handleOpenScheduleModal(null, day, '')} className="text-blue-500 hover:text-blue-700">
                             +
                           </button>
                         )}
@@ -222,8 +262,8 @@ export default function GestionHoraires({ currentRole }) {
                     );
                   })}
                 </tr>
-              ))
-            ) : (
+              ))}
+            {schedules.length === 0 && (
               <tr>
                 <td colSpan={days.length + 1} className="text-center py-8 text-gray-500 dark:text-gray-400">
                   Aucun horaire créé pour cet auditoire et cette session.
@@ -237,7 +277,7 @@ export default function GestionHoraires({ currentRole }) {
       {showModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center z-50">
           <div className="bg-white dark:bg-slate-800 p-8 rounded-lg shadow-xl w-1/2 max-w-lg">
-            <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Créer un nouvel horaire</h3>
+            <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">{editingSchedule ? 'Modifier l\'horaire' : 'Créer un nouvel horaire'}</h3>
             <form onSubmit={handleFormSubmit}>
               <div className="mb-4">
                 <label htmlFor="day-select" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Jour:</label>
@@ -272,9 +312,9 @@ export default function GestionHoraires({ currentRole }) {
               </div>
               <div className="flex items-center justify-between">
                 <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" disabled={loading}>
-                  {loading ? 'Création...' : 'Créer'}
+                  {loading ? (editingSchedule ? 'Modification...' : 'Création...') : (editingSchedule ? 'Modifier' : 'Créer')}
                 </button>
-                <button type="button" onClick={() => setShowModal(false)} className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                <button type="button" onClick={handleCloseModal} className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                   Annuler
                 </button>
               </div>

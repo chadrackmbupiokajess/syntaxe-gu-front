@@ -1816,9 +1816,11 @@ def department_courses_list(request):
     data = []
     for course in courses_queryset:
         teacher_name = "Non assigné"
+        teacher_id = None
         assignment = CourseAssignment.objects.filter(course=course).select_related('assistant').first()
         if assignment and assignment.assistant:
             teacher_name = assignment.assistant.get_full_name()
+            teacher_id = assignment.assistant.id
 
         data.append({
             "id": course.id,
@@ -1831,7 +1833,6 @@ def department_courses_list(request):
             "auditoire_id": course.auditoire.id,
             "auditoire_name": course.auditoire.name,
         })
-
     return Response(data)
 
 
@@ -1910,7 +1911,7 @@ def department_course_create(request):
 
 @api_view(["GET", "POST"])
 @permission_classes(DEV_PERMS)
-def department_auditorium_schedules(request, auditorium_id):
+def department_auditorium_schedules_list_create(request, auditorium_id):
     user = request.user
     try:
         department = user.department_head_of
@@ -1935,11 +1936,14 @@ def department_auditorium_schedules(request, auditorium_id):
                 "startTime": schedule.start_time.strftime('%H:%M'),
                 "endTime": schedule.end_time.strftime('%H:%M'),
                 "course": {
+                    "id": schedule.course.id if schedule.course else None,
                     "name": schedule.course.name if schedule.course else "N/A"
                 },
                 "teacher": {
+                    "id": schedule.teacher.id if schedule.teacher else None,
                     "name": schedule.teacher.get_full_name() if schedule.teacher else "N/A"
-                }
+                },
+                "session_type": schedule.session_type,
             })
         return Response(data)
 
@@ -1977,6 +1981,84 @@ def department_auditorium_schedules(request, auditorium_id):
             session_type=request.data.get('session_type', 'session') # Default to 'session'
         )
         return Response({"detail": "Horaire créé avec succès."}, status=201)
+
+@api_view(["GET", "PUT", "DELETE"])
+@permission_classes(DEV_PERMS)
+def department_auditorium_schedule_detail(request, auditorium_id, schedule_id):
+    user = request.user
+    try:
+        department = user.department_head_of
+    except AttributeError:
+        department = Departement.objects.first()
+        if not department:
+            return Response({"error": "No departments found."}, status=404)
+
+    try:
+        auditorium = Auditoire.objects.get(id=auditorium_id, departement=department)
+    except Auditoire.DoesNotExist:
+        return Response({"error": "Auditorium not found in this department."}, status=404)
+
+    try:
+        schedule = Calendrier.objects.get(id=schedule_id, auditoire=auditorium)
+    except Calendrier.DoesNotExist:
+        return Response({"error": "Schedule not found or does not belong to this auditorium."}, status=404)
+
+    if request.method == 'GET':
+        data = {
+            "id": schedule.id,
+            "day": schedule.day,
+            "startTime": schedule.start_time.strftime('%H:%M'),
+            "endTime": schedule.end_time.strftime('%H:%M'),
+            "course": {
+                "id": schedule.course.id if schedule.course else None,
+                "name": schedule.course.name if schedule.course else "N/A"
+            },
+            "teacher": {
+                "id": schedule.teacher.id if schedule.teacher else None,
+                "name": schedule.teacher.get_full_name() if schedule.teacher else "N/A"
+            },
+            "session_type": schedule.session_type,
+        }
+        return Response(data)
+
+    elif request.method == 'PUT':
+        day = request.data.get('day')
+        start_time = request.data.get('startTime')
+        end_time = request.data.get('endTime')
+        course_id = request.data.get('course')
+        teacher_id = request.data.get('teacher')
+        session_type = request.data.get('session_type')
+
+        if not all([day, start_time, end_time, session_type]):
+            return Response({"detail": "Le jour, l'heure de début, l'heure de fin et le type de session sont requis."}, status=400)
+
+        course = None
+        if course_id:
+            try:
+                course = Course.objects.get(id=course_id)
+            except Course.DoesNotExist:
+                return Response({"detail": "Cours introuvable."}, status=404)
+
+        teacher = None
+        if teacher_id:
+            try:
+                teacher = User.objects.get(id=teacher_id)
+            except User.DoesNotExist:
+                return Response({"detail": "Enseignant introuvable."}, status=404)
+
+        schedule.day = day
+        schedule.start_time = start_time
+        schedule.end_time = end_time
+        schedule.course = course
+        schedule.teacher = teacher
+        schedule.session_type = session_type
+        schedule.save()
+
+        return Response({"detail": "Horaire mis à jour avec succès."}, status=200)
+
+    elif request.method == 'DELETE':
+        schedule.delete()
+        return Response({"detail": "Horaire supprimé avec succès."}, status=204)
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
