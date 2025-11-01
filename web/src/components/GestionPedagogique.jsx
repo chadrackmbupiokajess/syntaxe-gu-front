@@ -77,8 +77,8 @@ export default function GestionPedagogique({ currentRole }) {
 
   useEffect(() => { loadData(); }, [currentRole]);
 
-  const filteredCourses = useMemo(() => 
-    courses.filter(c => 
+  const filteredCourses = useMemo(() =>
+    courses.filter(c =>
       c.intitule.toLowerCase().includes(filters.intitule.toLowerCase()) &&
       (isDepartmentRole || c.departement.toLowerCase().includes(filters.departement.toLowerCase())) &&
       (!filters.semestre || (c.semestre && c.semestre.trim().toLowerCase() === filters.semestre.trim().toLowerCase())) &&
@@ -128,7 +128,7 @@ export default function GestionPedagogique({ currentRole }) {
     } finally {
       setCreatingCourse(false);
     }
-  }; 
+  };
 
   const pageTitle = isDepartmentRole ? 'Gestion Pédagogique du Département' : 'Gestion Pédagogique de la Section';
 
@@ -139,7 +139,7 @@ export default function GestionPedagogique({ currentRole }) {
         <p className="mt-2 text-lg text-gray-600 dark:text-gray-300">Organisez et supervisez le programme de cours de votre {isDepartmentRole ? 'département' : 'section'}.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"> 
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KpiCard label="Nombre Total de Cours" value={loading ? '...' : (summary?.courses || 0)} color="bg-blue-600" icon={<BookOpenIcon />} />
         <KpiCard label="Total Crédits" value={loading ? '...' : (summary?.total_credits || 0)} color="bg-green-600" icon={<BookIcon />} />
         <KpiCard label="Nombre Total d'Enseignants" value={loading ? '...' : (summary?.teachers?.val || 0)} color="bg-purple-600" icon={<AcademicCapIcon />} />

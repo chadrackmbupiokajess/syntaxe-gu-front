@@ -64,6 +64,7 @@ import AssistantSubmissionDetail from '../screens/AssistantSubmissionDetail';
 
 // Section-specific components (for nested routes)
 import GestionPedagogique from '../components/GestionPedagogique';
+import GestionPedagogiqueSection from '../components/GestionPedagogiqueSection'; // Import new component
 import GestionHoraires from '../components/GestionHoraires'; // New import
 import SupervisionDepartements from '../components/SupervisionDepartements';
 import GestionEnseignants from '../components/GestionEnseignants';
@@ -72,6 +73,8 @@ import CoordinationAdministrative from '../components/CoordinationAdministrative
 import SectionProfile from '../screens/SectionProfile';
 import DgProfile from '../screens/DgProfile';
 import DepartementProfile from '../screens/DepartementProfile';
+import SectionReports from '../screens/SectionReports'; // Import new component
+import SectionMessages from '../screens/SectionMessages'; // Import new component
 
 // DG-specific components
 import DgAcademicReports from '../screens/DgAcademicReports';
@@ -155,12 +158,14 @@ export default function App() {
           <Route path="/section" element={<RoleRoute allowedRoles={['chef_section']} />}>
             <Route element={<SectionLayout />}>
               <Route index element={<SectionDashboard />} />
-              <Route path="pedagogie" element={<GestionPedagogique currentRole="chef_section" />} />
+              <Route path="pedagogie" element={<GestionPedagogiqueSection currentRole="chef_section" />} />
               <Route path="horaires" element={<GestionHoraires currentRole="chef_section" />} />
               <Route path="departements" element={<SupervisionDepartements />} />
               <Route path="enseignants" element={<GestionEnseignants currentRole="chef_section" />} />
               <Route path="etudiants" element={<GestionEtudiants currentRole="chef_section" />} />
               <Route path="administration" element={<CoordinationAdministrative />} />
+              <Route path="reports" element={<SectionReports />} />
+              <Route path="messages" element={<SectionMessages />} />
               <Route path="profil" element={<SectionProfile />} />
             </Route>
           </Route>

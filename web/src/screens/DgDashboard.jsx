@@ -21,14 +21,16 @@ export default function DgDashboard() {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
 
-  // Dummy data for new functionalities
+  // State for General Stats
   const [generalStats, setGeneralStats] = useState({
-    totalSections: 10,
-    totalDepartments: 30,
-    totalTeachers: 150,
-    totalStudents: 5000,
+    totalSections: 0,
+    totalDepartments: 0,
+    totalTeachers: 0,
+    totalStudents: 0,
   });
 
+  // Dummy data for new functionalities (Academic Reports, Financial Reports, Validation, Internal Messages)
+  // These will be replaced with API calls as endpoints are identified/created
   const [academicReports, setAcademicReports] = useState([
     { id: 1, type: 'Inscriptions', value: 1200, trend: '+5%' },
     { id: 2, type: 'Taux de réussite', value: '85%', trend: '+2%' },
@@ -36,18 +38,16 @@ export default function DgDashboard() {
     { id: 4, type: 'Performance moyenne', value: 'B+', trend: 'Stable' },
   ]);
 
+  // Financial Reports still use dummy data, as backend endpoints need to be clarified/created
   const [financialReports, setFinancialReports] = useState([
     { id: 1, type: 'Revenus', value: '1.5M USD', trend: '+10%' },
     { id: 2, type: 'Dépenses', value: '1.2M USD', trend: '+8%' },
     { id: 3, type: 'Budget restant', value: '0.3M USD', trend: '-5%' },
   ]);
 
-  const [personnelManagement, setPersonnelManagement] = useState([
-    { id: 1, name: 'Dr. Jean Dupont', role: 'Chef de Section Informatique', status: 'Active', email: 'jean.dupont@univ.com' },
-    { id: 2, name: 'Prof. Marie Curie', role: 'Chef de Département Physique', status: 'Active', email: 'marie.curie@univ.com' },
-    { id: 3, name: 'Mme. Sophie Martin', role: 'Secrétaire Académique', status: 'Active', email: 'sophie.martin@univ.com' },
-    { id: 4, name: 'M. Pierre Dubois', role: 'Comptable Principal', status: 'Active', email: 'pierre.dubois@univ.com' },
-  ]);
+  const [personnelManagement, setPersonnelManagement] = useState([]);
+  const [loadingPersonnelManagement, setLoadingPersonnelManagement] = useState(true);
+
 
   const [validationItems, setValidationItems] = useState([
     { id: 1, type: 'Programme', description: 'Nouveau programme de Master en IA', status: 'En attente', date: '2023-10-26' },
@@ -83,17 +83,57 @@ export default function DgDashboard() {
 
 
   const load = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const [s, r] = await Promise.all([
+      const [summaryRes, actionsRes, sectionsRes] = await Promise.all([
         axios.get('/api/dg/summary'),
         axios.get('/api/dg/actions'),
-      ])
-      setSum(s.data); setRows(r.data)
+        axios.get('/api/section/list'), // To get totalSections
+      ]);
+
+      setSum(summaryRes.data);
+      setRows(actionsRes.data);
+
+      setGeneralStats({
+        totalSections: sectionsRes.data.length,
+        totalDepartments: summaryRes.data.totalDepartments,
+        totalTeachers: summaryRes.data.totalTeachers,
+        totalStudents: summaryRes.data.totalStudents,
+      });
+
+    } catch (error) {
+      push({ title: 'Erreur', message: 'Erreur lors du chargement des données du tableau de bord.', status: 'error' });
+      console.error("Error loading dashboard data:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
+  // Effect to load Personnel Management
+  useEffect(() => {
+    const loadPersonnelManagement = async () => {
+      setLoadingPersonnelManagement(true);
+      try {
+        const response = await axios.get('/api/users'); // Assuming /api/users returns a list of all users
+        const personnelData = response.data.map(user => ({
+          id: user.id,
+          name: user.full_name, 
+          role: user.role, 
+          status: user.status, 
+          email: user.email,
+        }));
+        setPersonnelManagement(personnelData);
+      } catch (error) {
+        push({ title: 'Erreur', message: 'Erreur lors du chargement de la gestion du personnel.', status: 'error' });
+        console.error("Error loading personnel management:", error);
+      } finally {
+        setLoadingPersonnelManagement(false);
+      }
+    };
+    loadPersonnelManagement();
+  }, []);
+
+
   useEffect(()=>{ load() },[])
 
   return (
@@ -111,18 +151,23 @@ export default function DgDashboard() {
       {/* General Dashboard Section - Enhanced */}
       <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl">
         <h3 className="text-2xl font-bold mb-5 text-black dark:text-white">Vue d'ensemble de l'établissement</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard label="Total Sections" value={generalStats.totalSections} color="bg-indigo-50 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200" />
-          <KpiCard label="Total Départements" value={generalStats.totalDepartments} color="bg-teal-50 dark:bg-teal-900 text-teal-800 dark:text-teal-200" />
-          <KpiCard label="Total Enseignants" value={generalStats.totalTeachers} color="bg-sky-50 dark:bg-sky-900 text-sky-800 dark:text-sky-200" />
-          <KpiCard label="Total Étudiants" value={generalStats.totalStudents} color="bg-amber-50 dark:bg-amber-900 text-amber-800 dark:text-amber-200" />
-        </div>
+        {loading ? (
+          <Skeleton count={4} className="h-24" />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <KpiCard label="Total Sections" value={generalStats.totalSections} color="bg-indigo-50 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200" />
+            <KpiCard label="Total Départements" value={generalStats.totalDepartments} color="bg-teal-50 dark:bg-teal-900 text-teal-800 dark:text-teal-200" />
+            <KpiCard label="Total Enseignants" value={generalStats.totalTeachers} color="bg-sky-50 dark:bg-sky-900 text-sky-800 dark:text-sky-200" />
+            <KpiCard label="Total Étudiants" value={generalStats.totalStudents} color="bg-amber-50 dark:bg-amber-900 text-amber-800 dark:text-amber-200" />
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Academic Reports Section - with Chart */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl">
           <h3 className="text-2xl font-bold mb-5 text-black dark:text-white">Rapports Académiques</h3>
+          {/* NOTE: This section still uses dummy data. Backend endpoints are needed for academic reports and trend data. */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             {academicReports.map(report => (
               <KpiCard key={report.id} label={report.type} value={report.value} trend={report.trend} color="bg-gray-50 dark:bg-gray-700 text-black dark:text-white" />
@@ -150,6 +195,7 @@ export default function DgDashboard() {
         {/* Financial Reports Section - with Chart */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl">
           <h3 className="text-2xl font-bold mb-5 text-black dark:text-white">Rapports Financiers</h3>
+          {/* NOTE: This section still uses dummy data. Backend endpoints are needed for financial reports and trend data. */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             {financialReports.map(report => (
               <KpiCard key={report.id} label={report.type} value={report.value} trend={report.trend} color="bg-gray-50 dark:bg-gray-700 text-black dark:text-white" />
@@ -158,7 +204,7 @@ export default function DgDashboard() {
           <div style={{ width: '100%', height: 300 }}>
             <ResponsiveContainer>
               <AreaChart
-                data={financialTrendData}
+                data={financialTrendData} 
                 margin={{
                   top: 10, right: 30, left: 0, bottom: 0,
                 }}
@@ -181,8 +227,8 @@ export default function DgDashboard() {
         <ListWithFilters
           title="Liste du Personnel Clé"
           data={personnelManagement}
-          loading={false} // Dummy data, so not loading
-          onRefresh={() => { /* No refresh for dummy data */ }}
+          loading={loadingPersonnelManagement}
+          onRefresh={() => { /* Implement refresh for personnel data */ }}
           columns={[
             { key: 'name', header: 'Nom' },
             { key: 'role', header: 'Rôle' },
@@ -199,6 +245,7 @@ export default function DgDashboard() {
       {/* Validation Section */}
       <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl">
         <h3 className="text-2xl font-bold mb-5 text-black dark:text-white">Validation et Approbation</h3>
+        {/* NOTE: This section still uses dummy data. Backend endpoints are needed for validation items. */}
         <ListWithFilters
           title="Éléments en Attente de Validation"
           data={validationItems}
@@ -220,6 +267,7 @@ export default function DgDashboard() {
       {/* Communication Interne Section */}
       <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl">
         <h3 className="text-2xl font-bold mb-5 text-black dark:text-white">Communication Interne</h3>
+        {/* NOTE: This section still uses dummy data. Backend endpoints are needed for internal messages. */}
         <div className="mb-4">
           <textarea
             className="w-full p-2 border rounded-md dark:bg-slate-700 dark:text-white dark:border-slate-600"

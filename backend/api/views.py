@@ -10,7 +10,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
 from django.db.models import Q, Count, Sum, Avg
-import uuid
 
 from academics.models import Course, Auditoire, Calendrier, CourseAssignment, Section, Departement, CourseMessage, Paiement
 from evaluations.models import Assignment, Submission, Quiz, Question, Choice, Answer, QuizAttempt
@@ -151,7 +150,7 @@ def tptd_my(request):
 
 @api_view(['GET', 'DELETE'])
 @permission_classes(DEV_PERMS)
-def tptd_my_detail(request, id):
+def quizzes_my_detail(request, id):
     try:
         assignment = Assignment.objects.select_related('course__auditoire__departement').get(id=id, assistant=request.user)
 
@@ -227,7 +226,7 @@ def quizzes_my(request):
 
 @api_view(['GET', 'DELETE'])
 @permission_classes(DEV_PERMS)
-def quizzes_my_detail(request, id):
+def tptd_my_detail(request, id):
     try:
         assignment = Assignment.objects.select_related('course__auditoire__departement').get(id=id, assistant=request.user)
 
@@ -1486,6 +1485,16 @@ def section_summary(request):
     # Count departments in the section
     department_count = Departement.objects.filter(section=section).count()
 
+    # Count courses in the section
+    course_count = Course.objects.filter(
+        auditoire__departement__section=section
+    ).count()
+
+    # Calculate total credits for the section
+    total_credits = Course.objects.filter(
+        auditoire__departement__section=section
+    ).aggregate(Sum('credits'))['credits__sum'] or 0
+
     # Mock data for trends and success rate
     # In a real app, you would calculate this from historical data.
     data = {
@@ -1498,6 +1507,8 @@ def section_summary(request):
             "trend": [80, 75, 78, 85, teacher_count / 2] # Dummy trend
         },
         "departments": department_count,
+        "courses": course_count, # Added total courses
+        "total_credits": total_credits, # Added total credits
         "successRate": {
             "val": "85%", # Dummy value
             "trend": [70, 75, 85, 82, 85] # Dummy trend
@@ -1514,7 +1525,6 @@ def section_list(request):
         data.append({
             "id": section.id,
             "name": section.name,
-            "description": section.description, # Assuming a description field exists
         })
     return Response(data)
 

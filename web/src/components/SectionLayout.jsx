@@ -10,7 +10,9 @@ export default function SectionLayout() {
     { to: '/section/enseignants', label: 'Gestion des Enseignants' },
     { to: '/section/etudiants', label: 'Gestion des Étudiants' },
     { to: '/section/administration', label: 'Coordination Administrative' },
-    { to: '/section/profil', label: 'Profil' }, // Added Profil link
+    { to: '/section/reports', label: 'Rapports' },
+    { to: '/section/messages', label: 'Messages Internes' },
+    { to: '/section/profil', label: 'Profil' },
   ];
   return (
     <div className="min-h-[70vh] grid grid-cols-1 md:grid-cols-[240px_1fr] gap-4">
