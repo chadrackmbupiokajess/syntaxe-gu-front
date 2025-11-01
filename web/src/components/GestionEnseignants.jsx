@@ -9,31 +9,43 @@ const AcademicCapIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className=
 const BriefcaseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.55 23.55 0 0112 15c-1.635 0-3.201-.19-4.704-.545M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" /></svg>;
 const CheckCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
 
-const TeacherCard = ({ teacher, onAssign }) => (
-  <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-slate-700 flex flex-col">
-    <div className="p-6 flex flex-col items-center text-center flex-grow">
-      <img className="w-24 h-24 rounded-full object-cover mb-4 ring-2 ring-teal-500 dark:ring-teal-400 shadow-md" src={`https://i.pravatar.cc/150?u=${teacher.email}`} alt={teacher.name} />
-      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1 truncate w-full px-2">{teacher.name}</h3>
-      <p className="text-md font-semibold text-teal-600 dark:text-teal-400 truncate w-full px-2">{teacher.role}</p>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate w-full px-2">Département: {teacher.department}</p>
+const TeacherCard = ({ teacher, onAssign }) => {
+  const isAvailable = teacher.status === 'Activé';
 
-      <div className="mt-4 flex items-center space-x-2">
-          <span className={`h-3 w-3 rounded-full ${teacher.available ? 'bg-green-500' : 'bg-red-500'}`}></span>
-          <span className="text-sm text-gray-600 dark:text-gray-300">{teacher.available ? 'Disponible' : 'Occupé'}</span>
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-slate-700 flex flex-col">
+      <div className="p-6 flex flex-col items-center text-center flex-grow">
+        <img className="w-24 h-24 rounded-full object-cover mb-4 ring-2 ring-teal-500 dark:ring-teal-400 shadow-md" src={`https://i.pravatar.cc/150?u=${teacher.email}`} alt={teacher.name} />
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white mt-4 mb-2 w-full px-2 break-words">{teacher.name}</h3>
+        
+        {/* Role as a badge */}
+        <span className="text-sm font-semibold text-white bg-teal-600 px-3 py-1 rounded-full w-auto break-words mb-3">{teacher.rank || 'Rôle non défini'}</span>
+        
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 w-full px-2 break-words">{teacher.department}</p>
+
+        {/* Status as a badge */}
+        <div className="mt-4">
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isAvailable ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
+                <svg className={`-ml-0.5 mr-1.5 h-2 w-2 ${isAvailable ? 'text-green-400' : 'text-red-400'}`} fill="currentColor" viewBox="0 0 8 8">
+                    <circle cx="4" cy="4" r="3" />
+                </svg>
+                {isAvailable ? 'Disponible' : 'Non disponible'}
+            </span>
+        </div>
+      </div>
+
+      <div className="bg-gray-50 dark:bg-slate-700 px-4 py-3 flex justify-center items-center gap-2 border-t border-gray-100 dark:border-slate-700">
+          <button className="text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 px-3 py-2 rounded-lg shadow-md transition-all duration-300 whitespace-nowrap">Message</button>
+          <button className="text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 px-3 py-2 rounded-lg shadow-md transition-all duration-300 whitespace-nowrap">Profil</button>
+          <button 
+              onClick={() => onAssign(teacher)}
+              className="text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 px-3 py-2 rounded-lg shadow-md transition-all duration-300 whitespace-nowrap">
+              Assigner
+          </button>
       </div>
     </div>
-
-    <div className="bg-gray-50 dark:bg-slate-700 px-5 py-3 flex justify-center space-x-2 border-t border-gray-100 dark:border-slate-700">
-        <button className="text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 px-4 py-2 rounded-lg shadow-md transition-all duration-300">Message</button>
-        <button className="text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 px-4 py-2 rounded-lg shadow-md transition-all duration-300">Profil</button>
-        <button 
-            onClick={() => onAssign(teacher)}
-            className="text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 px-4 py-2 rounded-lg shadow-md transition-all duration-300">
-            Assigner
-        </button>
-    </div>
-  </div>
-);
+  );
+};
 
 export default function GestionEnseignants({ currentRole }) {
   const [teachers, setTeachers] = useState([]);
@@ -110,7 +122,7 @@ export default function GestionEnseignants({ currentRole }) {
     teachers.filter(t =>
       t.name.toLowerCase().includes(filters.name.toLowerCase()) &&
       (filters.department === '' || t.department === filters.department) &&
-      (filters.role === '' || (t.role && t.role.toLowerCase().startsWith(filters.role.toLowerCase())))
+      (filters.role === '' || (t.rank && t.rank.toLowerCase().startsWith(filters.role.toLowerCase())))
     ), [teachers, filters]);
 
   const handleFilterChange = (e) => {
@@ -178,9 +190,9 @@ export default function GestionEnseignants({ currentRole }) {
         ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <KpiCard label="Total Enseignants" value={summary?.teachers?.val || 0} color="bg-gradient-to-r from-blue-500 to-blue-600" icon={<UsersIcon />} />
-                <KpiCard label="Enseignants Disponibles" value={filteredTeachers.filter(t => t.available).length} color="bg-gradient-to-r from-green-500 to-green-600" icon={<CheckCircleIcon />} />
-                <KpiCard label="Professeurs" value={filteredTeachers.filter(t => t.role && t.role.toLowerCase().includes('professeur')).length} color="bg-gradient-to-r from-purple-500 to-purple-600" icon={<AcademicCapIcon />} />
-                <KpiCard label="Assistants" value={filteredTeachers.filter(t => t.role && t.role.toLowerCase().includes('assistant')).length} color="bg-gradient-to-r from-orange-500 to-orange-600" icon={<BriefcaseIcon />} />
+                <KpiCard label="Enseignants Disponibles" value={filteredTeachers.filter(t => t.status === 'Activé').length} color="bg-gradient-to-r from-green-500 to-green-600" icon={<CheckCircleIcon />} />
+                <KpiCard label="Professeurs" value={filteredTeachers.filter(t => t.rank && t.rank.toLowerCase().includes('professeur')).length} color="bg-gradient-to-r from-purple-500 to-purple-600" icon={<AcademicCapIcon />} />
+                <KpiCard label="Assistants" value={filteredTeachers.filter(t => t.rank && t.rank.toLowerCase().includes('assistant')).length} color="bg-gradient-to-r from-orange-500 to-orange-600" icon={<BriefcaseIcon />} />
             </div>
         )}
 
