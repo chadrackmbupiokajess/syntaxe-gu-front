@@ -10,7 +10,7 @@ export default function AssistantDashboard() {
     axios.get('/api/assistant/summary').then(r => setData(r.data))
   }, [])
 
-  if (!data) return <p>Chargement...</p>
+  if (!data) return <p className="text-black dark:text-white">Chargement...</p>
 
   return (
     <div className="grid gap-4">
@@ -29,21 +29,21 @@ export default function AssistantDashboard() {
         </Link>
       </div>
 
-      <div className="card p-4">
-        <h3 className="text-lg font-semibold mb-2">Mes auditoires</h3>
+      <div className="card p-4 bg-white dark:bg-slate-800">
+        <h3 className="text-lg font-semibold mb-2 text-black dark:text-white">Mes auditoires</h3>
         <ul className="text-sm grid gap-2">
           {data.auditoriums.map((a, i) => {
             return (
               <li key={i} className="flex items-center justify-between border rounded-lg px-3 py-2 border-slate-200/60 dark:border-slate-800/60">
                 <div>
                   <Link to={`/assistant/auditoires/${a.code}`}>
-                    <span className="font-medium">{a.code}</span>
-                    <p className="text-xs text-slate-500 mt-1"> {a.department || 'N/A'}</p>
+                    <span className="font-medium text-black dark:text-white">{a.code}</span>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1"> {a.department || 'N/A'}</p>
                   </Link>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-slate-500">{a.students} étudiants</span>
-                  <Link to={`/assistant/auditoires/${a.code}/messages`} className="btn btn-sm">Messages</Link>
+                  <span className="text-slate-500 dark:text-slate-400">{a.students} étudiants</span>
+                  <Link to={`/assistant/auditoires/${a.code}/messages`} className="btn btn-sm dark:text-white dark:hover:bg-slate-700">Messages</Link>
                 </div>
               </li>
             );

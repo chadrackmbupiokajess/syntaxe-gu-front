@@ -3,21 +3,21 @@ import axios from 'axios';
 import Skeleton from './Skeleton';
 
 const TeacherCard = ({ teacher }) => (
-  <div className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center p-6">
+  <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center p-6">
     <img className="w-24 h-24 rounded-full object-cover mb-4 shadow-lg" src={`https://i.pravatar.cc/150?u=${teacher.email}`} alt={teacher.name} />
-    <h3 className="text-xl font-bold text-gray-900">{teacher.name}</h3>
-    <p className="text-md font-semibold text-teal-600">{teacher.role}</p>
-    <p className="text-sm text-gray-500 mt-1">{teacher.department}</p>
+    <h3 className="text-xl font-bold text-gray-900 dark:text-white">{teacher.name}</h3>
+    <p className="text-md font-semibold text-teal-600 dark:text-teal-400">{teacher.role}</p>
+    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{teacher.department}</p>
 
     <div className="mt-4 flex items-center">
-        <span className={`h-3 w-3 rounded-full ${teacher.available ? 'bg-green-500' : 'bg-gray-400'}`}></span>
-        <span className="ml-2 text-sm text-gray-600">{teacher.available ? 'Disponible' : 'Non disponible'}</span>
+        <span className={`h-3 w-3 rounded-full ${teacher.available ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-600'}`}></span>
+        <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">{teacher.available ? 'Disponible' : 'Non disponible'}</span>
     </div>
 
     <div className="mt-6 flex-grow flex items-end space-x-2">
         <button className="text-xs font-bold text-white bg-teal-500 hover:bg-teal-600 px-3 py-2 rounded-lg">Message</button>
-        <button className="text-xs font-bold text-gray-700 bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-lg">Profil</button>
-        <button className="text-xs font-bold text-gray-700 bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-lg">Assigner</button>
+        <button className="text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 px-3 py-2 rounded-lg">Profil</button>
+        <button className="text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 px-3 py-2 rounded-lg">Assigner</button>
     </div>
   </div>
 );
@@ -58,18 +58,18 @@ export default function GestionEnseignants() {
   return (
     <div className="space-y-8">
         <div>
-            <h2 className="text-3xl font-bold text-gray-800">Gestion des Enseignants</h2>
-            <p className="mt-2 text-lg text-gray-600">Gérez votre personnel académique et suivez leurs activités.</p>
+            <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Gestion des Enseignants</h2>
+            <p className="mt-2 text-lg text-gray-600 dark:text-gray-300">Gérez votre personnel académique et suivez leurs activités.</p>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow-sm flex flex-wrap justify-between items-center gap-4">
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm flex flex-wrap justify-between items-center gap-4">
             <div className="flex gap-4">
-                <input type="text" name="name" placeholder="Rechercher par nom..." onChange={handleFilterChange} className="border p-2 rounded-md"/>
-                <select name="department" onChange={handleFilterChange} className="border p-2 rounded-md">
+                <input type="text" name="name" placeholder="Rechercher par nom..." onChange={handleFilterChange} className="border dark:border-slate-600 p-2 rounded-md dark:bg-slate-700 dark:text-white"/>
+                <select name="department" onChange={handleFilterChange} className="border dark:border-slate-600 p-2 rounded-md dark:bg-slate-700 dark:text-white">
                     <option value="">Tous les départements</option>
                     {uniqueDepartments.map(dep => <option key={dep} value={dep}>{dep}</option>)}
                 </select>
-                <select name="role" onChange={handleFilterChange} className="border p-2 rounded-md">
+                <select name="role" onChange={handleFilterChange} className="border dark:border-slate-600 p-2 rounded-md dark:bg-slate-700 dark:text-white">
                     <option value="">Tous les rôles</option>
                     <option value="Professeur">Professeurs</option>
                     <option value="Assistant">Assistants</option>

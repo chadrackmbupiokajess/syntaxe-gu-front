@@ -10,38 +10,38 @@ const DepartmentCard = ({ department }) => {
   const studentTeacherRatio = department.students > 0 ? department.students / department.teachers : 0;
 
   return (
-    <div className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
       <div className="p-6">
         <div className="flex items-center space-x-4">
           <img className="w-16 h-16 rounded-full object-cover" src={`https://i.pravatar.cc/150?u=${department.head}`} alt={department.head} />
           <div>
-            <h3 className="text-2xl font-bold text-gray-900">{department.name}</h3>
-            <p className="text-md font-semibold text-indigo-600">Chef: {department.head}</p>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{department.name}</h3>
+            <p className="text-md font-semibold text-indigo-600 dark:text-indigo-400">Chef: {department.head}</p>
           </div>
         </div>
         
         <div className="mt-6 space-y-4">
-            <div className="flex items-center text-gray-700">
+            <div className="flex items-center text-gray-700 dark:text-gray-300">
                 <UsersIcon />
                 <span className="ml-3">{department.teachers} Enseignants</span>
             </div>
-            <div className="flex items-center text-gray-700">
+            <div className="flex items-center text-gray-700 dark:text-gray-300">
                 <AcademicCapIcon />
                 <span className="ml-3">{department.students} Étudiants</span>
             </div>
         </div>
 
         <div className="mt-4">
-            <p className="text-sm text-gray-500">Ratio Étudiants/Enseignant: <span className="font-bold">{studentTeacherRatio.toFixed(1)}</span></p>
-            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+            <p className="text-sm text-gray-500 dark:text-gray-400">Ratio Étudiants/Enseignant: <span className="font-bold">{studentTeacherRatio.toFixed(1)}</span></p>
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mt-2">
                 <div className="bg-indigo-500 h-2.5 rounded-full" style={{ width: `${100 / (studentTeacherRatio / 5 + 1)}%` }}></div>
             </div>
         </div>
 
       </div>
-      <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
-        <button className="text-sm font-medium text-gray-600 hover:text-indigo-600">Contacter</button>
-        <button className="text-sm font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-100 px-3 py-1 rounded-lg">Gérer</button>
+      <div className="bg-gray-50 dark:bg-slate-700 px-6 py-4 flex justify-end space-x-3">
+        <button className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400">Contacter</button>
+        <button className="text-sm font-medium text-indigo-600 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 bg-indigo-100 dark:bg-indigo-900 px-3 py-1 rounded-lg">Gérer</button>
       </div>
     </div>
   );
@@ -75,16 +75,16 @@ export default function SupervisionDepartements() {
   return (
     <div className="space-y-8">
         <div>
-            <h2 className="text-3xl font-bold text-gray-800">Supervision des Départements</h2>
-            <p className="mt-2 text-lg text-gray-600">Coordonnez vos chefs de département et suivez leurs activités.</p>
+            <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Supervision des Départements</h2>
+            <p className="mt-2 text-lg text-gray-600 dark:text-gray-300">Coordonnez vos chefs de département et suivez leurs activités.</p>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow-sm flex justify-between items-center">
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm flex justify-between items-center">
             <input 
                 type="text" 
                 placeholder="Rechercher un département ou un chef..." 
                 onChange={(e) => setSearchTerm(e.target.value)} 
-                className="border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 w-1/3"
+                className="border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 w-1/3 dark:bg-slate-700 dark:text-white"
             />
             <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">
                 Consulter les Rapports d'Activités

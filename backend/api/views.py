@@ -9,11 +9,12 @@ from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Sum
 import uuid
 
-from academics.models import Course, Auditoire, Calendrier, CourseAssignment, Section, Departement, CourseMessage
+from academics.models import Course, Auditoire, Calendrier, CourseAssignment, Section, Departement, CourseMessage, Paiement
 from evaluations.models import Assignment, Submission, Quiz, Question, Choice, Answer, QuizAttempt
+from rest_framework.permissions import BasePermission, IsAuthenticated # Import BasePermission and IsAuthenticated
 
 User = get_user_model()
 
@@ -31,6 +32,12 @@ def health(request):
 
 
 DEV_PERMS = [permissions.AllowAny] if getattr(settings, "DEBUG", False) else [permissions.IsAuthenticated]
+
+# Custom Permission for Directeur Général
+class IsDirecteurGeneral(BasePermission):
+    """Allows access only to Directeur Général users."""
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated and request.user.role == 'dg'
 
 @api_view(['GET'])
 @permission_classes(DEV_PERMS)
@@ -58,7 +65,7 @@ def auth_me(request):
         "id": user.id,
         "username": user.matricule,
         "email": user.email,
-        "roles": [user.role],
+        "role": user.role, # Changed from "roles": [user.role] to "role": user.role
     })
 
 @api_view(["GET"])
@@ -222,36 +229,30 @@ def quizzes_my(request):
 @permission_classes(DEV_PERMS)
 def quizzes_my_detail(request, id):
     try:
-        quiz = Quiz.objects.select_related('course__auditoire__departement').get(id=id, assistant=request.user)
+        assignment = Assignment.objects.select_related('course__auditoire__departement').get(id=id, assistant=request.user)
 
         if request.method == 'GET':
-            questions = []
-            for q in quiz.questions.all():
-                choices = []
-                if q.question_type in ['single', 'multiple']:
-                    for c in q.choices.all():
-                        choices.append({"text": c.choice_text, "is_correct": c.is_correct})
-                questions.append({"text": q.question_text, "type": q.question_type, "choices": choices})
-
             data = {
-                "id": quiz.id,
-                "title": quiz.title,
-                "course_name": quiz.course.name,
-                "auditorium": quiz.course.auditoire.name,
-                "department": quiz.course.auditoire.departement.name,
-                "duration": quiz.duration,
-                "total_points": quiz.total_points,
-                "created_at": quiz.created_at,
-                "questions": questions,
+                "id": assignment.id,
+                "title": assignment.title,
+                "type": assignment.type,
+                "course_name": assignment.course.name,
+                "auditorium": assignment.course.auditoire.name,
+                "department": assignment.course.auditoire.departement.name,
+                "questionnaire": assignment.questionnaire,
+                "total_points": assignment.total_points,
+                "deadline": assignment.deadline,
+                "created_at": assignment.created_at,
             }
             return Response(data)
 
         elif request.method == 'DELETE':
-            quiz.delete()
+            assignment.delete()
             return Response(status=204)
 
-    except Quiz.DoesNotExist:
-        return Response({"detail": "Quiz non trouvé ou accès non autorisé."}, status=404)
+    except Assignment.DoesNotExist:
+        return Response({"detail": "TP/TD non trouvé ou accès non autorisé."}, status=404)
+
 
 @api_view(['GET', 'PATCH'])
 @permission_classes(DEV_PERMS)
@@ -297,7 +298,7 @@ def assistant_grades(request, auditorium_id, course_code):
                     "student_id": student.id,
                     "student_name": student.get_full_name(),
                     "matricule": student.matricule,
-                    "avatar": student.profile_picture.url if student.profile_picture else f"https://i.pravatar.cc/128?u={student.id}",
+                    "avatar": student.profile_picture.url if student.profile_picture else f"https://i.pravatar.cc/128?u={user.id}",
                     "grade": grade,
                     "total_points": total_points,
                 })
@@ -1341,26 +1342,70 @@ def pdg_activities(request):
 # ---- Endpoints DG (placeholders) ----
 
 @api_view(["GET"])
-@permission_classes(DEV_PERMS)
+@permission_classes([IsAuthenticated, IsDirecteurGeneral]) # Apply custom permission
 def dg_summary(request):
+    total_students = User.objects.filter(role='etudiant').count()
+    total_teachers = User.objects.filter(Q(role='professeur') | Q(role='assistant')).count()
+    total_departments = Departement.objects.count()
+    total_auditoires = Auditoire.objects.count()
+    total_revenue = Paiement.objects.aggregate(Sum('amount'))['amount__sum'] or 0
+
     data = {
-        "decisionsPending": 6,
-        "projects": 14,
-        "budgetUsed": 62,
-        "satisfaction": 82,
+        "totalStudents": total_students,
+        "totalTeachers": total_teachers,
+        "totalDepartments": total_departments,
+        "totalAuditoires": total_auditoires,
+        "totalRevenue": total_revenue,
+        "decisionsPending": 6, # Placeholder for now
+        "projects": 14,        # Placeholder for now
+        "budgetUsed": 62,      # Placeholder for now
+        "satisfaction": 82,    # Placeholder for now
     }
     return Response(data)
 
 
 @api_view(["GET"])
-@permission_classes(DEV_PERMS)
+@permission_classes([IsAuthenticated, IsDirecteurGeneral]) # Apply custom permission
 def dg_actions(request):
-    rows = [
-        {"id": 1, "date": "2025-10-12", "domaine": "Infrastructures", "action": "Validation chantier Bât. C", "statut": "en cours"},
-        {"id": 2, "date": "2025-10-18", "domaine": "RH", "action": "Lancement recrutement assistants", "statut": "planifié"},
-        {"id": 3, "date": "2025-10-25", "domaine": "Finances", "action": "Ajustement budget Q4", "statut": "terminé"},
-    ]
-    return Response(rows)
+    actions = []
+
+    # 1. Recent Course Creations (as a proxy for program approvals)
+    recent_courses = Course.objects.select_related('auditoire__departement').order_by('-id')[:5]
+    for course in recent_courses:
+        actions.append({
+            "id": f"course-{course.id}",
+            "type": "Création de Cours",
+            "description": f"Nouveau cours \"{course.name}\" ({course.code}) dans {course.auditoire.name} ({course.auditoire.departement.name}).",
+            "date": course.id, # Using ID as a proxy for creation date for now
+            "status": "À examiner",
+        })
+
+    # 2. Recent Course Assignments (as a proxy for course distribution validation)
+    recent_assignments = CourseAssignment.objects.select_related('course__auditoire__departement', 'assistant').order_by('-id')[:5]
+    for assignment in recent_assignments:
+        actions.append({
+            "id": f"assign-{assignment.id}",
+            "type": "Affectation de Cours",
+            "description": f"Cours \"{assignment.course.name}\" assigné à {assignment.assistant.get_full_name()} dans {assignment.course.auditoire.name}.",
+            "date": assignment.id, # Using ID as a proxy for creation date for now
+            "status": "À examiner",
+        })
+
+    # 3. Recent Payments (for financial oversight)
+    recent_payments = Paiement.objects.select_related('student').order_by('-date_paid')[:5]
+    for payment in recent_payments:
+        actions.append({
+            "id": f"payment-{payment.id}",
+            "type": "Paiement Reçu",
+            "description": f"Paiement de {payment.amount} USD reçu de {payment.student.get_full_name()} pour la {payment.tranche_number}e tranche.",
+            "date": payment.date_paid.strftime("%Y-%m-%d %H:%M"),
+            "status": "Complet",
+        })
+
+    # Sort actions by date (or ID as a proxy for now), most recent first
+    actions.sort(key=lambda x: x['date'], reverse=True)
+
+    return Response(actions)
 
 
 # ---- Endpoints SGA (placeholders) ----
@@ -1495,12 +1540,10 @@ def section_teachers_list(request):
         data.append({
             "id": teacher.id,
             "name": teacher.get_full_name(),
-            "email": teacher.email,
-            "role": teacher.get_role_display(),
-            "department": department,
-            "available": teacher.status == 'active',
+            "rank": teacher.get_role_display(), # Assuming rank is equivalent to role
+            "courses": course_names,
+            "status": teacher.get_status_display(), # Assuming a status field exists
         })
-
     return Response(data)
 
 @api_view(["GET"])
@@ -1732,7 +1775,7 @@ def department_activities_list(request):
             "type": "warning",
             "date": assign.created_at.strftime("%Y-%m-%d %H:%M"),
         })
-    
+
     # Sort activities by date, most recent first
     activities.sort(key=lambda x: x['date'], reverse=True)
 
@@ -1876,11 +1919,11 @@ def department_auditoires_with_courses(request):
             return Response({"error": "No departments found."}, status=404)
 
     auditoires_data = []
-    auditoires = Auditoire.objects.filter(departement=department).prefetch_related('courses') # Corrected related_name
+    auditoires = Auditoire.objects.filter(departement=department).prefetch_related('courses')
 
     for auditoire in auditoires:
         courses_data = []
-        for course in auditoire.courses.all(): # Corrected related_name
+        for course in auditoire.courses.all():
             courses_data.append({
                 "id": course.id,
                 "name": course.name,

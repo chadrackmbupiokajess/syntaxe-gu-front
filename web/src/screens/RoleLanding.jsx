@@ -15,12 +15,12 @@ const RoleLanding = () => {
                     navigate('/etudiant', { replace: true });
                     break;
                 case 'assistant':
-                case 'enseignant':
+                case 'professeur': // Assuming 'professeur' also uses the assistant layout/dashboard
                     navigate('/assistant', { replace: true });
                     break;
                 // Ajoutez tous les autres cas ici...
                 case 'pdg': navigate('/pdg', { replace: true }); break;
-                case 'directeur_general': navigate('/dg', { replace: true }); break;
+                case 'dg': navigate('/dg', { replace: true }); break; // Corrected from 'directeur_general' to 'dg'
                 case 'sga': navigate('/sga', { replace: true }); break;
                 case 'sgad': navigate('/sgad', { replace: true }); break;
                 case 'chef_section': navigate('/section', { replace: true }); break;

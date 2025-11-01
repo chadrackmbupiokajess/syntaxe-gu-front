@@ -5,6 +5,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import StudentLayout from '../components/StudentLayout';
 import AssistantLayout from '../components/AssistantLayout';
+import DgLayout from '../components/DgLayout';
+import SectionLayout from '../components/SectionLayout'; // Import SectionLayout
 import ProtectedRoute from '../shared/ProtectedRoute';
 import RoleRoute from '../shared/RoleRoute';
 import Unauthorized from '../shared/Unauthorized';
@@ -58,6 +60,13 @@ import AssistantToGrade from '../screens/AssistantToGrade';
 import AssistantProfile from '../screens/AssistantProfile';
 import AssistantStudentProfile from '../screens/AssistantStudentProfile';
 import AssistantSubmissionDetail from '../screens/AssistantSubmissionDetail';
+
+// Section-specific components (for nested routes)
+import GestionPedagogique from '../components/GestionPedagogique';
+import SupervisionDepartements from '../components/SupervisionDepartements';
+import GestionEnseignants from '../components/GestionEnseignants';
+import GestionEtudiants from '../components/GestionEtudiants';
+import CoordinationAdministrative from '../components/CoordinationAdministrative';
 
 export default function App() {
   return (
@@ -115,7 +124,9 @@ export default function App() {
             <Route index element={<PDGDashboard />} />
           </Route>
           <Route path="/dg" element={<RoleRoute allowedRoles={['dg']} />}>
-            <Route index element={<DgDashboard />} />
+            <Route element={<DgLayout />}>
+              <Route index element={<DgDashboard />} />
+            </Route>
           </Route>
           <Route path="/sga" element={<RoleRoute allowedRoles={['sga']} />}>
             <Route index element={<SgaDashboard />} />
@@ -124,7 +135,14 @@ export default function App() {
             <Route index element={<SgadDashboard />} />
           </Route>
           <Route path="/section" element={<RoleRoute allowedRoles={['chef_section']} />}>
-            <Route index element={<SectionDashboard />} />
+            <Route element={<SectionLayout />}> {/* Use SectionLayout here */}
+              <Route index element={<SectionDashboard />} />
+              <Route path="pedagogie" element={<GestionPedagogique />} />
+              <Route path="departements" element={<SupervisionDepartements />} />
+              <Route path="enseignants" element={<GestionEnseignants />} />
+              <Route path="etudiants" element={<GestionEtudiants />} />
+              <Route path="administration" element={<CoordinationAdministrative />} />
+            </Route>
           </Route>
           <Route path="/departement" element={<RoleRoute allowedRoles={['chef_departement']} />}> 
             <Route index element={<DepartementDashboard />} />

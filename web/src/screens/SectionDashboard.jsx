@@ -17,31 +17,31 @@ const Sparkline = ({ data, color = "#4f46e5" }) => (
 );
 
 const QuickActions = ({ onNavigate }) => (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md text-black dark:text-white">
         <h3 className="font-bold text-lg mb-4">Actions Rapides</h3>
         <div className="grid grid-cols-2 gap-4">
-            <button onClick={() => onNavigate(TABS.PEDAGOGIE)} className="text-center py-4 bg-indigo-50 hover:bg-indigo-100 rounded-lg">Valider Horaires</button>
-            <button onClick={() => onNavigate(TABS.ADMINISTRATION)} className="text-center py-4 bg-teal-50 hover:bg-teal-100 rounded-lg">Envoyer Message</button>
-            <button onClick={() => onNavigate(TABS.ETUDIANTS)} className="text-center py-4 bg-sky-50 hover:bg-sky-100 rounded-lg">Gérer Étudiants</button>
-            <button onClick={() => onNavigate(TABS.ENSEIGNANTS)} className="text-center py-4 bg-amber-50 hover:bg-amber-100 rounded-lg">Voir Enseignants</button>
+            <button onClick={() => onNavigate(TABS.PEDAGOGIE)} className="text-center py-4 bg-indigo-50 dark:bg-indigo-900 hover:bg-indigo-100 dark:hover:bg-indigo-800 rounded-lg text-black dark:text-white">Valider Horaires</button>
+            <button onClick={() => onNavigate(TABS.ADMINISTRATION)} className="text-center py-4 bg-teal-50 dark:bg-teal-900 hover:bg-teal-100 dark:hover:bg-teal-800 rounded-lg text-black dark:text-white">Envoyer Message</button>
+            <button onClick={() => onNavigate(TABS.ETUDIANTS)} className="text-center py-4 bg-sky-50 dark:bg-sky-900 hover:bg-sky-100 dark:hover:bg-sky-800 rounded-lg text-black dark:text-white">Gérer Étudiants</button>
+            <button onClick={() => onNavigate(TABS.ENSEIGNANTS)} className="text-center py-4 bg-amber-50 dark:bg-amber-900 hover:bg-amber-100 dark:hover:bg-amber-800 rounded-lg text-black dark:text-white">Voir Enseignants</button>
         </div>
     </div>
 );
 
 const Alerts = () => (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md text-black dark:text-white">
         <h3 className="font-bold text-lg mb-4">Alertes & Approbations</h3>
         <ul className="space-y-3">
-            <li className="flex items-center justify-between p-2 bg-red-100 rounded-md"><span>Rapport mensuel en retard (Prog)</span><button className="text-xs font-bold text-red-700">Relancer</button></li>
-            <li className="flex items-center justify-between p-2 bg-yellow-100 rounded-md"><span>Demande de congé (Dr. Cerf)</span><button className="text-xs font-bold text-yellow-700">Voir</button></li>
+            <li className="flex items-center justify-between p-2 bg-red-100 dark:bg-red-900 rounded-md"><span>Rapport mensuel en retard (Prog)</span><button className="text-xs font-bold text-red-700 dark:text-red-300">Relancer</button></li>
+            <li className="flex items-center justify-between p-2 bg-yellow-100 dark:bg-yellow-900 rounded-md"><span>Demande de congé (Dr. Cerf)</span><button className="text-xs font-bold text-yellow-700 dark:text-yellow-300">Voir</button></li>
         </ul>
     </div>
 );
 
 const RecentActivity = () => (
-    <div className="bg-white p-6 rounded-lg shadow-md col-span-1 md:col-span-2">
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md col-span-1 md:col-span-2 text-black dark:text-white">
         <h3 className="font-bold text-lg mb-4">Activité Récente</h3>
-        <ul className="space-y-2 text-sm text-gray-600">
+        <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
             <li><span className="font-semibold">[Systèmes]</span> Le rapport d'activité de Mai a été soumis.</li>
             <li><span className="font-semibold">[Étudiants]</span> 5 nouvelles inscriptions en G1.</li>
             <li><span className="font-semibold">[Pédagogie]</span> Le cours 'IA Avancée' a été ajouté au programme de L2.</li>
@@ -111,7 +111,7 @@ export default function SectionDashboard() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold text-gray-800">Tableau de Bord du Chef de Section</h1>
+      {/* Removed: <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Tableau de Bord du Chef de Section</h1> */}
       <div className="flex border-b overflow-x-auto">
         {Object.values(TABS).map((tab) => (
           <button
@@ -120,7 +120,7 @@ export default function SectionDashboard() {
             className={`py-2 px-4 text-sm font-medium whitespace-nowrap ${
               activeTab === tab
                 ? 'border-b-2 border-blue-500 text-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
             }`}
           >
             {tab}

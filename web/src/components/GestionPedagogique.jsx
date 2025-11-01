@@ -9,21 +9,21 @@ const TagIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5
 const CalendarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" /></svg>;
 
 const CourseCard = ({ course }) => (
-  <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+  <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
     <div className="p-6">
       <div className="flex justify-between items-start">
-        <h3 className="text-xl font-bold text-gray-800 mb-2">{course.intitule}</h3>
-        <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-1 rounded-full">{course.code}</span>
+        <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">{course.intitule}</h3>
+        <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-semibold px-2.5 py-1 rounded-full">{course.code}</span>
       </div>
-      <div className="text-gray-600 space-y-3 mt-4">
-        <div className="flex items-center"><TagIcon /><span className="ml-2">Département: <span className="font-medium text-gray-700">{course.departement}</span></span></div>
-        <div className="flex items-center"><BookIcon /><span className="ml-2">Crédits: <span className="font-medium text-gray-700">{course.credits}</span></span></div>
-        <div className="flex items-center"><CalendarIcon /><span className="ml-2">Semestre: <span className="font-medium text-gray-700">{course.semestre}</span></span></div>
+      <div className="text-gray-600 dark:text-gray-300 space-y-3 mt-4">
+        <div className="flex items-center"><TagIcon /><span className="ml-2">Département: <span className="font-medium text-gray-700 dark:text-gray-200">{course.departement}</span></span></div>
+        <div className="flex items-center"><BookIcon /><span className="ml-2">Crédits: <span className="font-medium text-gray-700 dark:text-gray-200">{course.credits}</span></span></div>
+        <div className="flex items-center"><CalendarIcon /><span className="ml-2">Semestre: <span className="font-medium text-gray-700 dark:text-gray-200">{course.semestre}</span></span></div>
       </div>
     </div>
-    <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
-        <button className="text-sm font-medium text-gray-600 hover:text-gray-900">Voir les détails</button>
-        <button className="text-sm font-medium text-blue-600 hover:text-blue-800">Modifier</button>
+    <div className="bg-gray-50 dark:bg-slate-700 px-6 py-4 flex justify-end gap-3">
+        <button className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">Voir les détails</button>
+        <button className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">Modifier</button>
     </div>
   </div>
 );
@@ -64,26 +64,26 @@ export default function GestionPedagogique() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-bold text-gray-800">Gestion Pédagogique</h2>
-        <p className="mt-2 text-lg text-gray-600">Organisez et supervisez le programme de cours de votre section.</p>
+        <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Gestion Pédagogique</h2>
+        <p className="mt-2 text-lg text-gray-600 dark:text-gray-300">Organisez et supervisez le programme de cours de votre section.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <KpiCard label="Nombre Total de Cours" value={loading ? '...' : filteredCourses.length} color="bg-blue-600" />
         <KpiCard label="Total Crédits de la Sélection" value={loading ? '...' : totalCredits} color="bg-green-600" />
-        <div className="bg-gray-100 p-4 rounded-lg flex items-center justify-center">
+        <div className="bg-gray-100 dark:bg-slate-700 p-4 rounded-lg flex items-center justify-center">
             <button className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">
                 Valider les Emplois du Temps
             </button>
         </div>
       </div>
 
-      <div className="bg-white p-4 rounded-lg shadow-sm">
+      <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex gap-4">
-                <input type="text" name="intitule" placeholder="Filtrer par intitulé..." onChange={handleFilterChange} className="border p-2 rounded"/>
-                <input type="text" name="departement" placeholder="Filtrer par département..." onChange={handleFilterChange} className="border p-2 rounded"/>
-                <input type="text" name="semestre" placeholder="Filtrer par semestre..." onChange={handleFilterChange} className="border p-2 rounded"/>
+                <input type="text" name="intitule" placeholder="Filtrer par intitulé..." onChange={handleFilterChange} className="border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white"/>
+                <input type="text" name="departement" placeholder="Filtrer par département..." onChange={handleFilterChange} className="border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white"/>
+                <input type="text" name="semestre" placeholder="Filtrer par semestre..." onChange={handleFilterChange} className="border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white"/>
             </div>
             <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
                 + Proposer un Nouveau Cours
