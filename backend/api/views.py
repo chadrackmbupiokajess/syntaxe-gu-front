@@ -1660,6 +1660,9 @@ def department_summary(request):
 
     course_count = Course.objects.filter(auditoire__departement=department).count()
 
+    # Calculate total credits for the department
+    total_credits = Course.objects.filter(auditoire__departement=department).aggregate(Sum('credits'))['credits__sum'] or 0
+
     data = {
         "students": {
             "val": student_count,
@@ -1670,6 +1673,7 @@ def department_summary(request):
             "trend": [10, 12, 11, 13, teacher_count / 2]
         },
         "courses": course_count,
+        "total_credits": total_credits,  # Add total_credits to the response
         "successRate": {
             "val": "80%",
             "trend": [65, 70, 80, 78, 80]

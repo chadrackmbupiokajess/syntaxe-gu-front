@@ -37,7 +37,6 @@ export default function GestionPedagogique({ currentRole }) {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ intitule: '', departement: '', semestre: '' });
   const [departmentSummary, setDepartmentSummary] = useState(null); // New state for department summary
-  const [totalDepartmentCredits, setTotalDepartmentCredits] = useState(0); // New state for total department credits
 
   // Assign Teacher Modal states
   const [showAssignTeacherModal, setShowAssignTeacherModal] = useState(false);
@@ -66,10 +65,6 @@ export default function GestionPedagogique({ currentRole }) {
             axios.get('/api/department/summary'), // New API call for summary
         ]);
         setCourses(coursesResponse.data);
-        // Calculate total department credits
-        const calculatedTotalCredits = coursesResponse.data.reduce((sum, course) => sum + (parseInt(course.credits) || 0), 0);
-        setTotalDepartmentCredits(calculatedTotalCredits);
-
         setAvailableTeachers(teachersResponse.data);
         setAvailableAuditoires(auditoriumsResponse.data);
         setDepartmentSummary(summaryResponse.data); // Set department summary
@@ -79,7 +74,6 @@ export default function GestionPedagogique({ currentRole }) {
         setAvailableTeachers([]);
         setAvailableAuditoires([]);
         setDepartmentSummary(null); // Reset summary on error
-        setTotalDepartmentCredits(0); // Reset total credits on error
     } finally {
         setLoading(false);
     }
@@ -93,9 +87,6 @@ export default function GestionPedagogique({ currentRole }) {
       c.departement.toLowerCase().includes(filters.departement.toLowerCase()) &&
       c.semestre.toLowerCase().includes(filters.semestre.toLowerCase())
     ), [courses, filters]);
-
-  // This totalCredits is for the filtered selection, not the global department total
-  const totalCreditsFilteredSelection = useMemo(() => filteredCourses.reduce((sum, c) => sum + (c.credits || 0), 0), [filteredCourses]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -189,7 +180,7 @@ export default function GestionPedagogique({ currentRole }) {
 
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6"> {/* Adjusted grid for more cards */}
         <KpiCard label="Nombre Total de Cours" value={loading ? '...' : (departmentSummary?.courses || 0)} color="bg-blue-600" icon={<BookOpenIcon />} />
-        <KpiCard label="Total Crédits du Département" value={loading ? '...' : totalDepartmentCredits} color="bg-green-600" icon={<BookIcon />} /> {/* Updated KPI Card */}
+        <KpiCard label="Total Crédits du Département" value={loading ? '...' : (departmentSummary?.total_credits || 0)} color="bg-green-600" icon={<BookIcon />} /> {/* Updated KPI Card */}
         <KpiCard label="Nombre Total d'Enseignants" value={loading ? '...' : (departmentSummary?.teachers?.val || 0)} color="bg-purple-600" icon={<AcademicCapIcon />} />
         <KpiCard label="Nombre Total d'Étudiants" value={loading ? '...' : (departmentSummary?.students?.val || 0)} color="bg-red-600" icon={<UsersIcon />} />
         <div className="bg-gray-100 dark:bg-slate-700 p-4 rounded-lg flex items-center justify-center">

@@ -4,6 +4,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 export default function DepartementLayout() {
   const nav = [
     { to: '/departement', label: 'Tableau de bord' },
+    { to: '/departement/pedagogie', label: 'Gestion Pédagogique' },
     { to: '/departement/enseignants', label: 'Gestion des Enseignants' },
     { to: '/departement/etudiants', label: 'Gestion des Étudiants' },
     { to: '/departement/profil', label: 'Profil' },
