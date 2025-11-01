@@ -35,7 +35,7 @@ const CourseCard = ({ course }) => (
 export default function GestionPedagogique({ currentRole }) {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ intitule: '', departement: '', semestre: '' });
+  const [filters, setFilters] = useState({ intitule: '', departement: '', semestre: '', auditoire: '' });
   const [summary, setSummary] = useState(null);
 
   // Create Course Modal states
@@ -81,7 +81,8 @@ export default function GestionPedagogique({ currentRole }) {
     courses.filter(c => 
       c.intitule.toLowerCase().includes(filters.intitule.toLowerCase()) &&
       (isDepartmentRole || c.departement.toLowerCase().includes(filters.departement.toLowerCase())) &&
-      (!filters.semestre || (c.semestre && c.semestre.trim().toLowerCase() === filters.semestre.trim().toLowerCase()))
+      (!filters.semestre || (c.semestre && c.semestre.trim().toLowerCase() === filters.semestre.trim().toLowerCase())) &&
+      (!filters.auditoire || c.auditoire_id === parseInt(filters.auditoire))
     ), [courses, filters, isDepartmentRole]);
 
   const handleFilterChange = (e) => {
@@ -156,6 +157,12 @@ export default function GestionPedagogique({ currentRole }) {
                     <option value="">Toutes les sessions</option>
                     <option value="Mi-session">Mi-session</option>
                     <option value="Session">Session</option>
+                </select>
+                <select name="auditoire" onChange={handleFilterChange} className="border dark:border-slate-600 p-2 rounded-md dark:bg-slate-700 dark:text-white">
+                    <option value="">Tous les auditoires</option>
+                    {availableAuditoires.map(auditoire => (
+                        <option key={auditoire.id} value={auditoire.id}>{auditoire.name}</option>
+                    ))}
                 </select>
             </div>
             <button onClick={handleProposeNewCourse} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
