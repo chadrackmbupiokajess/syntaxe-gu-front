@@ -7,7 +7,7 @@ import StudentLayout from '../components/StudentLayout';
 import AssistantLayout from '../components/AssistantLayout';
 import DgLayout from '../components/DgLayout';
 import SectionLayout from '../components/SectionLayout';
-import DepartementLayout from '../components/DepartementLayout'; // Import DepartementLayout
+import DepartementLayout from '../components/DepartementLayout';
 import ProtectedRoute from '../shared/ProtectedRoute';
 import RoleRoute from '../shared/RoleRoute';
 import Unauthorized from '../shared/Unauthorized';
@@ -70,7 +70,14 @@ import GestionEtudiants from '../components/GestionEtudiants';
 import CoordinationAdministrative from '../components/CoordinationAdministrative';
 import SectionProfile from '../screens/SectionProfile';
 import DgProfile from '../screens/DgProfile';
-import DepartementProfile from '../screens/DepartementProfile'; // Import DepartementProfile
+import DepartementProfile from '../screens/DepartementProfile';
+
+// DG-specific components
+import DgAcademicReports from '../screens/DgAcademicReports';
+import DgFinancialReports from '../screens/DgFinancialReports';
+import DgPersonnelManagement from '../screens/DgPersonnelManagement';
+import DgValidation from '../screens/DgValidation';
+import DgCommunication from '../screens/DgCommunication';
 
 export default function App() {
   return (
@@ -130,7 +137,12 @@ export default function App() {
           <Route path="/dg" element={<RoleRoute allowedRoles={['dg']} />}>
             <Route element={<DgLayout />}>
               <Route index element={<DgDashboard />} />
-              <Route path="profil" element={<DgProfile />} /> {/* Added Profil route for DG */}
+              <Route path="academic-reports" element={<DgAcademicReports />} />
+              <Route path="financial-reports" element={<DgFinancialReports />} />
+              <Route path="personnel-management" element={<DgPersonnelManagement />} />
+              <Route path="validation" element={<DgValidation />} />
+              <Route path="communication" element={<DgCommunication />} />
+              <Route path="profil" element={<DgProfile />} />
             </Route>
           </Route>
           <Route path="/sga" element={<RoleRoute allowedRoles={['sga']} />}>
@@ -140,23 +152,23 @@ export default function App() {
             <Route index element={<SgadDashboard />} />
           </Route>
           <Route path="/section" element={<RoleRoute allowedRoles={['chef_section']} />}>
-            <Route element={<SectionLayout />}> {/* Use SectionLayout here */}
+            <Route element={<SectionLayout />}>
               <Route index element={<SectionDashboard />} />
               <Route path="pedagogie" element={<GestionPedagogique />} />
               <Route path="departements" element={<SupervisionDepartements />} />
               <Route path="enseignants" element={<GestionEnseignants />} />
               <Route path="etudiants" element={<GestionEtudiants />} />
               <Route path="administration" element={<CoordinationAdministrative />} />
-              <Route path="profil" element={<SectionProfile />} /> {/* Changed to SectionProfile */}
+              <Route path="profil" element={<SectionProfile />} />
             </Route>
           </Route>
           <Route path="/departement" element={<RoleRoute allowedRoles={['chef_departement']} />}> 
-            <Route element={<DepartementLayout />}> {/* Use DepartementLayout here */}
+            <Route element={<DepartementLayout />}>
               <Route index element={<DepartementDashboard />} />
               <Route path="pedagogie" element={<GestionPedagogique />} />
               <Route path="enseignants" element={<GestionEnseignants />} />
               <Route path="etudiants" element={<GestionEtudiants />} />
-              <Route path="profil" element={<DepartementProfile />} /> {/* Added DepartementProfile route */}
+              <Route path="profil" element={<DepartementProfile />} />
             </Route>
           </Route>
           <Route path="/jury" element={<RoleRoute allowedRoles={['jury']} />}> 

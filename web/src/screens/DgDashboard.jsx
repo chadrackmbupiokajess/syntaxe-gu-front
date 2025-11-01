@@ -4,6 +4,16 @@ import KpiCard from '../components/KpiCard'
 import ListWithFilters from '../components/ListWithFilters'
 import Skeleton from '../components/Skeleton'
 import { useToast } from '../shared/ToastProvider'
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+// Dummy Icons
+const UsersIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 016-6h6a6 6 0 016 6v1h-3" /></svg>;
+const AcademicCapIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" /></svg>;
+const BookOpenIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.206 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.794 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.794 5 16.5 5c1.706 0 3.332.477 4.5 1.253v13C19.832 18.477 18.206 18 16.5 18s-3.332.477-4.5 1.253" /></svg>;
+const ChartBarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>;
+const BriefcaseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.55 23.55 0 0112 15c-1.63 0-3.2-.19-4.7-.545M12 14V7m-4 7H4a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v7a2 2 0 01-2 2h-4m-7 1v-4a1 1 0 011-1h2a1 1 0 011 1v4m-6 0h6" /></svg>;
+const CheckCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+const ChatAlt2Icon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2V7a2 2 0 012-2h2.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H17z" /></svg>;
 
 export default function DgDashboard() {
   const { push } = useToast()
@@ -50,6 +60,27 @@ export default function DgDashboard() {
     { id: 2, subject: 'Nouvelles directives budgétaires', content: 'Veuillez prendre note des nouvelles...', sender: 'DG', date: '2023-10-23' },
   ]);
 
+  // Dummy data for charts
+  const academicTrendData = [
+    { name: 'Jan', Inscriptions: 4000, Reussite: 2400 },
+    { name: 'Fev', Inscriptions: 3000, Reussite: 1398 },
+    { name: 'Mar', Inscriptions: 2000, Reussite: 9800 },
+    { name: 'Avr', Inscriptions: 2780, Reussite: 3908 },
+    { name: 'Mai', Inscriptions: 1890, Reussite: 4800 },
+    { name: 'Juin', Inscriptions: 2390, Reussite: 3800 },
+    { name: 'Juil', Inscriptions: 3490, Reussite: 4300 },
+  ];
+
+  const financialTrendData = [
+    { name: 'Jan', Revenus: 400, Depenses: 240 },
+    { name: 'Fev', Revenus: 300, Depenses: 139 },
+    { name: 'Mar', Revenus: 200, Depenses: 980 },
+    { name: 'Avr', Revenus: 278, Depenses: 390 },
+    { name: 'Mai', Revenus: 189, Depenses: 480 },
+    { name: 'Juin', Revenus: 239, Depenses: 380 },
+    { name: 'Juil', Revenus: 349, Depenses: 430 },
+  ];
+
 
   const load = async () => {
     setLoading(true)
@@ -66,60 +97,87 @@ export default function DgDashboard() {
   useEffect(()=>{ load() },[])
 
   return (
-    <div className="grid gap-4">
-      <h2 className="text-2xl font-bold mb-4">Tableau de bord du Directeur Général</h2>
-
-      {/* Existing KPI Cards */}
-      {!sum ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Skeleton className="h-20"/>
-          <Skeleton className="h-20"/>
-          <Skeleton className="h-20"/>
-          <Skeleton className="h-20"/>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <KpiCard label="Décisions en attente" value={sum.decisionsPending} />
-          <KpiCard label="Projets" value={sum.projects} />
-          <KpiCard label="Budget utilisé (%)" value={sum.budgetUsed} />
-          <KpiCard label="Satisfaction (%)" value={sum.satisfaction} />
+    <div className="grid gap-8">
+      {/* Hero Section for Main KPIs */}
+      {sum && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard label="Décisions en attente" value={sum.decisionsPending} icon={<BriefcaseIcon />} color="bg-blue-600 dark:bg-blue-800" />
+          <KpiCard label="Projets en cours" value={sum.projects} icon={<ChartBarIcon />} color="bg-green-600 dark:bg-green-800" />
+          <KpiCard label="Budget utilisé (%)" value={sum.budgetUsed} icon={<BookOpenIcon />} color="bg-yellow-600 dark:bg-yellow-800" />
+          <KpiCard label="Satisfaction Globale (%)" value={sum.satisfaction} icon={<CheckCircleIcon />} color="bg-purple-600 dark:bg-purple-800" />
         </div>
       )}
 
-      {/* General Dashboard Section */}
-      <div className="bg-white p-4 rounded-lg shadow">
-        <h3 className="text-xl font-semibold mb-3">Vue d'ensemble de l'établissement</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <KpiCard label="Total Sections" value={generalStats.totalSections} />
-          <KpiCard label="Total Départements" value={generalStats.totalDepartments} />
-          <KpiCard label="Total Enseignants" value={generalStats.totalTeachers} />
-          <KpiCard label="Total Étudiants" value={generalStats.totalStudents} />
+      {/* General Dashboard Section - Enhanced */}
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl">
+        <h3 className="text-2xl font-bold mb-5 text-black dark:text-white">Vue d'ensemble de l'établissement</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard label="Total Sections" value={generalStats.totalSections} color="bg-indigo-50 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200" />
+          <KpiCard label="Total Départements" value={generalStats.totalDepartments} color="bg-teal-50 dark:bg-teal-900 text-teal-800 dark:text-teal-200" />
+          <KpiCard label="Total Enseignants" value={generalStats.totalTeachers} color="bg-sky-50 dark:bg-sky-900 text-sky-800 dark:text-sky-200" />
+          <KpiCard label="Total Étudiants" value={generalStats.totalStudents} color="bg-amber-50 dark:bg-amber-900 text-amber-800 dark:text-amber-200" />
         </div>
       </div>
 
-      {/* Academic Reports Section */}
-      <div className="bg-white p-4 rounded-lg shadow">
-        <h3 className="text-xl font-semibold mb-3">Rapports Académiques</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {academicReports.map(report => (
-            <KpiCard key={report.id} label={report.type} value={report.value} trend={report.trend} />
-          ))}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Academic Reports Section - with Chart */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl">
+          <h3 className="text-2xl font-bold mb-5 text-black dark:text-white">Rapports Académiques</h3>
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            {academicReports.map(report => (
+              <KpiCard key={report.id} label={report.type} value={report.value} trend={report.trend} color="bg-gray-50 dark:bg-gray-700 text-black dark:text-white" />
+            ))}
+          </div>
+          <div style={{ width: '100%', height: 300 }}>
+            <ResponsiveContainer>
+              <AreaChart
+                data={academicTrendData}
+                margin={{
+                  top: 10, right: 30, left: 0, bottom: 0,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" className="dark:stroke-slate-700" />
+                <XAxis dataKey="name" stroke="#888888" className="dark:stroke-slate-400" />
+                <YAxis stroke="#888888" className="dark:stroke-slate-400" />
+                <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', color: 'white' }} />
+                <Area type="monotone" dataKey="Inscriptions" stackId="1" stroke="#8884d8" fill="#8884d8" />
+                <Area type="monotone" dataKey="Reussite" stackId="1" stroke="#82ca9d" fill="#82ca9d" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-      </div>
 
-      {/* Financial Reports Section */}
-      <div className="bg-white p-4 rounded-lg shadow">
-        <h3 className="text-xl font-semibold mb-3">Rapports Financiers</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {financialReports.map(report => (
-            <KpiCard key={report.id} label={report.type} value={report.value} trend={report.trend} />
-          ))}
+        {/* Financial Reports Section - with Chart */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl">
+          <h3 className="text-2xl font-bold mb-5 text-black dark:text-white">Rapports Financiers</h3>
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            {financialReports.map(report => (
+              <KpiCard key={report.id} label={report.type} value={report.value} trend={report.trend} color="bg-gray-50 dark:bg-gray-700 text-black dark:text-white" />
+            ))}
+          </div>
+          <div style={{ width: '100%', height: 300 }}>
+            <ResponsiveContainer>
+              <AreaChart
+                data={financialTrendData}
+                margin={{
+                  top: 10, right: 30, left: 0, bottom: 0,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" className="dark:stroke-slate-700" />
+                <XAxis dataKey="name" stroke="#888888" className="dark:stroke-slate-400" />
+                <YAxis stroke="#888888" className="dark:stroke-slate-400" />
+                <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', color: 'white' }} />
+                <Area type="monotone" dataKey="Revenus" stackId="1" stroke="#8884d8" fill="#8884d8" />
+                <Area type="monotone" dataKey="Depenses" stackId="1" stroke="#ffc658" fill="#ffc658" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
       {/* Personnel Management Section */}
-      <div className="bg-white p-4 rounded-lg shadow">
-        <h3 className="text-xl font-semibold mb-3">Gestion du Personnel</h3>
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl">
+        <h3 className="text-2xl font-bold mb-5 text-black dark:text-white">Gestion du Personnel</h3>
         <ListWithFilters
           title="Liste du Personnel Clé"
           data={personnelManagement}
@@ -139,8 +197,8 @@ export default function DgDashboard() {
       </div>
 
       {/* Validation Section */}
-      <div className="bg-white p-4 rounded-lg shadow">
-        <h3 className="text-xl font-semibold mb-3">Validation et Approbation</h3>
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl">
+        <h3 className="text-2xl font-bold mb-5 text-black dark:text-white">Validation et Approbation</h3>
         <ListWithFilters
           title="Éléments en Attente de Validation"
           data={validationItems}
@@ -160,11 +218,11 @@ export default function DgDashboard() {
       </div>
 
       {/* Communication Interne Section */}
-      <div className="bg-white p-4 rounded-lg shadow">
-        <h3 className="text-xl font-semibold mb-3">Communication Interne</h3>
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl">
+        <h3 className="text-2xl font-bold mb-5 text-black dark:text-white">Communication Interne</h3>
         <div className="mb-4">
           <textarea
-            className="w-full p-2 border rounded-md"
+            className="w-full p-2 border rounded-md dark:bg-slate-700 dark:text-white dark:border-slate-600"
             rows="3"
             placeholder="Écrire un message officiel à tous les chefs..."
           ></textarea>
