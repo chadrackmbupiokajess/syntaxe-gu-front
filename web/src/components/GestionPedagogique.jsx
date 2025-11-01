@@ -38,6 +38,15 @@ export default function GestionPedagogique({ currentRole }) {
   const [filters, setFilters] = useState({ intitule: '', departement: '', semestre: '' });
   const [summary, setSummary] = useState(null);
 
+  // Create Course Modal states
+  const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
+  const [newCourseIntitule, setNewCourseIntitule] = useState('');
+  const [newCourseSemestre, setNewCourseSemestre] = useState('');
+  const [newCourseCredits, setNewCourseCredits] = useState('');
+  const [newCourseAuditoire, setNewCourseAuditoire] = useState('');
+  const [availableAuditoires, setAvailableAuditoires] = useState([]);
+  const [creatingCourse, setCreatingCourse] = useState(false);
+
   const isDepartmentRole = currentRole === 'chef_departement';
 
   const loadData = async () => {
@@ -45,18 +54,22 @@ export default function GestionPedagogique({ currentRole }) {
     try {
         const coursesApiEndpoint = isDepartmentRole ? '/api/department/courses' : '/api/section/courses';
         const summaryApiEndpoint = isDepartmentRole ? '/api/department/summary' : '/api/section/summary';
+        const auditoiresApiEndpoint = isDepartmentRole ? '/api/department/auditoriums' : '/api/section/auditoriums';
 
-        const [coursesResponse, summaryResponse] = await Promise.all([
+        const [coursesResponse, summaryResponse, auditoiresResponse] = await Promise.all([
             axios.get(coursesApiEndpoint),
             axios.get(summaryApiEndpoint),
+            axios.get(auditoiresApiEndpoint),
         ]);
 
         setCourses(coursesResponse.data);
         setSummary(summaryResponse.data);
+        setAvailableAuditoires(auditoiresResponse.data);
     } catch (error) {
         console.error("Failed to load data", error);
         setCourses([]);
         setSummary(null);
+        setAvailableAuditoires([]);
     } finally {
         setLoading(false);
     }
@@ -68,13 +81,53 @@ export default function GestionPedagogique({ currentRole }) {
     courses.filter(c => 
       c.intitule.toLowerCase().includes(filters.intitule.toLowerCase()) &&
       (isDepartmentRole || c.departement.toLowerCase().includes(filters.departement.toLowerCase())) &&
-      (!filters.semestre || c.semestre === filters.semestre)
+      (filters.semestre === '' || c.semestre === filters.semestre)
     ), [courses, filters, isDepartmentRole]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
   };
+
+  // Create Course Modal handlers
+  const handleProposeNewCourse = () => {
+    setShowCreateCourseModal(true);
+    setNewCourseIntitule('');
+    setNewCourseSemestre('');
+    setNewCourseCredits('');
+    setNewCourseAuditoire('');
+  };
+
+  const handleCloseCreateCourseModal = () => {
+    setShowCreateCourseModal(false);
+  };
+
+  const handleCreateCourseSubmit = async (e) => {
+    e.preventDefault();
+    if (!newCourseIntitule || !newCourseSemestre || !newCourseCredits || !newCourseAuditoire) {
+      alert('Veuillez remplir tous les champs pour créer un cours.');
+      return;
+    }
+
+    setCreatingCourse(true);
+    try {
+      const createCourseApiEndpoint = isDepartmentRole ? '/api/department/course-create' : '/api/section/course-create';
+      await axios.post(createCourseApiEndpoint, {
+        intitule: newCourseIntitule,
+        semestre: newCourseSemestre,
+        credits: parseInt(newCourseCredits),
+        auditoire_id: newCourseAuditoire,
+      });
+      alert('Cours créé avec succès!');
+      handleCloseCreateCourseModal();
+      loadData(); // Reload data to reflect changes
+    } catch (error) {
+      console.error("Failed to create course", error);
+      alert("Erreur lors de la création du cours.");
+    } finally {
+      setCreatingCourse(false);
+    }
+  }; 
 
   const pageTitle = isDepartmentRole ? 'Gestion Pédagogique du Département' : 'Gestion Pédagogique de la Section';
 
@@ -105,6 +158,9 @@ export default function GestionPedagogique({ currentRole }) {
                     <option value="Session">Session</option>
                 </select>
             </div>
+            <button onClick={handleProposeNewCourse} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+                + Ajouter un cours
+            </button>
         </div>
       </div>
 
@@ -115,6 +171,89 @@ export default function GestionPedagogique({ currentRole }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCourses.map(course => <CourseCard key={course.code} course={course} />)}
+        </div>
+      )}
+
+      {/* Create Course Modal */}
+      {showCreateCourseModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center z-50">
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-lg shadow-xl w-1/2 max-w-lg">
+            <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Proposer un Nouveau Cours</h3>
+            <form onSubmit={handleCreateCourseSubmit}>
+              <div className="mb-4">
+                <label htmlFor="new-course-intitule" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Intitulé du Cours:</label>
+                <input
+                  type="text"
+                  id="new-course-intitule"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline dark:bg-slate-700"
+                  value={newCourseIntitule}
+                  onChange={(e) => setNewCourseIntitule(e.target.value)}
+                  disabled={creatingCourse}
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="new-course-semestre" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Semestre:</label>
+                <select
+                  id="new-course-semestre"
+                  className="shadow border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline dark:bg-slate-700"
+                  value={newCourseSemestre}
+                  onChange={(e) => setNewCourseSemestre(e.target.value)}
+                  disabled={creatingCourse}
+                  required
+                >
+                  <option value="">-- Choisir un semestre --</option>
+                  <option value="Mi-session">Mi-session</option>
+                  <option value="Session">Session</option>
+                </select>
+              </div>
+              <div className="mb-4">
+                <label htmlFor="new-course-credits" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Crédits:</label>
+                <input
+                  type="number"
+                  id="new-course-credits"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline dark:bg-slate-700"
+                  value={newCourseCredits}
+                  onChange={(e) => setNewCourseCredits(e.target.value)}
+                  disabled={creatingCourse}
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="new-course-auditoire" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Auditoire:</label>
+                <select
+                  id="new-course-auditoire"
+                  className="shadow border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline dark:bg-slate-700"
+                  value={newCourseAuditoire}
+                  onChange={(e) => setNewCourseAuditoire(e.target.value)}
+                  disabled={creatingCourse}
+                  required
+                >
+                  <option value="">-- Choisir un auditoire --</option>
+                  {availableAuditoires.map(auditoire => (
+                    <option key={auditoire.id} value={auditoire.id}>{auditoire.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center justify-between">
+                <button
+                  type="submit"
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  disabled={creatingCourse}
+                >
+                  {creatingCourse ? 'Création en cours...' : 'Créer le Cours'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCloseCreateCourseModal}
+                  className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  disabled={creatingCourse}
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

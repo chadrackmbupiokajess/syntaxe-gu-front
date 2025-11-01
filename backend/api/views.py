@@ -1871,17 +1871,13 @@ def department_course_create(request):
     intitule = request.data.get("intitule")
     semestre = request.data.get("semestre")
     credits = request.data.get("credits")
-    teacher_id = request.data.get("teacher") # This will be the teacher's ID
-    auditoire_id = request.data.get("auditoire_id") # Assuming auditoire is passed for course creation
+    auditoire_id = request.data.get("auditoire_id")
 
-    if not all([intitule, semestre, credits, teacher_id, auditoire_id]):
-        return Response({"detail": "Intitulé, semestre, crédits, enseignant et auditoire sont requis."}, status=400)
+    if not all([intitule, semestre, credits, auditoire_id]):
+        return Response({"detail": "Intitulé, semestre, crédits et auditoire sont requis."}, status=400)
 
     try:
-        teacher = User.objects.get(id=teacher_id, role__in=['professeur', 'assistant'])
         auditoire = Auditoire.objects.get(id=auditoire_id, departement=department)
-    except User.DoesNotExist:
-        return Response({"detail": "Enseignant non trouvé."}, status=404)
     except Auditoire.DoesNotExist:
         return Response({"detail": "Auditoire non trouvé dans ce département."}, status=404)
 
@@ -1890,15 +1886,13 @@ def department_course_create(request):
     while Course.objects.filter(code=code, auditoire=auditoire).exists():
         code = uuid.uuid4().hex[:8].upper()
 
-    with transaction.atomic():
-        course = Course.objects.create(
-            code=code,
-            name=intitule,
-            session_type=semestre,
-            credits=credits,
-            auditoire=auditoire,
-        )
-        CourseAssignment.objects.create(course=course, assistant=teacher)
+    course = Course.objects.create(
+        code=code,
+        name=intitule,
+        session_type=semestre,
+        credits=credits,
+        auditoire=auditoire,
+    )
 
     return Response({
         "id": course.id,
@@ -1907,7 +1901,6 @@ def department_course_create(request):
         "departement": course.auditoire.departement.name,
         "credits": course.credits,
         "semestre": course.session_type,
-        "teacher": teacher.get_full_name(),
         "auditoire_id": course.auditoire.id,
         "auditoire_name": course.auditoire.name,
     }, status=201)
