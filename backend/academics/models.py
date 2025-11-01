@@ -94,16 +94,24 @@ class SessionCourse(Course):
         super().save(*args, **kwargs)
 
 class Calendrier(models.Model):
-    title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    start_date = models.DateTimeField()
-    end_date = models.DateTimeField()
+    DAY_CHOICES = (
+        ('Lundi', 'Lundi'),
+        ('Mardi', 'Mardi'),
+        ('Mercredi', 'Mercredi'),
+        ('Jeudi', 'Jeudi'),
+        ('Vendredi', 'Vendredi'),
+        ('Samedi', 'Samedi'),
+    )
+    day = models.CharField(max_length=10, choices=DAY_CHOICES, default='Lundi')
+    start_time = models.TimeField(default='08:00')
+    end_time = models.TimeField(default='09:00')
     auditoire = models.ForeignKey(Auditoire, on_delete=models.CASCADE, related_name='calendar_events', null=True, blank=True)
     course = models.ForeignKey(Course, on_delete=models.SET_NULL, related_name='calendar_events', null=True, blank=True)
     teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name='calendar_events', null=True, blank=True, limit_choices_to={'role__in': ['assistant', 'professeur']})
+    session_type = models.CharField(max_length=20, choices=Course.SESSION_CHOICES, default='session')
 
     def __str__(self):
-        return self.title
+        return f"{self.day} {self.start_time}-{self.end_time}: {self.course.name if self.course else 'Libre'}"
 
 class CourseAssignment(models.Model):
     assistant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='course_assignments', limit_choices_to={'role__in': ['assistant', 'professeur']})

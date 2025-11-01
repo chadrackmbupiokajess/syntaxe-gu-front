@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from '../api/configAxios'; // Corrected import
+import axios from '../api/configAxios';
 import KpiCard from '../components/KpiCard';
 import Skeleton from '../components/Skeleton';
 import ListWithFilters from '../components/ListWithFilters';

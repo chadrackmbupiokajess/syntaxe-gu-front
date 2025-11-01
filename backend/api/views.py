@@ -1375,7 +1375,7 @@ def dg_actions(request):
         actions.append({
             "id": f"course-{course.id}",
             "type": "Création de Cours",
-            "description": f"Nouveau cours \"{course.name}\" ({course.code}) dans {course.auditoire.name} ({course.auditoire.departement.name}).",
+            "description": f"Nouveau cours '{course.name}' ({course.code}) dans {course.auditoire.name} ({course.auditoire.departement.name}).",
             "date": course.id, # Using ID as a proxy for creation date for now
             "status": "À examiner",
         })
@@ -1386,7 +1386,7 @@ def dg_actions(request):
         actions.append({
             "id": f"assign-{assignment.id}",
             "type": "Affectation de Cours",
-            "description": f"Cours \"{assignment.course.name}\" assigné à {assignment.assistant.get_full_name()} dans {assignment.course.auditoire.name}.",
+            "description": f"Cours '{assignment.course.name}' assigné à {assignment.assistant.get_full_name()} dans {assignment.course.auditoire.name}.",
             "date": assignment.id, # Using ID as a proxy for creation date for now
             "status": "À examiner",
         })
@@ -1779,7 +1779,7 @@ def department_activities_list(request):
     for assign in assignments:
         activities.append({
             "id": f"assign-{assign.id}",
-            "text": f"Nouvel {assign.type} \"{assign.title}\" pour {assign.course.name} (échéance: {assign.deadline.strftime("%Y-%m-%d")}).",
+            "text": f"Nouvel {assign.type} '{assign.title}' pour {assign.course.name} (échéance: {assign.deadline.strftime("%Y-%m-%d")}).",
             "type": "warning",
             "date": assign.created_at.strftime("%Y-%m-%d %H:%M"),
         })
@@ -1908,6 +1908,76 @@ def department_course_create(request):
 
 # ---- New Department Endpoints ----
 
+@api_view(["GET", "POST"])
+@permission_classes(DEV_PERMS)
+def department_auditorium_schedules(request, auditorium_id):
+    user = request.user
+    try:
+        department = user.department_head_of
+    except AttributeError:
+        department = Departement.objects.first()
+        if not department:
+            return Response({"error": "No departments found."}, status=404)
+
+    try:
+        auditorium = Auditoire.objects.get(id=auditorium_id, departement=department)
+    except Auditoire.DoesNotExist:
+        return Response({"error": "Auditorium not found in this department."}, status=404)
+
+    if request.method == 'GET':
+        session_type = request.query_params.get('session_type')
+        schedules = Calendrier.objects.filter(auditoire=auditorium, session_type=session_type).select_related('course', 'teacher')
+        data = []
+        for schedule in schedules:
+            data.append({
+                "id": schedule.id,
+                "day": schedule.day,
+                "startTime": schedule.start_time.strftime('%H:%M'),
+                "endTime": schedule.end_time.strftime('%H:%M'),
+                "course": {
+                    "name": schedule.course.name if schedule.course else "N/A"
+                },
+                "teacher": {
+                    "name": schedule.teacher.get_full_name() if schedule.teacher else "N/A"
+                }
+            })
+        return Response(data)
+
+    elif request.method == 'POST':
+        day = request.data.get('day')
+        start_time = request.data.get('startTime')
+        end_time = request.data.get('endTime')
+        course_id = request.data.get('course')
+        teacher_id = request.data.get('teacher')
+
+        if not all([day, start_time, end_time]):
+            return Response({"detail": "Le jour, l'heure de début et l'heure de fin sont requis."}, status=400)
+
+        course = None
+        if course_id:
+            try:
+                course = Course.objects.get(id=course_id)
+            except Course.DoesNotExist:
+                return Response({"detail": "Cours introuvable."}, status=404)
+
+        teacher = None
+        if teacher_id:
+            try:
+                teacher = User.objects.get(id=teacher_id)
+            except User.DoesNotExist:
+                return Response({"detail": "Enseignant introuvable."}, status=404)
+
+        Calendrier.objects.create(
+            auditoire=auditorium,
+            day=day,
+            start_time=start_time,
+            end_time=end_time,
+            course=course,
+            teacher=teacher,
+            session_type=request.data.get('session_type', 'session') # Default to 'session'
+        )
+        return Response({"detail": "Horaire créé avec succès."}, status=201)
+
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
 def department_auditorium_courses(request, auditorium_id):
@@ -1924,13 +1994,28 @@ def department_auditorium_courses(request, auditorium_id):
     except Auditoire.DoesNotExist:
         return Response({"error": "Auditorium not found in this department."}, status=404)
 
-    courses = Course.objects.filter(auditoire=auditorium)
+    courses_queryset = Course.objects.filter(auditoire=auditorium)
+    
+    session_type_filter = request.query_params.get('session_type')
+    if session_type_filter:
+        courses_queryset = courses_queryset.filter(session_type=session_type_filter)
+
     data = []
-    for course in courses:
+    for course in courses_queryset:
+        teacher_name = "Aucun enseignant sélectionné"
+        teacher_id = None
+        assignment = CourseAssignment.objects.filter(course=course).select_related('assistant').first()
+        if assignment and assignment.assistant:
+            teacher_name = assignment.assistant.get_full_name()
+            teacher_id = assignment.assistant.id
+
         data.append({
             "id": course.id,
             "code": course.code,
             "intitule": course.name,
+            "teacher": teacher_name,
+            "teacher_id": teacher_id,
+            "session_type": course.session_type,
         })
     return Response(data)
 
