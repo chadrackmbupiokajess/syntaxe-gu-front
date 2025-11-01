@@ -445,7 +445,7 @@ def assistant_grade_submission(request, assignment_id: int, submission_id: int):
             return Response({"detail": "La note est requise."}, status=400)
 
         if not (0 <= float(grade) <= submission.assignment.total_points):
-             return Response({"detail": f"La note doit être entre 0 et {submission.assignment.total_points}."}, status=400)
+            return Response({"detail": f"La note doit être entre 0 et {submission.assignment.total_points}."}, status=400)
 
         submission.grade = grade
         submission.feedback = feedback
@@ -2087,7 +2087,7 @@ def department_auditorium_courses(request, auditorium_id):
         return Response({"error": "Auditorium not found in this department."}, status=404)
 
     courses_queryset = Course.objects.filter(auditoire=auditorium)
-    
+
     session_type_filter = request.query_params.get('session_type')
     if session_type_filter:
         courses_queryset = courses_queryset.filter(session_type=session_type_filter)

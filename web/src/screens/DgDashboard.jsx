@@ -29,20 +29,38 @@ export default function DgDashboard() {
     totalStudents: 0,
   });
 
-  // Dummy data for new functionalities (Academic Reports, Financial Reports, Validation, Internal Messages)
-  // These will be replaced with API calls as endpoints are identified/created
+  // Academic Reports states
   const [academicReports, setAcademicReports] = useState([
     { id: 1, type: 'Inscriptions', value: 1200, trend: '+5%' },
     { id: 2, type: 'Taux de réussite', value: '85%', trend: '+2%' },
     { id: 3, type: 'Abandons', value: 50, trend: '-10%' },
     { id: 4, type: 'Performance moyenne', value: 'B+', trend: 'Stable' },
   ]);
+  const [academicTrendData, setAcademicTrendData] = useState([
+    { name: 'Jan', Inscriptions: 4000, Reussite: 2400 },
+    { name: 'Fev', Inscriptions: 3000, Reussite: 1398 },
+    { name: 'Mar', Inscriptions: 2000, Reussite: 9800 },
+    { name: 'Avr', Inscriptions: 2780, Reussite: 3908 },
+    { name: 'Mai', Inscriptions: 1890, Reussite: 4800 },
+    { name: 'Juin', Inscriptions: 2390, Reussite: 3800 },
+    { name: 'Juil', Inscriptions: 3490, Reussite: 4300 },
+  ]);
+  const [loadingAcademicReports, setLoadingAcademicReports] = useState(true);
 
   // Financial Reports still use dummy data, as backend endpoints need to be clarified/created
   const [financialReports, setFinancialReports] = useState([
     { id: 1, type: 'Revenus', value: '1.5M USD', trend: '+10%' },
     { id: 2, type: 'Dépenses', value: '1.2M USD', trend: '+8%' },
     { id: 3, type: 'Budget restant', value: '0.3M USD', trend: '-5%' },
+  ]);
+  const [financialTrendData, setFinancialTrendData] = useState([
+    { name: 'Jan', Revenus: 400, Depenses: 240 },
+    { name: 'Fev', Revenus: 300, Depenses: 139 },
+    { name: 'Mar', Revenus: 200, Depenses: 980 },
+    { name: 'Avr', Revenus: 278, Depenses: 390 },
+    { name: 'Mai', Revenus: 189, Depenses: 480 },
+    { name: 'Juin', Revenus: 239, Depenses: 380 },
+    { name: 'Juil', Revenus: 349, Depenses: 430 },
   ]);
 
   const [personnelManagement, setPersonnelManagement] = useState([]);
@@ -59,27 +77,6 @@ export default function DgDashboard() {
     { id: 1, subject: 'Réunion du Conseil de Direction', content: 'La réunion aura lieu le 15 novembre...', sender: 'DG', date: '2023-10-24' },
     { id: 2, subject: 'Nouvelles directives budgétaires', content: 'Veuillez prendre note des nouvelles...', sender: 'DG', date: '2023-10-23' },
   ]);
-
-  // Dummy data for charts
-  const academicTrendData = [
-    { name: 'Jan', Inscriptions: 4000, Reussite: 2400 },
-    { name: 'Fev', Inscriptions: 3000, Reussite: 1398 },
-    { name: 'Mar', Inscriptions: 2000, Reussite: 9800 },
-    { name: 'Avr', Inscriptions: 2780, Reussite: 3908 },
-    { name: 'Mai', Inscriptions: 1890, Reussite: 4800 },
-    { name: 'Juin', Inscriptions: 2390, Reussite: 3800 },
-    { name: 'Juil', Inscriptions: 3490, Reussite: 4300 },
-  ];
-
-  const financialTrendData = [
-    { name: 'Jan', Revenus: 400, Depenses: 240 },
-    { name: 'Fev', Revenus: 300, Depenses: 139 },
-    { name: 'Mar', Revenus: 200, Depenses: 980 },
-    { name: 'Avr', Revenus: 278, Depenses: 390 },
-    { name: 'Mai', Revenus: 189, Depenses: 480 },
-    { name: 'Juin', Revenus: 239, Depenses: 380 },
-    { name: 'Juil', Revenus: 349, Depenses: 430 },
-  ];
 
 
   const load = async () => {
@@ -108,6 +105,41 @@ export default function DgDashboard() {
       setLoading(false);
     }
   };
+
+  // Effect to load Academic Reports
+  useEffect(() => {
+    const loadAcademicReports = async () => {
+      setLoadingAcademicReports(true);
+      try {
+        // NOTE: These are hypothetical backend endpoints. You need to implement them.
+        const [summaryRes, trendRes] = await Promise.all([
+          axios.get('/api/dg/academic_reports_summary'),
+          axios.get('/api/dg/academic_trend_data'),
+        ]);
+
+        // Assuming summaryRes.data is an object like { inscriptions: { value, trend }, success_rate: { value, trend }, ...}
+        const mappedReports = [
+          { id: 1, type: 'Inscriptions', value: summaryRes.data.inscriptions.value, trend: summaryRes.data.inscriptions.trend },
+          { id: 2, type: 'Taux de réussite', value: summaryRes.data.success_rate.value, trend: summaryRes.data.success_rate.trend },
+          { id: 3, type: 'Abandons', value: summaryRes.data.dropouts.value, trend: summaryRes.data.dropouts.trend },
+          { id: 4, type: 'Performance moyenne', value: summaryRes.data.average_performance.value, trend: summaryRes.data.average_performance.trend },
+        ];
+        setAcademicReports(mappedReports);
+
+        // Assuming trendRes.data is an array like [{ name: 'Jan', Inscriptions: 4000, Reussite: 2400 }, ...]
+        setAcademicTrendData(trendRes.data);
+
+      } catch (error) {
+        push({ title: 'Erreur', message: 'Erreur lors du chargement des rapports académiques.', status: 'error' });
+        console.error("Error loading academic reports:", error);
+        // Keep dummy data if API call fails
+      } finally {
+        setLoadingAcademicReports(false);
+      }
+    };
+    loadAcademicReports();
+  }, []);
+
 
   // Effect to load Personnel Management
   useEffect(() => {
@@ -167,12 +199,15 @@ export default function DgDashboard() {
         {/* Academic Reports Section - with Chart */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl">
           <h3 className="text-2xl font-bold mb-5 text-black dark:text-white">Rapports Académiques</h3>
-          {/* NOTE: This section still uses dummy data. Backend endpoints are needed for academic reports and trend data. */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            {academicReports.map(report => (
-              <KpiCard key={report.id} label={report.type} value={report.value} trend={report.trend} color="bg-gray-50 dark:bg-gray-700 text-black dark:text-white" />
-            ))}
-          </div>
+          {loadingAcademicReports ? (
+            <Skeleton count={4} className="h-24" />
+          ) : (
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              {academicReports.map(report => (
+                <KpiCard key={report.id} label={report.type} value={report.value} trend={report.trend} color="bg-gray-50 dark:bg-gray-700 text-black dark:text-white" />
+              ))}
+            </div>
+          )}
           <div style={{ width: '100%', height: 300 }}>
             <ResponsiveContainer>
               <AreaChart
