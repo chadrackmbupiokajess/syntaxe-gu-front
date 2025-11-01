@@ -1537,6 +1537,10 @@ def section_teachers_list(request):
         if assignment and assignment.course and assignment.course.auditoire and assignment.course.auditoire.departement:
             department = assignment.course.auditoire.departement.name
 
+        # Get all courses assigned to the teacher
+        courses_assigned = CourseAssignment.objects.filter(assistant=teacher).select_related('course')
+        course_names = ", ".join([ca.course.name for ca in courses_assigned])
+
         data.append({
             "id": teacher.id,
             "name": teacher.get_full_name(),
@@ -1906,6 +1910,32 @@ def department_course_create(request):
 
 
 # ---- New Department Endpoints ----
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def department_auditorium_courses(request, auditorium_id):
+    user = request.user
+    try:
+        department = user.department_head_of
+    except AttributeError:
+        department = Departement.objects.first()
+        if not department:
+            return Response({"error": "No departments found."}, status=404)
+
+    try:
+        auditorium = Auditoire.objects.get(id=auditorium_id, departement=department)
+    except Auditoire.DoesNotExist:
+        return Response({"error": "Auditorium not found in this department."}, status=404)
+
+    courses = Course.objects.filter(auditoire=auditorium)
+    data = []
+    for course in courses:
+        data.append({
+            "id": course.id,
+            "code": course.code,
+            "intitule": course.name,
+        })
+    return Response(data)
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)

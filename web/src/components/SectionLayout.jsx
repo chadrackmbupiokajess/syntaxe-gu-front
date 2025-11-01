@@ -4,7 +4,6 @@ import { NavLink, Outlet } from 'react-router-dom';
 export default function SectionLayout() {
   const nav = [
     { to: '/section', label: 'Tableau de bord' },
-    { to: '/section/pedagogie', label: 'Gestion Pédagogique' },
     { to: '/section/departements', label: 'Supervision des Départements' },
     { to: '/section/enseignants', label: 'Gestion des Enseignants' },
     { to: '/section/etudiants', label: 'Gestion des Étudiants' },

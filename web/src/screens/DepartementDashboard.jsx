@@ -3,14 +3,13 @@ import axios from 'axios';
 import KpiCard from '../components/KpiCard';
 import Skeleton from '../components/Skeleton';
 import ListWithFilters from '../components/ListWithFilters';
-// Removed: GestionPedagogiqueDept, GestionEnseignantsDept, GestionEtudiantsDept, AdministrationDept
 import { Link } from 'react-router-dom'; // Import Link for QuickActions
 
 // --- SVG Icons for a more professional look ---
 const UsersIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 016-6h6a6 6 0 016 6v1h-3" /></svg>;
 const AcademicCapIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" /></svg>;
 const BookOpenIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.206 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.794 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.794 5 16.5 5c1.706 0 3.332.477 4.5 1.253v13C19.832 18.477 18.206 18 16.5 18s-3.332.477-4.5 1.253" /></svg>;
-const ChartBarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>;
+const ChartBarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 02 2h2a2 2 0 0 02-2zm0 0V9a2 2 0 0 12-2h2a2 2 0 0 12 2v10m-6 0a2 2 0 0 02 2h2a2 2 0 0 02-2m0 0V5a2 2 0 0 12-2h2a2 2 0 0 12 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z" /></svg>;
 const ClipboardListIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>;
 const CalendarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
 const DocumentReportIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
@@ -31,8 +30,8 @@ const QuickActions = () => {
             <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Actions Rapides</h3>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {actions.map(action => (
-                    <Link 
-                        key={action.title} 
+                    <Link
+                        key={action.title}
                         to={action.to}
                         className={`flex flex-col items-center justify-center p-4 ${action.color} text-white rounded-lg hover:opacity-90 transition-opacity duration-200 transform hover:scale-105`}
                     >
@@ -62,14 +61,11 @@ const RecentActivities = ({ activities }) => (
     </div>
 );
 
-// Removed: TABS object
-
 export default function DepartementDashboard() {
   const [sum, setSum] = useState(null);
   const [teachers, setTeachers] = useState([]);
   const [recentActivities, setRecentActivities] = useState([]);
   const [loading, setLoading] = useState(true);
-  // Removed: [activeTab, setActiveTab]
   const departmentName = "Informatique"; // This could come from user context or API
 
   const loadDashboardData = async () => {
@@ -98,52 +94,81 @@ export default function DepartementDashboard() {
     loadDashboardData(); // Always load summary for the dashboard index
   }, []); // Empty dependency array to run once on mount
 
-  // Removed: renderContent function
-
   return (
-    <div className="grid gap-8">
-      {/* Removed: h1 title */}
-      {/* Removed: horizontal tabs div */}
-      {/* KPIs remain at the top of the dashboard content */}
+    <div className="space-y-8 p-6 bg-gray-50 dark:bg-slate-900 min-h-screen">
+      {/* Enhanced Header Section */}
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
+        <div>
+          <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-2">Tableau de Bord du Département</h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400">Vue d'ensemble et gestion pour le département {departmentName}</p>
+        </div>
+        <span className="mt-4 md:mt-0 px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full text-sm font-medium">
+          Espace Chef de Département
+        </span>
+      </div>
+
+      {/* KPI Cards Section */}
       {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
-          <Skeleton className="h-24" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
+          <Skeleton className="h-32" />
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          <KpiCard label="Étudiants" value={sum?.students?.val || 0} color="bg-blue-500" icon={<UsersIcon />} />
-          <KpiCard label="Enseignants" value={sum?.teachers?.val || 0} color="bg-green-500" icon={<AcademicCapIcon />} />
-          <KpiCard label="Cours" value={sum?.courses || 0} color="bg-orange-500" icon={<BookOpenIcon />} />
-          <KpiCard label="Taux de réussite (%)" value={sum?.successRate?.val || 'N/A'} color="bg-purple-500" icon={<ChartBarIcon />} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <KpiCard label="Étudiants Inscrits" value={sum?.students?.val || 0} color="bg-gradient-to-r from-blue-500 to-blue-600" icon={<UsersIcon />} />
+          <KpiCard label="Enseignants Actifs" value={sum?.teachers?.val || 0} color="bg-gradient-to-r from-green-500 to-green-600" icon={<AcademicCapIcon />} />
+          <KpiCard label="Cours Offerts" value={sum?.courses || 0} color="bg-gradient-to-r from-orange-500 to-orange-600" icon={<BookOpenIcon />} />
+          <KpiCard label="Taux de Réussite" value={sum?.successRate?.val ? `${sum.successRate.val}%` : 'N/A'} color="bg-gradient-to-r from-purple-500 to-purple-600" icon={<ChartBarIcon />} />
         </div>
       )}
 
+      {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 grid gap-8">
-              <QuickActions />
-              <RecentActivities activities={recentActivities} />
+        {/* Left Column - Quick Actions & Recent Activities */}
+        <div className="lg:col-span-2 grid gap-8">
+          <QuickActions />
+          <RecentActivities activities={recentActivities} />
+        </div>
+
+        {/* Right Column - Teachers List */}
+        <div className="lg:col-span-1">
+          <ListWithFilters
+            title="Enseignants du Département"
+            data={teachers}
+            loading={loading}
+            onRefresh={loadDashboardData}
+            columns={[
+              { key: 'name', header: 'Nom' },
+              { key: 'rank', header: 'Grade' },
+              { key: 'courses', header: 'Cours Attribués' },
+              { key: 'status', header: 'Statut' },
+            ]}
+            filters={[
+              { key: 'name', label: 'Nom', type: 'text', placeholder: 'Ex: Jess' },
+              { key: 'rank', label: 'Grade', type: 'text', placeholder: 'Grade' },
+            ]}
+          />
+        </div>
+      </div>
+
+      {/* Placeholder for Charts/Graphs - New Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
+          <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Performance des Étudiants (Graphique)</h3>
+          <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center text-gray-500 dark:text-gray-400">
+            {/* Placeholder for a chart component */}
+            Graphique de performance ici
           </div>
-          <div className="lg:col-span-1">
-              <ListWithFilters
-                  title="Enseignants du Département"
-                  data={teachers}
-                  loading={loading}
-                  onRefresh={loadDashboardData}
-                  columns={[
-                      { key: 'name', header: 'Nom' },
-                      { key: 'rank', header: 'Grade' },
-                      { key: 'courses', header: 'Cours Attribués' },
-                      { key: 'status', header: 'Statut' },
-                  ]}
-                  filters={[
-                      { key: 'name', label: 'Nom', type: 'text', placeholder: 'Ex: Jess' },
-                      { key: 'rank', label: 'Grade', type: 'text', placeholder: 'Grade' },
-                  ]}
-              />
+        </div>
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
+          <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Répartition des Enseignants (Graphique)</h3>
+          <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center text-gray-500 dark:text-gray-400">
+            {/* Placeholder for another chart component */}
+            Graphique de répartition ici
           </div>
+        </div>
       </div>
     </div>
   );

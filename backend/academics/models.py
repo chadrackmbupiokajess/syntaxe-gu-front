@@ -99,6 +99,8 @@ class Calendrier(models.Model):
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
     auditoire = models.ForeignKey(Auditoire, on_delete=models.CASCADE, related_name='calendar_events', null=True, blank=True)
+    course = models.ForeignKey(Course, on_delete=models.SET_NULL, related_name='calendar_events', null=True, blank=True)
+    teacher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name='calendar_events', null=True, blank=True, limit_choices_to={'role__in': ['assistant', 'professeur']})
 
     def __str__(self):
         return self.title

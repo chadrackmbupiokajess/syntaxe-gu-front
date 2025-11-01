@@ -7,6 +7,10 @@ import Skeleton from './Skeleton';
 const BookIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 2a.75.75 0 01.75.75v.518a3.75 3.75 0 013.483 3.483H14.75a.75.75 0 010 1.5h-.518a3.75 3.75 0 01-3.483 3.483v.518a.75.75 0 01-1.5 0v-.518A3.75 3.75 0 015.768 8.25H5.25a.75.75 0 010-1.5h.518A3.75 3.75 0 019.25 3.268V2.75A.75.75 0 0110 2zM8.25 5.768A2.25 2.25 0 0110 3.518v5.964a2.25 2.25 0 01-1.75-2.25V5.768z" clipRule="evenodd" /></svg>;
 const TagIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zM9.25 12.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM10.75 6.5a.75.75 0 00-1.5 0v3a.75.75 0 001.5 0v-3z" /></svg>;
 const CalendarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" /></svg>;
+const UsersIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 016-6h6a6 6 0 016 6v1h-3" /></svg>;
+const AcademicCapIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" /></svg>;
+const BookOpenIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.206 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.794 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.794 5 16.5 5c1.706 0 3.332.477 4.5 1.253v13C19.832 18.477 18.206 18 16.5 18s-3.332.477-4.5 1.253" /></svg>;
+
 
 const CourseCard = ({ course }) => (
   <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
@@ -28,24 +32,60 @@ const CourseCard = ({ course }) => (
   </div>
 );
 
-export default function GestionPedagogique() {
+export default function GestionPedagogique({ currentRole }) {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ intitule: '', departement: '', semestre: '' });
+  const [departmentSummary, setDepartmentSummary] = useState(null); // New state for department summary
+  const [totalDepartmentCredits, setTotalDepartmentCredits] = useState(0); // New state for total department credits
 
-  const loadCourses = async () => {
+  // Assign Teacher Modal states
+  const [showAssignTeacherModal, setShowAssignTeacherModal] = useState(false);
+  const [availableTeachers, setAvailableTeachers] = useState([]);
+  const [selectedCourse, setSelectedCourse] = useState('');
+  const [selectedTeacher, setSelectedTeacher] = useState('');
+  const [assigning, setAssigning] = useState(false);
+
+  // Create Course Modal states
+  const [showCreateCourseModal, setShowCreateCourseModal] = useState(false);
+  const [newCourseIntitule, setNewCourseIntitule] = useState('');
+  const [newCourseSemestre, setNewCourseSemestre] = useState('');
+  const [newCourseCredits, setNewCourseCredits] = useState('');
+  const [newCourseTeacher, setNewCourseTeacher] = useState('');
+  const [newCourseAuditoire, setNewCourseAuditoire] = useState('');
+  const [availableAuditoires, setAvailableAuditoires] = useState([]);
+  const [creatingCourse, setCreatingCourse] = useState(false);
+
+  const loadData = async () => {
     setLoading(true);
     try {
-        const response = await axios.get('/api/section/courses');
-        setCourses(response.data);
+        const [coursesResponse, teachersResponse, auditoriumsResponse, summaryResponse] = await Promise.all([
+            axios.get('/api/section/courses'),
+            axios.get('/api/department/teachers'),
+            axios.get('/api/department/auditoriums'),
+            axios.get('/api/department/summary'), // New API call for summary
+        ]);
+        setCourses(coursesResponse.data);
+        // Calculate total department credits
+        const calculatedTotalCredits = coursesResponse.data.reduce((sum, course) => sum + (parseInt(course.credits) || 0), 0);
+        setTotalDepartmentCredits(calculatedTotalCredits);
+
+        setAvailableTeachers(teachersResponse.data);
+        setAvailableAuditoires(auditoriumsResponse.data);
+        setDepartmentSummary(summaryResponse.data); // Set department summary
     } catch (error) {
-        console.error("Failed to load courses", error);
+        console.error("Failed to load data", error);
+        setCourses([]);
+        setAvailableTeachers([]);
+        setAvailableAuditoires([]);
+        setDepartmentSummary(null); // Reset summary on error
+        setTotalDepartmentCredits(0); // Reset total credits on error
     } finally {
         setLoading(false);
     }
   };
 
-  useEffect(() => { loadCourses(); }, []);
+  useEffect(() => { loadData(); }, []);
 
   const filteredCourses = useMemo(() => 
     courses.filter(c => 
@@ -54,23 +94,104 @@ export default function GestionPedagogique() {
       c.semestre.toLowerCase().includes(filters.semestre.toLowerCase())
     ), [courses, filters]);
 
-  const totalCredits = useMemo(() => filteredCourses.reduce((sum, c) => sum + c.credits, 0), [filteredCourses]);
+  // This totalCredits is for the filtered selection, not the global department total
+  const totalCreditsFilteredSelection = useMemo(() => filteredCourses.reduce((sum, c) => sum + (c.credits || 0), 0), [filteredCourses]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prev => ({ ...prev, [name]: value }));
   };
 
+  // Assign Teacher Modal handlers
+  const handleAssignTeacher = () => {
+    setShowAssignTeacherModal(true);
+    setSelectedCourse('');
+    setSelectedTeacher('');
+  };
+
+  const handleCloseAssignTeacherModal = () => {
+    setShowAssignTeacherModal(false);
+  };
+
+  const handleAssignSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedCourse || !selectedTeacher) {
+      alert('Veuillez sélectionner un cours et un enseignant.');
+      return;
+    }
+
+    setAssigning(true);
+    try {
+      await axios.post('/api/department/assign-course', {
+        courseId: selectedCourse,
+        teacherId: selectedTeacher,
+      });
+      alert('Cours assigné avec succès!');
+      handleCloseAssignTeacherModal();
+      loadData(); // Reload data to reflect changes
+    } catch (error) {
+      console.error("Failed to assign course", error);
+      alert("Erreur lors de l'assignation du cours.");
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  // Create Course Modal handlers
+  const handleProposeNewCourse = () => {
+    setShowCreateCourseModal(true);
+    setNewCourseIntitule('');
+    setNewCourseSemestre('');
+    setNewCourseCredits('');
+    setNewCourseTeacher('');
+    setNewCourseAuditoire('');
+  };
+
+  const handleCloseCreateCourseModal = () => {
+    setShowCreateCourseModal(false);
+  };
+
+  const handleCreateCourseSubmit = async (e) => {
+    e.preventDefault();
+    if (!newCourseIntitule || !newCourseSemestre || !newCourseCredits || !newCourseTeacher || !newCourseAuditoire) {
+      alert('Veuillez remplir tous les champs pour créer un cours.');
+      return;
+    }
+
+    setCreatingCourse(true);
+    try {
+      await axios.post('/api/department/course-create', {
+        intitule: newCourseIntitule,
+        semestre: newCourseSemestre,
+        credits: parseInt(newCourseCredits),
+        teacher: newCourseTeacher,
+        auditoire_id: newCourseAuditoire,
+      });
+      alert('Cours créé avec succès!');
+      handleCloseCreateCourseModal();
+      loadData(); // Reload data to reflect changes
+    } catch (error) {
+      console.error("Failed to create course", error);
+      alert("Erreur lors de la création du cours.");
+    } finally {
+      setCreatingCourse(false);
+    }
+  }; 
+
+  const pageTitle = currentRole === 'chef_departement' ? 'Gestion Pédagogique du Département' : 'Gestion Pédagogique de la Section';
+
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Gestion Pédagogique</h2>
-        <p className="mt-2 text-lg text-gray-600 dark:text-gray-300">Organisez et supervisez le programme de cours de votre section.</p>
+        <h2 className="text-3xl font-bold text-gray-800 dark:text-white">{pageTitle}</h2>
+        <p className="mt-2 text-lg text-gray-600 dark:text-gray-300">Organisez et supervisez le programme de cours de votre {currentRole === 'chef_departement' ? 'département' : 'section'}.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <KpiCard label="Nombre Total de Cours" value={loading ? '...' : filteredCourses.length} color="bg-blue-600" />
-        <KpiCard label="Total Crédits de la Sélection" value={loading ? '...' : totalCredits} color="bg-green-600" />
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6"> {/* Adjusted grid for more cards */}
+        <KpiCard label="Nombre Total de Cours" value={loading ? '...' : (departmentSummary?.courses || 0)} color="bg-blue-600" icon={<BookOpenIcon />} />
+        <KpiCard label="Total Crédits du Département" value={loading ? '...' : totalDepartmentCredits} color="bg-green-600" icon={<BookIcon />} /> {/* Updated KPI Card */}
+        <KpiCard label="Nombre Total d'Enseignants" value={loading ? '...' : (departmentSummary?.teachers?.val || 0)} color="bg-purple-600" icon={<AcademicCapIcon />} />
+        <KpiCard label="Nombre Total d'Étudiants" value={loading ? '...' : (departmentSummary?.students?.val || 0)} color="bg-red-600" icon={<UsersIcon />} />
         <div className="bg-gray-100 dark:bg-slate-700 p-4 rounded-lg flex items-center justify-center">
             <button className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">
                 Valider les Emplois du Temps
@@ -85,9 +206,14 @@ export default function GestionPedagogique() {
                 <input type="text" name="departement" placeholder="Filtrer par département..." onChange={handleFilterChange} className="border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white"/>
                 <input type="text" name="semestre" placeholder="Filtrer par semestre..." onChange={handleFilterChange} className="border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white"/>
             </div>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
-                + Proposer un Nouveau Cours
-            </button>
+            <div className="flex gap-2">
+                <button onClick={handleProposeNewCourse} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
+                    + Proposer un Nouveau Cours
+                </button>
+                <button onClick={handleAssignTeacher} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg">
+                    Assigner un Enseignant
+                </button>
+            </div>
         </div>
       </div>
 
@@ -98,6 +224,160 @@ export default function GestionPedagogique() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCourses.map(course => <CourseCard key={course.code} course={course} />)}
+        </div>
+      )}
+
+      {/* Assign Teacher Modal */}
+      {showAssignTeacherModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center z-50">
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-lg shadow-xl w-1/2 max-w-lg">
+            <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Assigner un Enseignant à un Cours</h3>
+            <form onSubmit={handleAssignSubmit}>
+              <div className="mb-4">
+                <label htmlFor="course-select" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Sélectionner un Cours:</label>
+                <select
+                  id="course-select"
+                  className="shadow border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline dark:bg-slate-700"
+                  value={selectedCourse}
+                  onChange={(e) => setSelectedCourse(e.target.value)}
+                  disabled={assigning}
+                >
+                  <option value="">-- Choisir un cours --</option>
+                  {courses.map(course => (
+                    <option key={course.id} value={course.id}>{course.intitule} ({course.code})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="mb-6">
+                <label htmlFor="teacher-select" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Sélectionner un Enseignant:</label>
+                <select
+                  id="teacher-select"
+                  className="shadow border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline dark:bg-slate-700"
+                  value={selectedTeacher}
+                  onChange={(e) => setSelectedTeacher(e.target.value)}
+                  disabled={assigning}
+                >
+                  <option value="">-- Choisir un enseignant --</option>
+                  {availableTeachers.map(teacher => (
+                    <option key={teacher.id} value={teacher.id}>{teacher.name} ({teacher.rank})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center justify-between">
+                <button
+                  type="submit"
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  disabled={assigning}
+                >
+                  {assigning ? 'Assignation en cours...' : 'Assigner'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCloseAssignTeacherModal}
+                  className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  disabled={assigning}
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Create Course Modal */}
+      {showCreateCourseModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex justify-center items-center z-50">
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-lg shadow-xl w-1/2 max-w-lg">
+            <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Proposer un Nouveau Cours</h3>
+            <form onSubmit={handleCreateCourseSubmit}>
+              <div className="mb-4">
+                <label htmlFor="new-course-intitule" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Intitulé du Cours:</label>
+                <input
+                  type="text"
+                  id="new-course-intitule"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline dark:bg-slate-700"
+                  value={newCourseIntitule}
+                  onChange={(e) => setNewCourseIntitule(e.target.value)}
+                  disabled={creatingCourse}
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="new-course-semestre" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Semestre:</label>
+                <input
+                  type="text"
+                  id="new-course-semestre"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline dark:bg-slate-700"
+                  value={newCourseSemestre}
+                  onChange={(e) => setNewCourseSemestre(e.target.value)}
+                  disabled={creatingCourse}
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="new-course-credits" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Crédits:</label>
+                <input
+                  type="number"
+                  id="new-course-credits"
+                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline dark:bg-slate-700"
+                  value={newCourseCredits}
+                  onChange={(e) => setNewCourseCredits(e.target.value)}
+                  disabled={creatingCourse}
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="new-course-auditoire" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Auditoire:</label>
+                <select
+                  id="new-course-auditoire"
+                  className="shadow border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline dark:bg-slate-700"
+                  value={newCourseAuditoire}
+                  onChange={(e) => setNewCourseAuditoire(e.target.value)}
+                  disabled={creatingCourse}
+                  required
+                >
+                  <option value="">-- Choisir un auditoire --</option>
+                  {availableAuditoires.map(auditoire => (
+                    <option key={auditoire.id} value={auditoire.id}>{auditoire.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="mb-6">
+                <label htmlFor="new-course-teacher" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Enseignant Responsable:</label>
+                <select
+                  id="new-course-teacher"
+                  className="shadow border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline dark:bg-slate-700"
+                  value={newCourseTeacher}
+                  onChange={(e) => setNewCourseTeacher(e.target.value)}
+                  disabled={creatingCourse}
+                  required
+                >
+                  <option value="">-- Choisir un enseignant --</option>
+                  {availableTeachers.map(teacher => (
+                    <option key={teacher.id} value={teacher.id}>{teacher.name} ({teacher.rank})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center justify-between">
+                <button
+                  type="submit"
+                  className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  disabled={creatingCourse}
+                >
+                  {creatingCourse ? 'Création en cours...' : 'Créer le Cours'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCloseCreateCourseModal}
+                  className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                  disabled={creatingCourse}
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
