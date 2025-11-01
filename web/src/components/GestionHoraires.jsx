@@ -126,9 +126,9 @@ export default function GestionHoraires({ currentRole }) {
 
   const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
   const timeSlots = useMemo(() => {
-    // Generate time slots from 8:00 to 18:00
+    // Generate time slots from 8:00 to 18:00 (inclusive)
     const slots = [];
-    for (let i = 8; i <= 18; i++) {
+    for (let i = 8; i <= 18; i++) { // Changed loop limit back to 18 for wider range
       slots.push(`${i < 10 ? '0' : ''}${i}:00`);
     }
     return slots;
@@ -181,12 +181,12 @@ export default function GestionHoraires({ currentRole }) {
             onChange={(e) => setSelectedSessionType(e.target.value)}
             className="border dark:border-slate-600 p-2 rounded-md dark:bg-slate-700 dark:text-white"
           >
-            <option value="mi-session">Mi-session</option> {/* Changed value */}
-            <option value="session">Session</option> {/* Changed value */}
+            <option value="mi-session">Mi-session</option>
+            <option value="session">Session</option>
           </select>
         </div>
         <button onClick={handleCreateScheduleClick} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
-          + Créer un nouvel horaire
+          Ajouter une ligne
         </button>
       </div>
 
