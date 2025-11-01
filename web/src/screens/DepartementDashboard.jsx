@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '../api/configAxios'; // Corrected import
 import KpiCard from '../components/KpiCard';
 import Skeleton from '../components/Skeleton';
 import ListWithFilters from '../components/ListWithFilters';
@@ -17,24 +17,11 @@ const DocumentReportIcon = () => <svg xmlns="http://www.w3.org/2000/svg" classNa
 const BellIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 01-6 0v-1m6 0H9" /></svg>;
 
 // --- Chart Components ---
-const studentPerformanceData = [
-  { name: 'G1', performance: 80 },
-  { name: 'G2', performance: 92 },
-  { name: 'G3', performance: 85 },
-  { name: 'L1', performance: 78 },
-  { name: 'L2', performance: 88 },
-];
-
-const teacherDistributionData = [
-  { name: 'Professeurs', value: 12 },
-  { name: 'Assistants', value: 25 },
-];
-
 const COLORS = ['#0088FE', '#00C49F'];
 
-const StudentPerformanceChart = () => (
+const StudentPerformanceChart = ({ data }) => (
   <ResponsiveContainer width="100%" height={300}>
-    <BarChart data={studentPerformanceData}>
+    <BarChart data={data}>
       <CartesianGrid strokeDasharray="3 3" />
       <XAxis dataKey="name" />
       <YAxis />
@@ -45,11 +32,11 @@ const StudentPerformanceChart = () => (
   </ResponsiveContainer>
 );
 
-const TeacherDistributionChart = () => (
+const TeacherDistributionChart = ({ data }) => (
   <ResponsiveContainer width="100%" height={300}>
     <PieChart>
       <Pie
-        data={teacherDistributionData}
+        data={data}
         cx="50%"
         cy="50%"
         labelLine={false}
@@ -58,7 +45,7 @@ const TeacherDistributionChart = () => (
         dataKey="value"
         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
       >
-        {teacherDistributionData.map((entry, index) => (
+        {data.map((entry, index) => (
           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
         ))}
       </Pie>
@@ -118,26 +105,34 @@ export default function DepartementDashboard() {
   const [sum, setSum] = useState(null);
   const [teachers, setTeachers] = useState([]);
   const [recentActivities, setRecentActivities] = useState([]);
+  const [studentPerformance, setStudentPerformance] = useState([]);
+  const [teacherDistribution, setTeacherDistribution] = useState([]);
   const [loading, setLoading] = useState(true);
   const departmentName = "Informatique"; // This could come from user context or API
 
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const [summaryResponse, teachersResponse, activitiesResponse] = await Promise.all([
+      const [summaryResponse, teachersResponse, activitiesResponse, studentPerformanceResponse, teacherDistributionResponse] = await Promise.all([
         axios.get('/api/department/summary'),
         axios.get('/api/department/teachers'),
         axios.get('/api/department/activities'),
+        axios.get('/api/department/student-performance'),
+        axios.get('/api/department/teacher-distribution'),
       ]);
       setSum(summaryResponse.data);
       setTeachers(teachersResponse.data);
       setRecentActivities(activitiesResponse.data);
+      setStudentPerformance(studentPerformanceResponse.data);
+      setTeacherDistribution(teacherDistributionResponse.data);
     } catch (error) {
       console.error("Failed to load department data", error);
       // Fallback to dummy data or empty arrays on error
       setSum({ students: { val: 0, trend: [] }, teachers: { val: 0, trend: [] }, courses: 0, successRate: { val: 'N/A', trend: [] } });
       setTeachers([]);
       setRecentActivities([]);
+      setStudentPerformance([]);
+      setTeacherDistribution([]);
     } finally {
       setLoading(false);
     }
@@ -210,11 +205,11 @@ export default function DepartementDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
           <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Performance des Étudiants</h3>
-          <StudentPerformanceChart />
+          <StudentPerformanceChart data={studentPerformance} />
         </div>
         <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
           <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Répartition des Enseignants</h3>
-          <TeacherDistributionChart />
+          <TeacherDistributionChart data={teacherDistribution} />
         </div>
       </div>
     </div>

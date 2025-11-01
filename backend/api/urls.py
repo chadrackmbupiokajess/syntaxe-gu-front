@@ -81,6 +81,8 @@ from .views import (
     department_auditorium_courses, # New import
     department_auditoires_with_courses, # New import
     department_assign_course, # New import
+    department_student_performance, # New import
+    department_teacher_distribution, # New import
 )
 
 urlpatterns = [
@@ -164,6 +166,8 @@ urlpatterns = [
     re_path(r"^department/course-create/?$", department_course_create, name="department_course_create"), # Corrected endpoint
     re_path(r"^department/auditoriums/?$", department_auditoriums_list, name="department_auditoriums_list"), # New endpoint
     re_path(r"^department/auditoriums/(?P<auditorium_id>\d+)/courses/?$", department_auditorium_courses, name="department_auditorium_courses"), # New endpoint for courses by auditorium
+    re_path(r"^department/student-performance/?$", department_student_performance, name="department_student_performance"), # New endpoint for student performance
+    re_path(r"^department/teacher-distribution/?$", department_teacher_distribution, name="department_teacher_distribution"), # New endpoint for teacher distribution
     re_path(r"^department/auditoires-with-courses/?$", department_auditoires_with_courses, name="department_auditoires_with_courses"), # New endpoint for auditoires with courses
     re_path(r"^department/assign-course/?$", department_assign_course, name="department_assign_course"), # New endpoint for assigning courses
     re_path(r"^jury/summary/?$", jury_summary, name="jury_summary"),

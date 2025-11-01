@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import axios from '../api/configAxios'; // Corrected import
 import KpiCard from './KpiCard';
 import Skeleton from './Skeleton';
 

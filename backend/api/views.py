@@ -9,7 +9,7 @@ from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
-from django.db.models import Q, Count, Sum
+from django.db.models import Q, Count, Sum, Avg
 import uuid
 
 from academics.models import Course, Auditoire, Calendrier, CourseAssignment, Section, Departement, CourseMessage, Paiement
@@ -1932,6 +1932,47 @@ def department_auditorium_courses(request, auditorium_id):
             "code": course.code,
             "intitule": course.name,
         })
+    return Response(data)
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def department_student_performance(request):
+    user = request.user
+    try:
+        department = user.department_head_of
+    except AttributeError:
+        department = Departement.objects.first()
+        if not department:
+            return Response({"error": "No departments found."}, status=404)
+
+    auditoires = Auditoire.objects.filter(departement=department)
+    data = []
+    for auditoire in auditoires:
+        avg_grade = Submission.objects.filter(assignment__course__auditoire=auditoire).aggregate(Avg('grade'))['grade__avg']
+        data.append({
+            "name": auditoire.name,
+            "performance": round(avg_grade, 2) if avg_grade else 0,
+        })
+    return Response(data)
+
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def department_teacher_distribution(request):
+    user = request.user
+    try:
+        department = user.department_head_of
+    except AttributeError:
+        department = Departement.objects.first()
+        if not department:
+            return Response({"error": "No departments found."}, status=404)
+
+    professeurs = User.objects.filter(role='professeur', course_assignments__course__auditoire__departement=department).distinct().count()
+    assistants = User.objects.filter(role='assistant', course_assignments__course__auditoire__departement=department).distinct().count()
+
+    data = [
+        { "name": "Professeurs", "value": professeurs },
+        { "name": "Assistants", "value": assistants },
+    ]
     return Response(data)
 
 @api_view(["GET"])
