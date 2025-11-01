@@ -6,6 +6,7 @@ export default function GestionHoraires({ currentRole }) {
   const [schedules, setSchedules] = useState([]);
   const [auditoires, setAuditoires] = useState([]);
   const [selectedAuditoire, setSelectedAuditoire] = useState('');
+  const [selectedSessionType, setSelectedSessionType] = useState('Mi-session'); // New state for session type
   const [newSchedule, setNewSchedule] = useState({ day: '', startTime: '', endTime: '', course: '', teacher: '' });
   const [availableCourses, setAvailableCourses] = useState([]);
   const [availableTeachers, setAvailableTeachers] = useState([]);
@@ -26,10 +27,10 @@ export default function GestionHoraires({ currentRole }) {
 
   useEffect(() => {
     if (selectedAuditoire) {
-      // Fetch schedules, courses, and teachers for the selected auditoire
+      // Fetch schedules, courses, and teachers for the selected auditoire and session type
       const schedulesApiEndpoint = isDepartmentRole
-        ? `/api/department/auditoriums/${selectedAuditoire}/schedules`
-        : `/api/section/auditoriums/${selectedAuditoire}/schedules`;
+        ? `/api/department/auditoriums/${selectedAuditoire}/schedules?session_type=${selectedSessionType}`
+        : `/api/section/auditoriums/${selectedAuditoire}/schedules?session_type=${selectedSessionType}`;
       const coursesApiEndpoint = isDepartmentRole
         ? `/api/department/auditoriums/${selectedAuditoire}/courses`
         : `/api/section/auditoriums/${selectedAuditoire}/courses`;
@@ -45,7 +46,7 @@ export default function GestionHoraires({ currentRole }) {
         setAvailableTeachers(teachersRes.data);
       });
     }
-  }, [selectedAuditoire, isDepartmentRole]);
+  }, [selectedAuditoire, selectedSessionType, isDepartmentRole]);
 
   const handleCreateSchedule = (day, time) => {
     setNewSchedule({ day, startTime: '', endTime: '', course: '', teacher: '' });
@@ -95,6 +96,16 @@ export default function GestionHoraires({ currentRole }) {
               <option key={auditoire.id} value={auditoire.id}>{auditoire.name}</option>
             ))}
           </select>
+          <label htmlFor="session-type-select" className="font-semibold">Session:</label>
+          <select
+            id="session-type-select"
+            value={selectedSessionType}
+            onChange={(e) => setSelectedSessionType(e.target.value)}
+            className="border dark:border-slate-600 p-2 rounded-md dark:bg-slate-700 dark:text-white"
+          >
+            <option value="Mi-session">Mi-session</option>
+            <option value="Session">Session</option>
+          </select>
         </div>
         <button onClick={() => setShowModal(true)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">
           + Créer un nouvel horaire
@@ -134,7 +145,7 @@ export default function GestionHoraires({ currentRole }) {
             ) : (
               <tr>
                 <td colSpan={days.length + 1} className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  Aucun horaire créé pour cet auditoire.
+                  Aucun horaire créé pour cet auditoire et cette session.
                 </td>
               </tr>
             )}
