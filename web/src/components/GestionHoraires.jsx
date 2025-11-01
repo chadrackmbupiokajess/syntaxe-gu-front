@@ -76,6 +76,11 @@ export default function GestionHoraires({ currentRole }) {
     return Array.from(allSlots).sort();
   }, [schedules]);
 
+  const selectedAuditoireName = useMemo(() => {
+    const auditoire = auditoires.find(a => a.id === parseInt(selectedAuditoire));
+    return auditoire ? auditoire.name : '';
+  }, [auditoires, selectedAuditoire]);
+
   return (
     <div className="space-y-8">
       <div>
@@ -113,6 +118,7 @@ export default function GestionHoraires({ currentRole }) {
       </div>
 
       <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm overflow-x-auto">
+        <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Horaires pour : {selectedAuditoireName} - {selectedSessionType}</h3>
         <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
           <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
