@@ -6,7 +6,7 @@ export default function GestionHoraires({ currentRole }) {
   const [schedules, setSchedules] = useState([]);
   const [auditoires, setAuditoires] = useState([]);
   const [selectedAuditoire, setSelectedAuditoire] = useState('');
-  const [newSchedule, setNewSchedule] = useState({ day: '', time: '', course: '', teacher: '' });
+  const [newSchedule, setNewSchedule] = useState({ day: '', startTime: '', endTime: '', course: '', teacher: '' });
   const [availableCourses, setAvailableCourses] = useState([]);
   const [availableTeachers, setAvailableTeachers] = useState([]);
 
@@ -48,7 +48,7 @@ export default function GestionHoraires({ currentRole }) {
   }, [selectedAuditoire, isDepartmentRole]);
 
   const handleCreateSchedule = (day, time) => {
-    setNewSchedule({ day, time, course: '', teacher: '' });
+    setNewSchedule({ day, startTime: '', endTime: '', course: '', teacher: '' });
     setShowModal(true);
   };
 
@@ -61,11 +61,19 @@ export default function GestionHoraires({ currentRole }) {
     e.preventDefault();
     // Logic to save the new schedule
     console.log(newSchedule);
+    // Add the new schedule to the list
+    setSchedules(prev => [...prev, { ...newSchedule, id: Date.now() }]);
     setShowModal(false);
   };
 
   const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-  const timeSlots = Array.from({ length: 10 }, (_, i) => `${8 + i}:00 - ${9 + i}:00`);
+  const timeSlots = useMemo(() => {
+    const allSlots = new Set();
+    schedules.forEach(s => {
+      allSlots.add(s.startTime);
+    });
+    return Array.from(allSlots).sort();
+  }, [schedules]);
 
   return (
     <div className="space-y-8">
@@ -102,26 +110,34 @@ export default function GestionHoraires({ currentRole }) {
             </tr>
           </thead>
           <tbody>
-            {timeSlots.map(slot => (
-              <tr key={slot} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                <td className="py-4 px-6 font-medium text-gray-900 whitespace-nowrap dark:text-white">{slot}</td>
-                {days.map(day => {
-                  const schedule = schedules.find(s => s.day === day && s.time === slot);
-                  return (
-                    <td key={day} className="py-4 px-6" onClick={() => !schedule && handleCreateSchedule(day, slot)}>
-                      {schedule ? (
-                        <div>
-                          <p className="font-bold">{schedule.course.name}</p>
-                          <p>{schedule.teacher.name}</p>
-                        </div>
-                      ) : (
-                        <button className="text-blue-500 hover:text-blue-700">+</button>
-                      )}
-                    </td>
-                  );
-                })}
+            {timeSlots.length > 0 ? (
+              timeSlots.map(slot => (
+                <tr key={slot} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                  <td className="py-4 px-6 font-medium text-gray-900 whitespace-nowrap dark:text-white">{`${slot} - ${parseInt(slot) + 1}:00`}</td>
+                  {days.map(day => {
+                    const schedule = schedules.find(s => s.day === day && s.startTime === slot);
+                    return (
+                      <td key={day} className="py-4 px-6" onClick={() => !schedule && handleCreateSchedule(day, slot)}>
+                        {schedule ? (
+                          <div>
+                            <p className="font-bold">{schedule.course.name}</p>
+                            <p>{schedule.teacher.name}</p>
+                          </div>
+                        ) : (
+                          <button className="text-blue-500 hover:text-blue-700">+</button>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={days.length + 1} className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  Aucun horaire créé pour cet auditoire.
+                </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
@@ -131,6 +147,22 @@ export default function GestionHoraires({ currentRole }) {
           <div className="bg-white dark:bg-slate-800 p-8 rounded-lg shadow-xl w-1/2 max-w-lg">
             <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Créer un nouvel horaire</h3>
             <form onSubmit={handleFormSubmit}>
+              <div className="mb-4">
+                <label htmlFor="day-select" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Jour:</label>
+                <select id="day-select" name="day" value={newSchedule.day} onChange={handleInputChange} className="shadow border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline dark:bg-slate-700">
+                  {days.map(day => <option key={day} value={day}>{day}</option>)}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label htmlFor="startTime-input" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Heure de début:</label>
+                  <input id="startTime-input" type="time" name="startTime" value={newSchedule.startTime} onChange={handleInputChange} className="shadow border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline dark:bg-slate-700" />
+                </div>
+                <div>
+                  <label htmlFor="endTime-input" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Heure de fin:</label>
+                  <input id="endTime-input" type="time" name="endTime" value={newSchedule.endTime} onChange={handleInputChange} className="shadow border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline dark:bg-slate-700" />
+                </div>
+              </div>
               <div className="mb-4">
                 <label htmlFor="course-select" className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Cours:</label>
                 <select id="course-select" name="course" value={newSchedule.course} onChange={handleInputChange} className="shadow border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:shadow-outline dark:bg-slate-700">
