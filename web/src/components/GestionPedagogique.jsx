@@ -81,7 +81,7 @@ export default function GestionPedagogique({ currentRole }) {
     courses.filter(c => 
       c.intitule.toLowerCase().includes(filters.intitule.toLowerCase()) &&
       (isDepartmentRole || c.departement.toLowerCase().includes(filters.departement.toLowerCase())) &&
-      (filters.semestre === '' || c.semestre === filters.semestre)
+      (!filters.semestre || (c.semestre && c.semestre.trim().toLowerCase() === filters.semestre.trim().toLowerCase()))
     ), [courses, filters, isDepartmentRole]);
 
   const handleFilterChange = (e) => {
