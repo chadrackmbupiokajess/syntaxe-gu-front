@@ -1937,11 +1937,11 @@ def department_auditorium_schedules_list_create(request, auditorium_id):
                 "endTime": schedule.end_time.strftime('%H:%M'),
                 "course": {
                     "id": schedule.course.id if schedule.course else None,
-                    "name": schedule.course.name if schedule.course else "N/A"
+                    "name": schedule.course.name if schedule.course else "-"
                 },
                 "teacher": {
                     "id": schedule.teacher.id if schedule.teacher else None,
-                    "name": schedule.teacher.get_full_name() if schedule.teacher else "N/A"
+                    "name": schedule.teacher.get_full_name() if schedule.teacher else " "
                 },
                 "session_type": schedule.session_type,
             })
