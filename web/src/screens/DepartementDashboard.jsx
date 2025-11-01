@@ -3,7 +3,8 @@ import axios from 'axios';
 import KpiCard from '../components/KpiCard';
 import Skeleton from '../components/Skeleton';
 import ListWithFilters from '../components/ListWithFilters';
-import { Link } from 'react-router-dom'; // Import Link for QuickActions
+import { Link } from 'react-router-dom';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 // --- SVG Icons for a more professional look ---
 const UsersIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 016-6h6a6 6 0 016 6v1h-3" /></svg>;
@@ -15,7 +16,59 @@ const CalendarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-
 const DocumentReportIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
 const BellIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 01-6 0v-1m6 0H9" /></svg>;
 
-// --- New Components for a more professional look ---
+// --- Chart Components ---
+const studentPerformanceData = [
+  { name: 'G1', performance: 80 },
+  { name: 'G2', performance: 92 },
+  { name: 'G3', performance: 85 },
+  { name: 'L1', performance: 78 },
+  { name: 'L2', performance: 88 },
+];
+
+const teacherDistributionData = [
+  { name: 'Professeurs', value: 12 },
+  { name: 'Assistants', value: 25 },
+];
+
+const COLORS = ['#0088FE', '#00C49F'];
+
+const StudentPerformanceChart = () => (
+  <ResponsiveContainer width="100%" height={300}>
+    <BarChart data={studentPerformanceData}>
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="name" />
+      <YAxis />
+      <Tooltip />
+      <Legend />
+      <Bar dataKey="performance" fill="#8884d8" />
+    </BarChart>
+  </ResponsiveContainer>
+);
+
+const TeacherDistributionChart = () => (
+  <ResponsiveContainer width="100%" height={300}>
+    <PieChart>
+      <Pie
+        data={teacherDistributionData}
+        cx="50%"
+        cy="50%"
+        labelLine={false}
+        outerRadius={80}
+        fill="#8884d8"
+        dataKey="value"
+        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+      >
+        {teacherDistributionData.map((entry, index) => (
+          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+        ))}
+      </Pie>
+      <Tooltip />
+    </PieChart>
+  </ResponsiveContainer>
+);
+
+
+// --- Main Dashboard Components ---
 
 const QuickActions = () => {
     const actions = [
@@ -153,21 +206,15 @@ export default function DepartementDashboard() {
         </div>
       </div>
 
-      {/* Placeholder for Charts/Graphs - New Section */}
+      {/* Charts/Graphs Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Performance des Étudiants (Graphique)</h3>
-          <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center text-gray-500 dark:text-gray-400">
-            {/* Placeholder for a chart component */}
-            Graphique de performance ici
-          </div>
+          <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Performance des Étudiants</h3>
+          <StudentPerformanceChart />
         </div>
         <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md">
-          <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Répartition des Enseignants (Graphique)</h3>
-          <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-md flex items-center justify-center text-gray-500 dark:text-gray-400">
-            {/* Placeholder for another chart component */}
-            Graphique de répartition ici
-          </div>
+          <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Répartition des Enseignants</h3>
+          <TeacherDistributionChart />
         </div>
       </div>
     </div>
