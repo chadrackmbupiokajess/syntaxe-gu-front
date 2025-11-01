@@ -79,8 +79,8 @@ export default function DgFinancialReports() {
         </div>
 
         {/* Budget Allocation Pie Chart */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl">
-          <h3 className="text-xl font-bold mb-4 text-black dark:text-white">Répartition Budgétaire</h3>
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl text-black dark:text-white">
+          <h3 className="text-xl font-bold mb-4">Répartition Budgétaire</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -97,7 +97,7 @@ export default function DgFinancialReports() {
                 ))}
               </Pie>
               <Tooltip contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', color: 'white' }} />
-              <Legend wrapperStyle={{ color: 'currentColor' }} />
+              <Legend wrapperStyle={{ color: 'white' }} /> {/* Changed to always white */}
             </PieChart>
           </ResponsiveContainer>
         </div>
