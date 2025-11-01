@@ -61,7 +61,7 @@ const TeacherDistributionChart = ({ data }) => (
 const QuickActions = () => {
     const actions = [
         { title: 'Assigner Cours', to: '/departement/enseignants', icon: <ClipboardListIcon />, color: 'bg-blue-500' },
-        { title: 'Valider Horaires', to: '/departement/pedagogie', icon: <CalendarIcon />, color: 'bg-green-500' },
+        { title: 'Voir Horaire', to: '/departement/horaires', icon: <CalendarIcon />, color: 'bg-green-500' }, // Modified action
         { title: 'Voir Étudiants', to: '/departement/etudiants', icon: <UsersIcon />, color: 'bg-yellow-500' },
         { title: 'Générer Rapport', to: '/departement/administration', icon: <DocumentReportIcon />, color: 'bg-purple-500' },
     ];

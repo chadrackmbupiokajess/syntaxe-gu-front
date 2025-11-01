@@ -2,6 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import axios from '../api/configAxios'; // Corrected import
 import { toast } from 'react-toastify'; // Import toast for notifications
 
+// SVG Icon for Delete
+const TrashIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm-1 3a1 1 0 100 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+  </svg>
+);
+
 export default function GestionHoraires({ currentRole }) {
   const [showModal, setShowModal] = useState(false);
   const [schedules, setSchedules] = useState([]);
@@ -113,6 +120,22 @@ export default function GestionHoraires({ currentRole }) {
     }
   };
 
+  const handleDeleteSchedule = async (scheduleId) => {
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer cet horaire ?")) {
+      try {
+        const schedulesApiEndpoint = isDepartmentRole
+          ? `/api/department/auditoriums/${selectedAuditoire}/schedules/${scheduleId}`
+          : `/api/section/auditoriums/${selectedAuditoire}/schedules/${scheduleId}`;
+        await axios.delete(schedulesApiEndpoint);
+        toast.success("Horaire supprimé avec succès !");
+        loadSchedules(); // Reload schedules after deletion
+      } catch (error) {
+        console.error("Error deleting schedule:", error);
+        toast.error("Erreur lors de la suppression de l'horaire.");
+      }
+    }
+  };
+
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -174,8 +197,8 @@ export default function GestionHoraires({ currentRole }) {
             course: schedule.course,
             teacher: schedule.teacher,
             session_type: schedule.session_type,
-            courseName: schedule.course?.name || 'N/A',
-            teacherName: schedule.teacher?.name || 'N/A',
+            courseName: schedule.course?.name || '-', 
+            teacherName: schedule.teacher?.name || '-', 
         };
     }
     return null;
@@ -242,16 +265,25 @@ export default function GestionHoraires({ currentRole }) {
                     {/* Display time only if a schedule exists in this row for any day */}
                     {days.some(day => getScheduleForCell(day, slotIdentifier)) ? 
                         getScheduleForCell(days.find(d => getScheduleForCell(d, slotIdentifier)), slotIdentifier)?.startTime + ' - ' + getScheduleForCell(days.find(d => getScheduleForCell(d, slotIdentifier)), slotIdentifier)?.endTime
-                        : ''}
+                        : '-'}
                   </td>
                   {days.map(day => {
                     const scheduleInfo = getScheduleForCell(day, slotIdentifier);
                     return (
-                      <td key={day} className="py-4 px-6 cursor-pointer" onClick={() => handleOpenScheduleModal(scheduleInfo, day, scheduleInfo?.startTime)}>
+                      <td key={day} className="py-4 px-6">
                         {scheduleInfo ? (
-                          <div>
-                            <p className="font-bold text-gray-900 dark:text-white">{scheduleInfo.courseName}</p>
-                            <p className="text-gray-600 dark:text-gray-400">{scheduleInfo.teacherName}</p>
+                          <div className="flex items-center justify-between">
+                            <div className="cursor-pointer" onClick={() => handleOpenScheduleModal(scheduleInfo, day, scheduleInfo?.startTime)}>
+                              <p className="font-bold text-gray-900 dark:text-white">{scheduleInfo.courseName}</p>
+                              <p className="text-gray-600 dark:text-gray-400">{scheduleInfo.teacherName}</p>
+                            </div>
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); handleDeleteSchedule(scheduleInfo.id); }}
+                                className="text-red-500 hover:text-red-700 ml-2"
+                                title="Supprimer cet horaire"
+                            >
+                                <TrashIcon />
+                            </button>
                           </div>
                         ) : (
                           <button onClick={() => handleOpenScheduleModal(null, day, '')} className="text-blue-500 hover:text-blue-700">
@@ -262,7 +294,8 @@ export default function GestionHoraires({ currentRole }) {
                     );
                   })}
                 </tr>
-              ))}
+              ))
+            }
             {schedules.length === 0 && (
               <tr>
                 <td colSpan={days.length + 1} className="text-center py-8 text-gray-500 dark:text-gray-400">
