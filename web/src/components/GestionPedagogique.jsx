@@ -68,7 +68,7 @@ export default function GestionPedagogique({ currentRole }) {
     courses.filter(c => 
       c.intitule.toLowerCase().includes(filters.intitule.toLowerCase()) &&
       (isDepartmentRole || c.departement.toLowerCase().includes(filters.departement.toLowerCase())) &&
-      c.semestre.toLowerCase().includes(filters.semestre.toLowerCase())
+      (!filters.semestre || c.semestre === filters.semestre)
     ), [courses, filters, isDepartmentRole]);
 
   const handleFilterChange = (e) => {
@@ -99,7 +99,11 @@ export default function GestionPedagogique({ currentRole }) {
                 {!isDepartmentRole && (
                   <input type="text" name="departement" placeholder="Filtrer par département..." onChange={handleFilterChange} className="border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white"/>
                 )}
-                <input type="text" name="semestre" placeholder="Filtrer par semestre..." onChange={handleFilterChange} className="border dark:border-slate-600 p-2 rounded dark:bg-slate-700 dark:text-white"/>
+                <select name="semestre" onChange={handleFilterChange} className="border dark:border-slate-600 p-2 rounded-md dark:bg-slate-700 dark:text-white">
+                    <option value="">Toutes les sessions</option>
+                    <option value="Mi-session">Mi-session</option>
+                    <option value="Session">Session</option>
+                </select>
             </div>
         </div>
       </div>
