@@ -9,19 +9,20 @@ const CameraIcon = () => (
   </svg>
 );
 
-export default function AssistantProfile() {
-  // Dummy profile data for Assistant/Teacher
+export default function DepartementProfile() {
+  // Dummy profile data for Chef de Département
   const [profile, setProfile] = useState({
-    prenom: 'Sophie',
-    nom: 'Martin',
-    email: 'sophie.martin@univ.com',
-    phone: '+243 891 234 567',
-    address: '789 Rue des Professeurs, Kinshasa',
-    avatar: 'https://i.pravatar.cc/150?u=sophie.martin@univ.com',
-    role: 'Assistant',
-    department: 'Informatique',
-    grade: 'Assistant de Recherche',
-    coursesTaught: '3',
+    prenom: 'Pierre',
+    nom: 'Dubois',
+    email: 'pierre.dubois@univ.com',
+    phone: '+243 851 123 456',
+    address: '789 Avenue de la Science, Kinshasa',
+    avatar: 'https://i.pravatar.cc/150?u=pierre.dubois@univ.com',
+    department: 'Génie Logiciel',
+    section: 'Informatique',
+    role: 'Chef de Département',
+    experience: '8 ans',
+    specialisation: 'Développement Web',
   });
 
   const [formData, setFormData] = useState({
@@ -37,8 +38,6 @@ export default function AssistantProfile() {
   const [profilePicturePreview, setProfilePicturePreview] = useState(profile.avatar);
   const fileInputRef = useRef(null);
   const toast = useToast();
-
-  // Removed useEffect for fetching data, using dummy data directly
 
   const handleFormChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -59,8 +58,8 @@ export default function AssistantProfile() {
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     // Simulate API call
-    console.log("Updating Assistant profile with:", formData, profilePictureFile);
-    toast.push({ title: 'Informations mises à jour', message: 'Votre profil a été sauvegardé (simulation).', kind: 'success' });
+    console.log("Updating Department Head profile with:", formData, profilePictureFile);
+    toast.push({ title: 'Informations mises à jour', message: 'Votre profil de Chef de Département a été sauvegardé (simulation).', kind: 'success' });
     // In a real app, you'd send formData and profilePictureFile to your backend
   };
 
@@ -71,8 +70,8 @@ export default function AssistantProfile() {
       return;
     }
     // Simulate API call
-    console.log("Updating Assistant password with:", passwordData);
-    toast.push({ title: 'Mot de passe mis à jour', message: 'Votre mot de passe a été changé (simulation).', kind: 'success' });
+    console.log("Updating Department Head password with:", passwordData);
+    toast.push({ title: 'Mot de passe mis à jour', message: 'Votre mot de passe de Chef de Département a été changé (simulation).', kind: 'success' });
     setPasswordData({ current_password: '', new_password: '', confirm_password: '' });
     // In a real app, you'd send passwordData to your backend
   };
@@ -99,21 +98,29 @@ export default function AssistantProfile() {
             <p className="text-sm text-slate-500 dark:text-slate-400">{profile.role}</p>
           </div>
         </div>
-        {/* --- Assistant Info --- */}
+        {/* --- Department Info --- */}
         <div className="card bg-white dark:bg-slate-800 p-6 shadow-lg mt-8">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Informations d'Enseignant</h3>
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Informations de Département</h3>
           <div className="grid grid-cols-1 gap-y-2 text-sm">
             <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
               <span className="text-slate-500 dark:text-slate-400">Département:</span>
               <span className="font-medium text-slate-700 dark:text-slate-300">{profile.department}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
-              <span className="text-slate-500 dark:text-slate-400">Grade:</span>
-              <span className="font-medium text-slate-700 dark:text-slate-300">{profile.grade}</span>
+              <span className="text-slate-500 dark:text-slate-400">Section:</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">{profile.section}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
+              <span className="text-slate-500 dark:text-slate-400">Rôle:</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">{profile.role}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
+              <span className="text-slate-500 dark:text-slate-400">Expérience:</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">{profile.experience}</span>
             </div>
             <div className="flex justify-between py-1">
-              <span className="text-slate-500 dark:text-slate-400">Cours enseignés:</span>
-              <span className="font-medium text-slate-700 dark:text-slate-300">{profile.coursesTaught}</span>
+              <span className="text-slate-500 dark:text-slate-400">Spécialisation:</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">{profile.specialisation}</span>
             </div>
           </div>
         </div>

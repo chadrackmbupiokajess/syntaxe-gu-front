@@ -6,7 +6,8 @@ import Layout from '../components/Layout';
 import StudentLayout from '../components/StudentLayout';
 import AssistantLayout from '../components/AssistantLayout';
 import DgLayout from '../components/DgLayout';
-import SectionLayout from '../components/SectionLayout'; // Import SectionLayout
+import SectionLayout from '../components/SectionLayout';
+import DepartementLayout from '../components/DepartementLayout'; // Import DepartementLayout
 import ProtectedRoute from '../shared/ProtectedRoute';
 import RoleRoute from '../shared/RoleRoute';
 import Unauthorized from '../shared/Unauthorized';
@@ -67,8 +68,9 @@ import SupervisionDepartements from '../components/SupervisionDepartements';
 import GestionEnseignants from '../components/GestionEnseignants';
 import GestionEtudiants from '../components/GestionEtudiants';
 import CoordinationAdministrative from '../components/CoordinationAdministrative';
-import SectionProfile from '../screens/SectionProfile'; // Import SectionProfile
-import DgProfile from '../screens/DgProfile'; // Import DgProfile
+import SectionProfile from '../screens/SectionProfile';
+import DgProfile from '../screens/DgProfile';
+import DepartementProfile from '../screens/DepartementProfile'; // Import DepartementProfile
 
 export default function App() {
   return (
@@ -149,7 +151,13 @@ export default function App() {
             </Route>
           </Route>
           <Route path="/departement" element={<RoleRoute allowedRoles={['chef_departement']} />}> 
-            <Route index element={<DepartementDashboard />} />
+            <Route element={<DepartementLayout />}> {/* Use DepartementLayout here */}
+              <Route index element={<DepartementDashboard />} />
+              <Route path="pedagogie" element={<GestionPedagogique />} />
+              <Route path="enseignants" element={<GestionEnseignants />} />
+              <Route path="etudiants" element={<GestionEtudiants />} />
+              <Route path="profil" element={<DepartementProfile />} /> {/* Added DepartementProfile route */}
+            </Route>
           </Route>
           <Route path="/jury" element={<RoleRoute allowedRoles={['jury']} />}> 
             <Route index element={<JuryDashboard />} />
