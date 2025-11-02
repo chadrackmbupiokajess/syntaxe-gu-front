@@ -42,6 +42,7 @@ from .views import (
     sga_calendar_events,
     sga_enrollment_requests,
     sga_deliberation_sessions,
+    sga_auditoires_list,
     sgad_summary,
     sgad_paie,
     section_summary,
@@ -167,6 +168,7 @@ urlpatterns = [
     re_path(r"^sga/academic-coordination/calendar-events/?$", sga_calendar_events, name="sga_calendar_events"),
     re_path(r"^sga/student-management/enrollment-requests/?$", sga_enrollment_requests, name="sga_enrollment_requests"),
     re_path(r"^sga/evaluation-supervision/deliberation-sessions/?$", sga_deliberation_sessions, name="sga_deliberation_sessions"),
+    re_path(r"^sga/auditoires/?$", sga_auditoires_list, name="sga_auditoires_list"),
 
     re_path(r"^sgad/summary/?$", sgad_summary, name="sgad_summary"),
     re_path(r"^sgad/paie/?$", sgad_paie, name="sgad_paie"),

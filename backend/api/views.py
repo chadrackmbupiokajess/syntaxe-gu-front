@@ -1584,6 +1584,25 @@ def sga_deliberation_sessions(request):
     return Response(deliberations)
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsSGA])
+def sga_auditoires_list(request):
+    auditoires_data = []
+    auditoires = Auditoire.objects.select_related('departement__section').all().order_by('level', 'name')
+
+    for auditoire in auditoires:
+        student_count = User.objects.filter(current_auditoire=auditoire, role='etudiant').count()
+        auditoires_data.append({
+            "id": auditoire.id,
+            "name": auditoire.name,
+            "department": auditoire.departement.name if auditoire.departement else "N/A",
+            "section": auditoire.departement.section.name if auditoire.departement and auditoire.departement.section else "N/A",
+            "level": auditoire.level,
+            "student_count": student_count,
+        })
+    return Response(auditoires_data)
+
+
 # ---- Endpoints SGAD (placeholders)
 
 @api_view(["GET"])
@@ -2378,7 +2397,7 @@ def department_assign_course(request):
     return Response({"detail": "Cours assigné avec succès."}, status=201)
 
 
-# ---- Endpoints Département (placeholders)
+# ---- Endpoints Département (placeholders) ----
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
@@ -2391,7 +2410,7 @@ def department_list(request):
     return Response(rows)
 
 
-# ---- Endpoints Jury (placeholders)
+# ---- Endpoints Jury (placeholders) ----
 
 @api_view(["GET"])
 @permission_classes(DEV_PERMS)
