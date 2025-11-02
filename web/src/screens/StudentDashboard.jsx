@@ -80,10 +80,10 @@ export default function StudentDashboard() {
   return (
     <div className="grid gap-6">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiCard label="Programme" value={data.program} />
-        <KpiCard label="Semestre" value={data.semester} />
-        <KpiCard label="Crédits" value={totalCredits} />
-        <KpiCard label="GPA" value={gpa} />
+        <KpiCard label="Programme" value={data.program} color="blue" />
+        <KpiCard label="Semestre" value={data.semester} color="green" />
+        <KpiCard label="Crédits" value={totalCredits} color="orange" />
+        <KpiCard label="GPA" value={gpa} color="red" />
       </div>
       <div className="card p-4">
         <h3 className="text-lg font-semibold">Prochains événements</h3>

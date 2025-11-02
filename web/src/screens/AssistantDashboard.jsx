@@ -18,16 +18,16 @@ export default function AssistantDashboard() {
       <div className="grid gap-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <Link to="/assistant/courses">
-            <KpiCard label="Mes cours" value={data.courses} />
+            <KpiCard label="Mes cours" value={data.courses} color="blue" />
           </Link>
           <Link to="/assistant/tptd">
-            <KpiCard label="TP/TD actifs" value={data.activeTPTD} />
+            <KpiCard label="TP/TD actifs" value={data.activeTPTD} color="green" />
           </Link>
           <Link to="/assistant/quizzes">
-            <KpiCard label="Quiz actifs" value={data.activeQuizzes} />
+            <KpiCard label="Quiz actifs" value={data.activeQuizzes} color="orange" />
           </Link>
           <Link to="/assistant/to-grade">
-            <KpiCard label="À corriger" value={data.toGrade} />
+            <KpiCard label="À corriger" value={data.toGrade} color="red" />
           </Link>
         </div>
 

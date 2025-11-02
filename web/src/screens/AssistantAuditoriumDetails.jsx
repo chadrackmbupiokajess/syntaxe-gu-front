@@ -4,6 +4,7 @@ import axios from 'axios';
 
 export default function AssistantAuditoriumDetails() {
   const { code } = useParams();
+  const [auditorium, setAuditorium] = useState(null);
   const [students, setStudents] = useState(null);
   const [auditoriumStats, setAuditoriumStats] = useState(null);
   const [auditoriumActivities, setAuditoriumActivities] = useState(null);
@@ -21,6 +22,16 @@ export default function AssistantAuditoriumDetails() {
       setLoading(true);
       setError(false);
       try {
+        // Fetch auditorium details
+        try {
+          const auditoriumResponse = await axios.get(`/api/auditoriums/assistant/my`);
+          const currentAuditorium = auditoriumResponse.data.find(a => a.code === code);
+          setAuditorium(currentAuditorium);
+        } catch (err) {
+          console.error("Error fetching auditorium details:", err);
+          setError(true);
+        }
+
         // Fetch students (initial fetch, might be updated later based on selected course)
         try {
           const studentsResponse = await axios.get(`/api/assistant/auditoriums/${code}/students`);
@@ -98,8 +109,8 @@ export default function AssistantAuditoriumDetails() {
 
   return (
     <div className="grid gap-4 min-h-screen bg-slate-900 text-white p-4">
-      <h1 className="text-3xl font-bold mb-2">Détails de l'auditoire : {code}</h1>
-      <p className="text-lg text-white/80 mb-6">Département - {auditoriumStats?.department}</p>
+      <h1 className="text-3xl font-bold mb-2">Détails de l'auditoire : {auditorium?.name || code}</h1>
+      <p className="text-lg text-white/80 mb-6">Département - {auditorium?.department || auditoriumStats?.department}</p>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Actions rapides */}
