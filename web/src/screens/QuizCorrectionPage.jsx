@@ -1,157 +1,137 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useToast } from '../shared/ToastProvider'; // Import useToast
 
 export default function QuizCorrectionPage() {
   const { quiz_id, attempt_id } = useParams();
+  const navigate = useNavigate(); // Import and use navigate
+  const toast = useToast(); // Import and use toast
   const [quizDetails, setQuizDetails] = useState(null);
   const [attemptDetails, setAttemptDetails] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [questionGrades, setQuestionGrades] = useState({}); // Nouvel état pour stocker les notes par question
+  
+  // Simplified state for the total score
+  const [totalScore, setTotalScore] = useState('');
 
   useEffect(() => {
     const fetchQuizData = async () => {
       try {
         setLoading(true);
         const quizRes = await axios.get(`/api/quizzes/my/${quiz_id}`);
-        console.log("Quiz data received:", quizRes.data);
         setQuizDetails(quizRes.data);
 
-        // TODO: Implémenter l'appel API réel pour les détails de la tentative pour un assistant
-        // Pour l'instant, nous utilisons un placeholder ou une structure vide si non disponible
-        // const attemptRes = await axios.get(`/api/quizzes/${quiz_id}/attempt/${attempt_id}`);
-        // setAttemptDetails(attemptRes.data);
-        const mockAttempt = { student_name: "Étudiant Inconnu", submitted_at: new Date().toISOString(), answers: [] };
+        // TODO: Replace with a real API call to get attempt details, including student answers and existing score
+        const mockAttempt = { 
+            student_name: "Étudiant Placeholder", 
+            submitted_at: new Date().toISOString(), 
+            answers: quizRes.data.questionnaire.map(q => ({ question_id: q.id, student_answer: "Réponse de l'étudiant..." })),
+            score: null // Assuming no score initially
+        };
         setAttemptDetails(mockAttempt);
-
-        // Initialiser les notes des questions une fois que les détails du quiz sont chargés
-        if (quizRes.data && quizRes.data.questionnaire) {
-          const initialGrades = {};
-          quizRes.data.questionnaire.forEach(q => {
-            // Utiliser l'ID de la question comme clé
-            initialGrades[q.id] = 0; // Par défaut à 0
-          });
-          setQuestionGrades(initialGrades);
-        }
+        setTotalScore(mockAttempt.score || '');
 
       } catch (err) {
-        console.error("Erreur lors du chargement des données du quiz:", err);
-        setError("Impossible de charger les détails du quiz ou de la tentative. Veuillez vérifier le backend.");
+        console.error("Erreur lors du chargement des données:", err);
+        setError("Impossible de charger les détails. Veuillez vérifier le backend.");
+        toast.push({ kind: 'error', title: 'Erreur', message: 'Impossible de charger les détails.' });
       } finally {
         setLoading(false);
       }
     };
 
     fetchQuizData();
-  }, [quiz_id, attempt_id]);
-
-  // Calcul de la note totale
-  const totalScore = Object.values(questionGrades).reduce((sum, grade) => sum + parseFloat(grade || 0), 0);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 flex items-center justify-center">
-        <p className="text-xl text-gray-600 dark:text-gray-300">Chargement des détails du quiz...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 flex items-center justify-center">
-        <p className="text-xl text-red-600 dark:text-red-400">{error}</p>
-      </div>
-    );
-  }
-
-  // Afficher un message si quizDetails n'est pas encore chargé ou si les questions sont manquantes
-  if (!quizDetails || !quizDetails.questionnaire || !attemptDetails) {
-    return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 flex items-center justify-center">
-        <p className="text-xl text-gray-600 dark:text-gray-300">Aucune donnée de quiz ou de tentative trouvée, ou les questions sont manquantes.</p>
-      </div>
-    );
-  }
-
-  const handleGradeChange = (questionId, newGrade) => {
-    setQuestionGrades(prevGrades => ({
-      ...prevGrades,
-      [questionId]: newGrade,
-    }));
-  };
+  }, [quiz_id, attempt_id, toast]);
 
   const handleSubmitCorrection = async () => {
-    console.log("Correction soumise:", {
-      quiz_id,
-      attempt_id,
-      grades: questionGrades,
-      total_score: totalScore,
-    });
-
+    if (totalScore === '' || totalScore < 0 || totalScore > quizDetails.total_points) {
+      toast.push({ kind: 'error', title: 'Note invalide', message: `La note doit être entre 0 et ${quizDetails.total_points}.` });
+      return;
+    }
+    setSaving(true);
     try {
-      // TODO: Implémenter cet endpoint backend pour enregistrer les corrections
-      await axios.post(`/api/assistant/quizzes/${quiz_id}/attempt/${attempt_id}/grade`, {
-        grades: questionGrades,
-        total_score: totalScore,
+      // The backend endpoint was simplified to only take total_score
+      await axios.post(`/api/assistant/quizzes/${quiz_id}/attempt/${attempt_id}/grade/`, {
+        total_score: parseFloat(totalScore),
       });
-      alert("Correction soumise avec succès !");
+      toast.push({ title: 'Succès', message: 'La note a été enregistrée.' });
+      navigate('/assistant/a-corriger'); // Redirect after successful submission
     } catch (submitError) {
       console.error("Erreur lors de la soumission de la correction:", submitError);
-      alert("Erreur lors de la soumission de la correction. Veuillez vérifier le backend.");
+      toast.push({ kind: 'error', title: 'Erreur', message: 'Impossible d\'enregistrer la note.' });
+    } finally {
+      setSaving(false);
     }
   };
 
+  if (loading) {
+    return <div className="card p-4">Chargement...</div>;
+  }
+
+  if (error || !quizDetails || !attemptDetails) {
+    return <div className="card p-4">{error || "Données non trouvées."}</div>;
+  }
+
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6">
-      <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 border border-gray-200 dark:border-gray-700">
-        <h1 className="text-4xl font-extrabold text-gray-800 dark:text-white mb-4">Correction de Quiz</h1>
-        <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">ID du Quiz: <span className="font-semibold text-indigo-600 dark:text-indigo-400">{quiz_id}</span>, ID de la Tentative: <span className="font-semibold text-indigo-600 dark:text-indigo-400">{attempt_id}</span></p>
-
-        <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg shadow-inner">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">{quizDetails.title}</h2>
-          <p className="text-md text-gray-700 dark:text-gray-200">Étudiant: <span className="font-medium">{attemptDetails.student_name}</span></p>
-          <p className="text-md text-gray-700 dark:text-gray-200">Soumis le: <span className="font-medium">{new Date(attemptDetails.submitted_at).toLocaleString()}</span></p>
-          <p className="text-2xl font-bold text-gray-800 dark:text-white mt-4">Note Totale: <span className="text-indigo-600 dark:text-indigo-400">{totalScore}</span></p>
-        </div>
-
-        <div className="space-y-6">
-          {quizDetails.questionnaire.map((question, index) => {
-            // Utiliser question.id pour la correspondance des réponses de l'étudiant
-            const studentAnswerObj = attemptDetails.answers.find(ans => ans.question_id === question.id);
-            const studentAnswer = studentAnswerObj ? studentAnswerObj.student_answer : "Pas de réponse";
-
-            return (
-              <div key={question.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md p-5 border border-gray-200 dark:border-gray-600">
-                <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Question {index + 1}: {question.question}</h3>
-                <p className="text-md text-gray-700 dark:text-gray-200 mb-2">Votre réponse: <span className="font-medium text-indigo-600 dark:text-indigo-400">{String(studentAnswer)}</span></p>
-                {/* La réponse correcte n'est pas fournie par l'API actuelle */}
-                {/* <p className="text-md text-gray-700 dark:text-gray-200 mb-4">Réponse correcte: <span className="font-medium text-green-600 dark:text-green-400">{String(question.correct_answer)}</span></p> */}
-
-                <div className="flex items-center space-x-4">
-                  <label htmlFor={`grade-${question.id}`} className="text-md text-gray-700 dark:text-gray-200">Note:</label>
-                  <input
-                    type="number"
-                    id={`grade-${question.id}`}
-                    min="0"
-                    max={question.points || 10} // Utilise les points de la question comme max, sinon 10
-                    value={questionGrades[question.id] || 0} // Utilise la note de l'état ou 0 par défaut
-                    onChange={(e) => handleGradeChange(question.id, e.target.value)}
-                    className="w-24 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                </div>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Colonne de gauche: Infos et notation */}
+      <div className="lg:col-span-1 space-y-6">
+        <div className="card bg-white dark:bg-slate-800 p-5 shadow-lg">
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-4">Noter le Quiz</h2>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="grade" className="block text-sm font-medium text-slate-600 dark:text-slate-300">Note Globale</label>
+              <div className="mt-1 flex items-center">
+                <input
+                  type="number"
+                  id="grade"
+                  value={totalScore}
+                  onChange={(e) => setTotalScore(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800"
+                  placeholder={`Note sur ${quizDetails.total_points}`}
+                />
+                <span className="ml-2 text-slate-500">/ {quizDetails.total_points}</span>
               </div>
-            );
-          })}
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col gap-3">
+          <button className="btn btn-lg w-full" onClick={handleSubmitCorrection} disabled={saving}>
+            {saving ? 'Enregistrement...' : 'Enregistrer la Note'}
+          </button>
+          <button className="btn btn-lg w-full !bg-slate-600" onClick={() => navigate('/assistant/a-corriger')}>
+            Annuler
+          </button>
+        </div>
+      </div>
+
+      {/* Colonne de droite: Détails du quiz et réponses */}
+      <div className="lg:col-span-2 space-y-4">
+        <div className="card bg-white dark:bg-slate-800 p-5 shadow-lg">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">Détails du Quiz</h3>
+          <p><span className="font-semibold">Titre:</span> {quizDetails.title}</p>
+          <p><span className="font-semibold">Cours:</span> {quizDetails.course_name}</p>
+          <p><span className="font-semibold">Étudiant:</span> {attemptDetails.student_name}</p>
+          <p><span className="font-semibold">Soumis le:</span> {new Date(attemptDetails.submitted_at).toLocaleString()}</p>
         </div>
 
-        <div className="mt-8 text-right">
-          <button
-            onClick={handleSubmitCorrection}
-            className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
-          >
-            Soumettre la Correction
-          </button>
+        <div className="card bg-white dark:bg-slate-800 p-5 shadow-lg">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">Questions et Réponses de l'Étudiant</h3>
+          <div className="space-y-4">
+            {quizDetails.questionnaire.map((question, index) => {
+              const studentAnswerObj = attemptDetails.answers.find(ans => ans.question_id === question.id);
+              const studentAnswer = studentAnswerObj ? studentAnswerObj.student_answer : "Pas de réponse";
+
+              return (
+                <div key={question.id} className="border-b border-slate-200 dark:border-slate-700 pb-4 last:border-b-0">
+                  <p className="font-medium text-slate-700 dark:text-slate-300">Question {index + 1}: {question.question}</p>
+                  <p className="text-md text-gray-700 dark:text-gray-200 mb-2">Réponse: <span className="font-medium text-indigo-600 dark:text-indigo-400">{String(studentAnswer)}</span></p>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
