@@ -8,23 +8,32 @@ export default function QuizCorrectionPage() {
   const [attemptDetails, setAttemptDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [questionGrades, setQuestionGrades] = useState({}); // Nouvel état pour stocker les notes par question
 
   useEffect(() => {
     const fetchQuizData = async () => {
       try {
         setLoading(true);
         const quizRes = await axios.get(`/api/quizzes/my/${quiz_id}`);
-        console.log("Quiz data received:", quizRes.data); // Ajoutez ce log pour inspecter la réponse
+        console.log("Quiz data received:", quizRes.data);
         setQuizDetails(quizRes.data);
 
-        // L'appel API pour les détails de la tentative n'a pas de correspondance claire dans urls.py pour un assistant.
-        // Il faudra peut-être un nouvel endpoint ou une autre approche.
-        // Pour l'instant, je le commente pour éviter l'erreur 404.
+        // TODO: Implémenter l'appel API réel pour les détails de la tentative pour un assistant
+        // Pour l'instant, nous utilisons un placeholder ou une structure vide si non disponible
         // const attemptRes = await axios.get(`/api/quizzes/${quiz_id}/attempt/${attempt_id}`);
         // setAttemptDetails(attemptRes.data);
+        const mockAttempt = { student_name: "Étudiant Inconnu", submitted_at: new Date().toISOString(), answers: [] };
+        setAttemptDetails(mockAttempt);
 
-        // Placeholder for attempt details if needed for UI, remove once actual API is implemented
-        setAttemptDetails({ student_name: "Chargement...", submitted_at: new Date().toISOString(), answers: [] });
+        // Initialiser les notes des questions une fois que les détails du quiz sont chargés
+        if (quizRes.data && quizRes.data.questionnaire) {
+          const initialGrades = {};
+          quizRes.data.questionnaire.forEach(q => {
+            // Utiliser l'ID de la question comme clé
+            initialGrades[q.id] = 0; // Par défaut à 0
+          });
+          setQuestionGrades(initialGrades);
+        }
 
       } catch (err) {
         console.error("Erreur lors du chargement des données du quiz:", err);
@@ -36,6 +45,9 @@ export default function QuizCorrectionPage() {
 
     fetchQuizData();
   }, [quiz_id, attempt_id]);
+
+  // Calcul de la note totale
+  const totalScore = Object.values(questionGrades).reduce((sum, grade) => sum + parseFloat(grade || 0), 0);
 
   if (loading) {
     return (
@@ -53,22 +65,41 @@ export default function QuizCorrectionPage() {
     );
   }
 
-  if (!quizDetails || !attemptDetails) {
+  // Afficher un message si quizDetails n'est pas encore chargé ou si les questions sont manquantes
+  if (!quizDetails || !quizDetails.questionnaire || !attemptDetails) {
     return (
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 flex items-center justify-center">
-        <p className="text-xl text-gray-600 dark:text-gray-300">Aucune donnée trouvée pour ce quiz ou cette tentative.</p>
+        <p className="text-xl text-gray-600 dark:text-gray-300">Aucune donnée de quiz ou de tentative trouvée, ou les questions sont manquantes.</p>
       </div>
     );
   }
 
   const handleGradeChange = (questionId, newGrade) => {
-    // Logique pour mettre à jour la note d'une question
-    console.log(`Question ${questionId}: Nouvelle note ${newGrade}`);
+    setQuestionGrades(prevGrades => ({
+      ...prevGrades,
+      [questionId]: newGrade,
+    }));
   };
 
-  const handleSubmitCorrection = () => {
-    // Logique pour soumettre la correction finale
-    alert("Correction soumise !");
+  const handleSubmitCorrection = async () => {
+    console.log("Correction soumise:", {
+      quiz_id,
+      attempt_id,
+      grades: questionGrades,
+      total_score: totalScore,
+    });
+
+    try {
+      // TODO: Implémenter cet endpoint backend pour enregistrer les corrections
+      await axios.post(`/api/assistant/quizzes/${quiz_id}/attempt/${attempt_id}/grade`, {
+        grades: questionGrades,
+        total_score: totalScore,
+      });
+      alert("Correction soumise avec succès !");
+    } catch (submitError) {
+      console.error("Erreur lors de la soumission de la correction:", submitError);
+      alert("Erreur lors de la soumission de la correction. Veuillez vérifier le backend.");
+    }
   };
 
   return (
@@ -81,18 +112,21 @@ export default function QuizCorrectionPage() {
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">{quizDetails.title}</h2>
           <p className="text-md text-gray-700 dark:text-gray-200">Étudiant: <span className="font-medium">{attemptDetails.student_name}</span></p>
           <p className="text-md text-gray-700 dark:text-gray-200">Soumis le: <span className="font-medium">{new Date(attemptDetails.submitted_at).toLocaleString()}</span></p>
+          <p className="text-2xl font-bold text-gray-800 dark:text-white mt-4">Note Totale: <span className="text-indigo-600 dark:text-indigo-400">{totalScore}</span></p>
         </div>
 
         <div className="space-y-6">
-          {quizDetails.questions && quizDetails.questions.map((question, index) => {
+          {quizDetails.questionnaire.map((question, index) => {
+            // Utiliser question.id pour la correspondance des réponses de l'étudiant
             const studentAnswerObj = attemptDetails.answers.find(ans => ans.question_id === question.id);
             const studentAnswer = studentAnswerObj ? studentAnswerObj.student_answer : "Pas de réponse";
 
             return (
               <div key={question.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md p-5 border border-gray-200 dark:border-gray-600">
-                <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Question {index + 1}: {question.text}</h3>
+                <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Question {index + 1}: {question.question}</h3>
                 <p className="text-md text-gray-700 dark:text-gray-200 mb-2">Votre réponse: <span className="font-medium text-indigo-600 dark:text-indigo-400">{String(studentAnswer)}</span></p>
-                <p className="text-md text-gray-700 dark:text-gray-200 mb-4">Réponse correcte: <span className="font-medium text-green-600 dark:text-green-400">{String(question.correct_answer)}</span></p>
+                {/* La réponse correcte n'est pas fournie par l'API actuelle */}
+                {/* <p className="text-md text-gray-700 dark:text-gray-200 mb-4">Réponse correcte: <span className="font-medium text-green-600 dark:text-green-400">{String(question.correct_answer)}</span></p> */}
 
                 <div className="flex items-center space-x-4">
                   <label htmlFor={`grade-${question.id}`} className="text-md text-gray-700 dark:text-gray-200">Note:</label>
@@ -100,8 +134,8 @@ export default function QuizCorrectionPage() {
                     type="number"
                     id={`grade-${question.id}`}
                     min="0"
-                    max="10"
-                    defaultValue="0" // Valeur par défaut, à remplacer par la note existante si disponible
+                    max={question.points || 10} // Utilise les points de la question comme max, sinon 10
+                    value={questionGrades[question.id] || 0} // Utilise la note de l'état ou 0 par défaut
                     onChange={(e) => handleGradeChange(question.id, e.target.value)}
                     className="w-24 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
                   />

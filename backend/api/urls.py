@@ -78,6 +78,7 @@ from .views import (
     assistant_grades,
     assistant_submission_detail,
     assistant_grade_submission,
+    assistant_grade_quiz_attempt, # New import for quiz grading
     student_messages,
     user_list,
     department_auditorium_courses, # New import
@@ -143,6 +144,9 @@ urlpatterns = [
     # New Assistant TPTD Submission endpoints
     re_path(r"^assistant/tptd/(?P<assignment_id>\d+)/submission/(?P<submission_id>\d+)/?$", assistant_submission_detail, name="assistant_submission_detail"),
     re_path(r"^assistant/tptd/(?P<assignment_id>\d+)/submission/(?P<submission_id>\d+)/grade/?$", assistant_grade_submission, name="assistant_grade_submission"),
+
+    # New Assistant Quiz Grading endpoint
+    re_path(r"^assistant/quizzes/(?P<quiz_id>\d+)/attempt/(?P<attempt_id>\d+)/grade/?$", assistant_grade_quiz_attempt, name="assistant_grade_quiz_attempt"),
 
     # Admin & other roles endpoints
     re_path(r"^pdg/summary/?$", pdg_summary, name="pdg_summary"),

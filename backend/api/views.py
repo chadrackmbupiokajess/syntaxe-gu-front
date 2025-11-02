@@ -148,33 +148,53 @@ def tptd_my(request):
         })
     return Response(items)
 
+
 @api_view(['GET', 'DELETE'])
 @permission_classes(DEV_PERMS)
 def quizzes_my_detail(request, id):
     try:
-        assignment = Assignment.objects.select_related('course__auditoire__departement').get(id=id, assistant=request.user)
+        # Fetch Quiz object instead of Assignment
+        quiz = Quiz.objects.select_related('course__auditoire__departement').get(id=id, assistant=request.user)
 
         if request.method == 'GET':
+            questions_data = []
+            for q_obj in quiz.questions.all().order_by('id'): # Ensure consistent order
+                questions_data.append({
+                    "id": q_obj.id, # Include question ID
+                    "question": q_obj.question_text, # Use 'question' for consistency with frontend
+                    "type": q_obj.question_type,
+                    "points": getattr(q_obj, 'points', 10), # Use q_obj.points if exists, else 10
+                })
+
+            # Ensure quiz.duration is an integer for timedelta calculation
+            duration_minutes = quiz.duration if isinstance(quiz.duration, int) else 0
+
+            course_name = quiz.course.name if quiz.course else "N/A"
+            auditorium_name = quiz.course.auditoire.name if quiz.course and quiz.course.auditoire else "N/A"
+            department_name = quiz.course.auditoire.departement.name if quiz.course and quiz.course.auditoire and quiz.course.auditoire.departement else "N/A"
+
             data = {
-                "id": assignment.id,
-                "title": assignment.title,
-                "type": assignment.type,
-                "course_name": assignment.course.name,
-                "auditorium": assignment.course.auditoire.name,
-                "department": assignment.course.auditoire.departement.name,
-                "questionnaire": assignment.questionnaire,
-                "total_points": assignment.total_points,
-                "deadline": assignment.deadline,
-                "created_at": assignment.created_at,
+                "id": quiz.id,
+                "title": quiz.title,
+                "type": "Quiz", # Hardcode type as Quiz
+                "course_name": course_name,
+                "auditorium": auditorium_name,
+                "department": department_name,
+                "questionnaire": questions_data, # Now contains questions with IDs
+                "total_points": quiz.total_points,
+                "deadline": (quiz.created_at + timedelta(minutes=duration_minutes)) if quiz.created_at else None, # Assuming duration is in minutes
+                "created_at": quiz.created_at,
             }
             return Response(data)
 
         elif request.method == 'DELETE':
-            assignment.delete()
+            quiz.delete()
             return Response(status=204)
 
-    except Assignment.DoesNotExist:
-        return Response({"detail": "TP/TD non trouvé ou accès non autorisé."}, status=404)
+    except Quiz.DoesNotExist:
+        return Response({"detail": "Quiz non trouvé ou accès non autorisé."}, status=404)
+    except Exception as e:
+        return Response({"detail": f"Une erreur inattendue est survenue: {e}"}, status=500)
 
 
 @api_view(['GET', 'POST'])
@@ -457,6 +477,39 @@ def assistant_grade_submission(request, assignment_id: int, submission_id: int):
 
     except Submission.DoesNotExist:
         return Response({"detail": "Soumission non trouvée ou accès non autorisé."}, status=404)
+    except Exception as e:
+        return Response({"detail": f"Une erreur inattendue est survenue: {e}"}, status=500)
+
+
+@api_view(["POST"])
+@permission_classes(DEV_PERMS)
+def assistant_grade_quiz_attempt(request, quiz_id: int, attempt_id: int):
+    try:
+        with transaction.atomic():
+            attempt = QuizAttempt.objects.select_related('quiz__assistant', 'student').get(id=attempt_id, quiz__id=quiz_id)
+
+            if attempt.quiz.assistant != request.user:
+                return Response({"detail": "Accès non autorisé à cette tentative de quiz."}, status=403)
+
+            total_score = request.data.get("total_score")
+
+            if total_score is None:
+                return Response({"detail": "Le score total est requis."}, status=400)
+
+            # Validate that the score is within the allowed range
+            if not (0 <= float(total_score) <= attempt.quiz.total_points):
+                return Response({"detail": f"La note doit être entre 0 et {attempt.quiz.total_points}."}, status=400)
+
+            # Update the overall quiz attempt score and status
+            attempt.score = total_score
+            attempt.correction_status = 'graded'
+            attempt.graded_at = timezone.now()
+            attempt.save()
+
+            return Response({"detail": "Correction du quiz soumise avec succès.", "total_score": total_score}, status=200)
+
+    except QuizAttempt.DoesNotExist:
+        return Response({"detail": "Tentative de quiz non trouvée ou accès non autorisé."}, status=404)
     except Exception as e:
         return Response({"detail": f"Une erreur inattendue est survenue: {e}"}, status=500)
 
@@ -1233,46 +1286,68 @@ def quizzes_student_attempt_submit(request, id: int):
             answers_data = request.data.get('answers', {})
             reason = request.data.get('reason', 'manual')
 
-            attempt = QuizAttempt.objects.get(student=user, quiz=quiz)
-            attempt.submission_reason = reason
+            attempt, created = QuizAttempt.objects.get_or_create(
+                student=user,
+                quiz=quiz,
+                defaults={'total_questions': quiz.questions.count()}
+            )
 
+            if not created and attempt.submitted_at:
+                return Response({"detail": "Vous avez déjà soumis ce quiz."}, status=400)
+
+            attempt.submission_reason = reason
             Answer.objects.filter(attempt=attempt).delete()
 
             total_score = 0
-            should_auto_grade = attempt.submission_reason in ['time-out', 'left-page']
+            has_text_question = quiz.questions.filter(question_type='text').exists()
+            
+            # Set initial correction status. It will be 'graded' if auto-grading is successful.
+            if has_text_question:
+                attempt.correction_status = 'manual'
+            else:
+                attempt.correction_status = 'pending'
 
             for question_id, answer_value in answers_data.items():
                 question = Question.objects.get(id=question_id)
-                points = None
+                points = 0
+                
+                answer = Answer.objects.create(
+                    attempt=attempt,
+                    question=question,
+                    answer_text=str(answer_value) if question.question_type == 'text' else ''
+                )
 
-                if should_auto_grade:
-                    if question.question_type == 'single':
-                        correct_choice = question.choices.filter(is_correct=True).first()
-                        if correct_choice and correct_choice.id == answer_value:
-                            points = 1
-
-                    elif question.question_type == 'multiple':
-                        correct_choices = set(question.choices.filter(is_correct=True).values_list('id', flat=True))
-                        if isinstance(answer_value, list) and set(answer_value) == correct_choices:
-                            points = 1
-
-                    answer = Answer.objects.create(
-                        attempt=attempt,
-                        question=question,
-                        answer_text=str(answer_value) if question.question_type == 'text' else '',
-                        points_obtained=points
-                    )
-
-                    if question.question_type in ['single', 'multiple'] and answer_value:
+                if question.question_type in ['single', 'multiple'] and answer_value:
+                    try:
                         if isinstance(answer_value, list):
                             answer.selected_choices.set(answer_value)
                         else:
                             answer.selected_choices.set([answer_value])
+                    except (ValueError, TypeError):
+                        # Handle cases where answer_value might not be a valid ID list
+                        pass
 
-                    if should_auto_grade and points is not None:
-                        total_score += points
+                # Auto-grade if there are no text questions
+                if not has_text_question:
+                    question_points = getattr(question, 'points', 10)
+                    if question.question_type == 'single':
+                        correct_choice = question.choices.filter(is_correct=True).first()
+                        if correct_choice and str(correct_choice.id) == str(answer_value):
+                            points = question_points
+                    elif question.question_type == 'multiple':
+                        correct_choices = set(str(c.id) for c in question.choices.filter(is_correct=True))
+                        submitted_choices = set(str(v) for v in answer_value) if isinstance(answer_value, list) else set()
+                        if correct_choices == submitted_choices:
+                            points = question_points
+                
+                answer.points_obtained = points
+                answer.save()
+                total_score += points
 
-            attempt.score = total_score if should_auto_grade else None
+            if not has_text_question:
+                attempt.score = total_score
+                attempt.correction_status = 'graded'
+
             attempt.submitted_at = timezone.now()
             attempt.save()
 
@@ -1281,7 +1356,7 @@ def quizzes_student_attempt_submit(request, id: int):
             "correction_status": attempt.correction_status,
             "total_questions": attempt.total_questions
         }
-        if should_auto_grade:
+        if not has_text_question:
             response_data["score"] = attempt.score
 
         return Response(response_data)
