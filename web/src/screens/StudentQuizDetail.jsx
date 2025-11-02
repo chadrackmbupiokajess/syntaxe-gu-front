@@ -50,7 +50,7 @@ function QuizQuestion({ question, answer, onAnswerChange, submitted }) {
               type="checkbox"
               id={`q${question.id}-c${choice.id}`}
               value={choice.id}
-              checked={answer?.includes(choice.id)}
+              checked={answer?.includes(choice.id) ?? false}
               onChange={() => handleChoiceChange(choice.id)}
               disabled={submitted}
               className="mr-2"
@@ -80,6 +80,7 @@ export default function StudentQuizDetail() {
   const [answers, setAnswers] = useState({});
   const [submissionResult, setSubmissionResult] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
+  const [attemptId, setAttemptId] = useState(null);
 
   const submittedRef = useRef(false);
 
@@ -87,7 +88,7 @@ export default function StudentQuizDetail() {
     if (submittedRef.current) return;
     submittedRef.current = true;
 
-    const res = await safePost(`/api/quizzes/student/attempts/${id}/submit/`, { answers, reason });
+    const res = await safePost(`/api/quizzes/student/attempts/${attemptId}/submit/`, { answers, reason });
     if (res) {
       setSubmissionResult(res);
       if (res.correction_status === 'automatic') {
@@ -101,23 +102,41 @@ export default function StudentQuizDetail() {
       toast.push({ title: "Erreur", message: "Erreur lors de la soumission du quiz.", kind: 'error' });
       submittedRef.current = false; // Allow retry if submission fails
     }
-  }, [id, answers, toast]);
-
-  const fetchQuiz = async () => {
-    setLoading(true);
-    const data = await safeGet(`/api/quizzes/student/${id}/`);
-    if (data) {
-      setQuiz(data);
-      if (!submissionResult) {
-        setTimeLeft(data.duration * 60);
-      }
-    }
-    setLoading(false);
-  };
+  }, [attemptId, answers, toast]);
 
   useEffect(() => {
-    fetchQuiz();
-  }, [id]);
+    const fetchAndStartQuiz = async () => {
+      setLoading(true);
+      const startRes = await safePost(`/api/quizzes/student/${id}/start/`);
+      if (startRes && startRes.attempt_id) {
+        setAttemptId(startRes.attempt_id);
+        const data = await safeGet(`/api/quizzes/student/${id}/`);
+        if (data) {
+          setQuiz(data);
+          const initialAnswers = {};
+          data.questions?.forEach(q => {
+            if (q.type === 'multiple') {
+              initialAnswers[q.id] = [];
+            } else if (q.type === 'single') {
+              initialAnswers[q.id] = null;
+            } else {
+              initialAnswers[q.id] = '';
+            }
+          });
+          setAnswers(initialAnswers);
+          if (!submissionResult) {
+            setTimeLeft(data.duration * 60);
+          }
+        }
+      } else {
+        toast.push({ title: "Erreur", message: "Impossible de démarrer le quiz.", kind: 'error' });
+        navigate('/etudiant/travaux');
+      }
+      setLoading(false);
+    };
+
+    fetchAndStartQuiz();
+  }, [id, navigate, toast]);
 
   // Effet pour le compte à rebours
   useEffect(() => {

@@ -329,7 +329,7 @@ export function initMock() {
   // Assistant: cours par auditoire
   const auditoriumCourses = {
     'L3-INFO-A': [ { code: 'ALGO301', title: 'Algorithmique' }, { code: 'RES304', title: 'Réseaux' } ],
-    'L2-INFO-B': [ { code: 'BD202', title: 'Bases de données' }, { code: 'POO205', title: 'Programmation OO' } ],
+    'L2-INFO-B': [ { code: 'BD202', title: 'Bases de données', }, { code: 'POO205', title: 'Programmation OO' } ],
   }
   mock.onGet(/\/api\/assistant\/auditoriums\/(.+)\/courses/).reply(config => {
     const m = config.url.match(/auditoriums\/(.+)\/courses/)
@@ -484,15 +484,6 @@ export function initMock() {
   mock.onGet('/api/apparitorat/presences').reply(200, [
     { id: 1, date: '2025-11-04', auditoire: 'L3-INFO-A', present: 58, total: 62 },
     { id: 2, date: '2025-11-04', auditoire: 'L2-INFO-B', present: 52, total: 58 },
-  ])
-
-  mock.onGet('/api/sga/summary').reply(200, {
-    enrollmentsPending: 14,
-    auditoriumsManaged: 12,
-  })
-  mock.onGet('/api/sga/demandes').reply(200, [
-    { id: 'DEM-1', type: 'Inscription', etudiant: 'Chris M.', statut: 'en attente' },
-    { id: 'DEM-2', type: 'Transfert', etudiant: 'Diane N.', statut: 'validé' },
   ])
 
   mock.onGet('/api/sgad/summary').reply(200, {

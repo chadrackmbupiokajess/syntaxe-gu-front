@@ -6,6 +6,7 @@ import Layout from '../components/Layout';
 import StudentLayout from '../components/StudentLayout';
 import AssistantLayout from '../components/AssistantLayout';
 import DgLayout from '../components/DgLayout';
+import SgaLayout from '../components/SgaLayout';
 import SectionLayout from '../components/SectionLayout';
 import DepartementLayout from '../components/DepartementLayout';
 import ProtectedRoute from '../shared/ProtectedRoute';
@@ -84,6 +85,13 @@ import DgPersonnelManagement from '../screens/DgPersonnelManagement';
 import DgValidation from '../screens/DgValidation';
 import DgCommunication from '../screens/DgCommunication';
 
+// SGA-specific components
+import SgaInscriptions from '../screens/SgaInscriptions';
+import SgaProgrammes from '../screens/SgaProgrammes';
+import SgaAuditoires from '../screens/SgaAuditoires';
+import SgaDeliberations from '../screens/SgaDeliberations';
+import SgaProfil from '../screens/SgaProfil';
+
 export default function App() {
   return (
     <Routes>
@@ -154,7 +162,14 @@ export default function App() {
             </Route>
           </Route>
           <Route path="/sga" element={<RoleRoute allowedRoles={['sga']} />}>
-            <Route index element={<SgaDashboard />} />
+            <Route element={<SgaLayout />}>
+              <Route index element={<SgaDashboard />} />
+              <Route path="inscriptions" element={<SgaInscriptions />} />
+              <Route path="programmes" element={<SgaProgrammes />} />
+              <Route path="auditoires" element={<SgaAuditoires />} />
+              <Route path="deliberations" element={<SgaDeliberations />} />
+              <Route path="profil" element={<SgaProfil />} />
+            </Route>
           </Route>
           <Route path="/sgad" element={<RoleRoute allowedRoles={['sgad']} />}>
             <Route index element={<SgadDashboard />} />

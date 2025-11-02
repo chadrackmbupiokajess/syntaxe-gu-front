@@ -173,10 +173,10 @@ export default function DgDashboard() {
       {/* Hero Section for Main KPIs */}
       {sum && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard label="Décisions en attente" value={sum.decisionsPending} icon={<BriefcaseIcon />} color="bg-blue-600 dark:bg-blue-800" />
-          <KpiCard label="Projets en cours" value={sum.projects} icon={<ChartBarIcon />} color="bg-green-600 dark:bg-green-800" />
-          <KpiCard label="Budget utilisé (%)" value={sum.budgetUsed} icon={<BookOpenIcon />} color="bg-yellow-600 dark:bg-yellow-800" />
-          <KpiCard label="Satisfaction Globale (%)" value={sum.satisfaction} icon={<CheckCircleIcon />} color="bg-purple-600 dark:bg-purple-800" />
+          <KpiCard label="Décisions en attente" value={sum.decisionsPending} icon={<BriefcaseIcon />} color="bg-gradient-to-r from-blue-500 to-blue-600" />
+          <KpiCard label="Projets en cours" value={sum.projects} icon={<ChartBarIcon />} color="bg-gradient-to-r from-green-500 to-green-600" />
+          <KpiCard label="Budget utilisé (%)" value={sum.budgetUsed} icon={<BookOpenIcon />} color="bg-gradient-to-r from-orange-500 to-orange-600" />
+          <KpiCard label="Satisfaction Globale (%)" value={sum.satisfaction} icon={<CheckCircleIcon />} color="bg-gradient-to-r from-purple-500 to-purple-600" />
         </div>
       )}
 
@@ -187,10 +187,10 @@ export default function DgDashboard() {
           <Skeleton count={4} className="h-24" />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <KpiCard label="Total Sections" value={generalStats.totalSections} color="bg-indigo-50 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200" />
-            <KpiCard label="Total Départements" value={generalStats.totalDepartments} color="bg-teal-50 dark:bg-teal-900 text-teal-800 dark:text-teal-200" />
-            <KpiCard label="Total Enseignants" value={generalStats.totalTeachers} color="bg-sky-50 dark:bg-sky-900 text-sky-800 dark:text-sky-200" />
-            <KpiCard label="Total Étudiants" value={generalStats.totalStudents} color="bg-amber-50 dark:bg-amber-900 text-amber-800 dark:text-amber-200" />
+            <KpiCard label="Total Sections" value={generalStats.totalSections} color="bg-gradient-to-r from-blue-500 to-blue-600" icon={<UsersIcon />} />
+            <KpiCard label="Total Départements" value={generalStats.totalDepartments} color="bg-gradient-to-r from-green-500 to-green-600" icon={<AcademicCapIcon />} />
+            <KpiCard label="Total Enseignants" value={generalStats.totalTeachers} color="bg-gradient-to-r from-orange-500 to-orange-600" icon={<UsersIcon />} />
+            <KpiCard label="Total Étudiants" value={generalStats.totalStudents} color="bg-gradient-to-r from-purple-500 to-purple-600" icon={<UsersIcon />} />
           </div>
         )}
       </div>

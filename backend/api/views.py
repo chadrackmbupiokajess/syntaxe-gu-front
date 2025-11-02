@@ -1,3 +1,5 @@
+import uuid
+
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import permissions
@@ -37,6 +39,12 @@ class IsDirecteurGeneral(BasePermission):
     """Allows access only to Directeur Général users."""
     def has_permission(self, request, view):
         return request.user and request.user.is_authenticated and request.user.role == 'dg'
+
+# Custom Permission for Secrétaire Général Académique
+class IsSGA(BasePermission):
+    """Allows access only to Secrétaire Général Académique users."""
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated and request.user.role == 'sga'
 
 @api_view(['GET'])
 @permission_classes(DEV_PERMS)
@@ -1116,8 +1124,13 @@ def quizzes_student_detail(request, id):
             choices = []
             if q.question_type in ['single', 'multiple']:
                 for c in q.choices.all():
-                    choices.append({"text": c.choice_text, "is_correct": c.is_correct})
-            questions.append({"text": q.question_text, "type": q.question_type, "choices": choices})
+                    choices.append({"id": c.id, "text": c.choice_text})
+            questions.append({
+                "id": q.id,
+                "text": q.question_text,
+                "type": q.question_type,
+                "choices": choices
+            })
 
         assistant_name = quiz.assistant.get_full_name() if quiz.assistant else "N/A"
         deadline = (quiz.created_at or timezone.now()) + timedelta(days=7)
@@ -1282,26 +1295,21 @@ def quizzes_student_attempt_submit(request, id: int):
     try:
         with transaction.atomic():
             user = request.user
-            quiz = Quiz.objects.get(id=id)
-            answers_data = request.data.get('answers', {})
-            reason = request.data.get('reason', 'manual')
+            attempt = QuizAttempt.objects.select_related('quiz').get(id=id, student=user)
 
-            attempt, created = QuizAttempt.objects.get_or_create(
-                student=user,
-                quiz=quiz,
-                defaults={'total_questions': quiz.questions.count()}
-            )
-
-            if not created and attempt.submitted_at:
+            if attempt.submitted_at:
                 return Response({"detail": "Vous avez déjà soumis ce quiz."}, status=400)
 
+            answers_data = request.data.get('answers', {})
+            reason = request.data.get('reason', 'manual')
             attempt.submission_reason = reason
+
             Answer.objects.filter(attempt=attempt).delete()
 
             total_score = 0
+            quiz = attempt.quiz
             has_text_question = quiz.questions.filter(question_type='text').exists()
-            
-            # Set initial correction status. It will be 'graded' if auto-grading is successful.
+
             if has_text_question:
                 attempt.correction_status = 'manual'
             else:
@@ -1324,10 +1332,8 @@ def quizzes_student_attempt_submit(request, id: int):
                         else:
                             answer.selected_choices.set([answer_value])
                     except (ValueError, TypeError):
-                        # Handle cases where answer_value might not be a valid ID list
                         pass
 
-                # Auto-grade if there are no text questions
                 if not has_text_question:
                     question_points = getattr(question, 'points', 10)
                     if question.question_type == 'single':
@@ -1482,27 +1488,100 @@ def dg_actions(request):
     return Response(actions)
 
 
-# ---- Endpoints SGA (placeholders) ----
+# ---- Endpoints SGA (Dynamique) ----
 
 @api_view(["GET"])
-@permission_classes(DEV_PERMS)
-def sga_summary(request):
+@permission_classes([IsAuthenticated, IsSGA])
+def sga_kpi_summary(request):
+    total_students = User.objects.filter(role='etudiant').count()
+    total_teachers = User.objects.filter(Q(role='professeur') | Q(role='assistant')).count()
+    
+    # Programmes à examiner: Compter les cours créés récemment (ex: dans les 30 derniers jours)
+    # Ou les cours sans assignation d'enseignant (nécessitant une décision)
+    # Pour l'instant, on prend les 5 derniers cours créés comme proxy.
+    programs_to_review = Course.objects.order_by('-id')[:5].count()
+
+    # Inscriptions en attente: Étudiants qui ont un auditoire mais n'ont pas encore payé la première tranche
+    # Ou n'ont aucun paiement enregistré
+    pending_enrollments = User.objects.filter(
+        role='etudiant',
+        current_auditoire__isnull=False
+    ).exclude(
+        payments__tranche_number=1, payments__amount__gt=0 # Assuming a paid first tranche means enrollment is not pending
+    ).distinct().count()
+
     data = {
-        "enrollmentsPending": 23,
-        "auditoriumsManaged": 18,
+        "totalStudents": total_students,
+        "programsToReview": programs_to_review,
+        "teachers": total_teachers,
+        "pendingEnrollments": pending_enrollments,
     }
     return Response(data)
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsSGA])
+def sga_program_approvals(request):
+    # Lister les cours récemment créés qui pourraient nécessiter une approbation du SGA
+    # On peut ajouter un champ 'status' au modèle Course si un workflow d'approbation est nécessaire.
+    # Pour l'instant, on liste les cours créés récemment.
+    recent_courses = Course.objects.select_related('auditoire__departement').order_by('-id')[:10]
+    approvals = []
+    for course in recent_courses:
+        approvals.append({
+            "id": course.id,
+            "program": course.name,
+            "department": course.auditoire.departement.name if course.auditoire and course.auditoire.departement else "N/A",
+            "status": "En attente" # Placeholder status
+        })
+    return Response(approvals)
 
 @api_view(["GET"])
-@permission_classes(DEV_PERMS)
-def sga_demandes(request):
-    rows = [
-        {"id": 101, "type": "Attestation", "etudiant": "STU-00023", "statut": "en attente"},
-        {"id": 102, "type": "Changement auditoire", "etudiant": "STU-00452", "statut": "validé"},
-        {"id": 103, "type": "Duplicata carte", "etudiant": "STU-01234", "statut": "en attente"},
+@permission_classes([IsAuthenticated, IsSGA])
+def sga_calendar_events(request):
+    # Récupérer les événements du calendrier académique
+    events = Calendrier.objects.select_related('course', 'auditoire').order_by('day', 'start_time')
+    calendar_data = []
+    for event in events:
+        calendar_data.append({
+            "id": event.id,
+            "event": f"{event.course.name if event.course else 'Libre'} ({event.auditoire.name if event.auditoire else 'N/A'})",
+            "date": f"{event.day} {event.start_time.strftime('%H:%M')}",
+            "type": "Cours"
+        })
+    return Response(calendar_data)
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsSGA])
+def sga_enrollment_requests(request):
+    # Étudiants ayant un auditoire mais n'ayant pas encore payé la première tranche
+    pending_students = User.objects.filter(
+        role='etudiant',
+        current_auditoire__isnull=False
+    ).exclude(
+        payments__tranche_number=1, payments__amount__gt=0
+    ).select_related('current_auditoire__departement').distinct().order_by('last_name', 'first_name')[:10]
+
+    enrollment_data = []
+    for student in pending_students:
+        enrollment_data.append({
+            "id": student.id,
+            "student": student.get_full_name(),
+            "program": student.current_auditoire.name if student.current_auditoire else "N/A",
+            "status": "En attente de paiement 1ère tranche" # Ou un statut plus précis
+        })
+    return Response(enrollment_data)
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsSGA])
+def sga_deliberation_sessions(request):
+    # Simuler des sessions de délibération, car il n'y a pas de modèle dédié.
+    # Dans une implémentation réelle, cela viendrait d'un modèle DeliberationSession.
+    deliberations = [
+        { "id": 1, "faculty": "Sciences Appliquées", "date": "2024-02-10", "status": "Planifiée" },
+        { "id": 2, "faculty": "Sciences Économiques", "date": "2024-02-15", "status": "Planifiée" },
+        { "id": 3, "faculty": "Droit", "date": "2024-01-28", "status": "Terminée" },
     ]
-    return Response(rows)
+    return Response(deliberations)
 
 
 # ---- Endpoints SGAD (placeholders)
@@ -1913,7 +1992,7 @@ def department_courses_list(request):
             "intitule": course.name,
             "departement": course.auditoire.departement.name,
             "credits": course.credits,
-            "semestre": course.session_type, # Assuming session_type can be S1/S2
+            "semestre": course.session_type,
             "teacher": teacher_name,
             "auditoire_id": course.auditoire.id,
             "auditoire_name": course.auditoire.name,

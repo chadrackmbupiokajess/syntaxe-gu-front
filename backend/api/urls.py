@@ -33,8 +33,15 @@ from .views import (
     pdg_activities,
     dg_summary,
     dg_actions,
-    sga_summary,
-    sga_demandes,
+    # Anciennes vues SGA (supprimées)
+    # sga_summary,
+    # sga_demandes,
+    # Nouvelles vues SGA
+    sga_kpi_summary,
+    sga_program_approvals,
+    sga_calendar_events,
+    sga_enrollment_requests,
+    sga_deliberation_sessions,
     sgad_summary,
     sgad_paie,
     section_summary,
@@ -51,8 +58,8 @@ from .views import (
     department_courses_list,
     department_course_create,
     department_auditoriums_list,
-    department_auditorium_schedules_list_create, # Renamed import
-    department_auditorium_schedule_detail, # New import
+    department_auditorium_schedules_list_create,
+    department_auditorium_schedule_detail,
     jury_summary,
     jury_defenses,
     apparitorat_summary,
@@ -78,14 +85,14 @@ from .views import (
     assistant_grades,
     assistant_submission_detail,
     assistant_grade_submission,
-    assistant_grade_quiz_attempt, # New import for quiz grading
+    assistant_grade_quiz_attempt,
     student_messages,
     user_list,
-    department_auditorium_courses, # New import
-    department_auditoires_with_courses, # New import
-    department_assign_course, # New import
-    department_student_performance, # New import
-    department_teacher_distribution, # New import
+    department_auditorium_courses,
+    department_auditoires_with_courses,
+    department_assign_course,
+    department_student_performance,
+    department_teacher_distribution,
 )
 
 urlpatterns = [
@@ -105,10 +112,10 @@ urlpatterns = [
     re_path(r"^quizzes/student/available/?$", quizzes_student_available, name="quizzes_student_available"),
     re_path(r"^tptd/student/available/?$", tptd_student_available, name="tptd_student_available"),
     re_path(r"^tptd/student/(?P<id>\d+)/?$", tptd_student_detail, name="tptd_student_detail"),
+    re_path(r"^quizzes/student/(?P<id>\d+)/start/?$", quizzes_student_start, name="quizzes_student_start"),
     re_path(r"^quizzes/student/(?P<id>\d+)/?$", quizzes_student_detail, name="quizzes_student_detail"),
     re_path(r"^quizzes/student/my-attempts/?$", quizzes_student_my_attempts, name="quizzes_student_my_attempts"),
     re_path(r"^tptd/student/my-submissions/?$", tptd_student_my_submissions, name="tptd_student_my_submissions"),
-    re_path(r"^quizzes/student/(?P<id>\d+)/start/?$", quizzes_student_start, name="quizzes_student_start"),
     re_path(r"^quizzes/student/attempts/(?P<id>\d+)/submit/?$", quizzes_student_attempt_submit, name="quizzes_student_attempt_submit"),
     re_path(r"^tptd/student/(?P<id>\d+)/submit/?$", tptd_student_submit, name="tptd_student_submit"),
     re_path(r"^student/courses/?$", student_courses, name="student_courses"),
@@ -153,8 +160,14 @@ urlpatterns = [
     re_path(r"^pdg/activities/?$", pdg_activities, name="pdg_activities"),
     re_path(r"^dg/summary/?$", dg_summary, name="dg_summary"),
     re_path(r"^dg/actions/?$", dg_actions, name="dg_actions"),
-    re_path(r"^sga/summary/?$", sga_summary, name="sga_summary"),
-    re_path(r"^sga/demandes/?$", sga_demandes, name="sga_demandes"),
+
+    # SGA Endpoints (Dynamique)
+    re_path(r"^sga/kpi/?$", sga_kpi_summary, name="sga_kpi_summary"),
+    re_path(r"^sga/academic-coordination/program-approvals/?$", sga_program_approvals, name="sga_program_approvals"),
+    re_path(r"^sga/academic-coordination/calendar-events/?$", sga_calendar_events, name="sga_calendar_events"),
+    re_path(r"^sga/student-management/enrollment-requests/?$", sga_enrollment_requests, name="sga_enrollment_requests"),
+    re_path(r"^sga/evaluation-supervision/deliberation-sessions/?$", sga_deliberation_sessions, name="sga_deliberation_sessions"),
+
     re_path(r"^sgad/summary/?$", sgad_summary, name="sgad_summary"),
     re_path(r"^sgad/paie/?$", sgad_paie, name="sgad_paie"),
     re_path(r"^section/summary/?$", section_summary, name="section_summary"),
@@ -165,19 +178,19 @@ urlpatterns = [
     re_path(r"^section/courses/?$", section_courses_list, name="section_courses_list"),
     re_path(r"^department/summary/?$", department_summary, name="department_summary"),
     re_path(r"^department/list/?$", department_list, name="department_list"),
-    re_path(r"^department/students/?$", department_students_list, name="department_students_list"), # New endpoint
-    re_path(r"^department/teachers/?$", department_teachers_list, name="department_teachers_list"), # New endpoint
-    re_path(r"^department/activities/?$", department_activities_list, name="department_activities_list"), # New endpoint
-    re_path(r"^department/courses/?$", department_courses_list, name="department_courses_list"), # New endpoint
-    re_path(r"^department/course-create/?$", department_course_create, name="department_course_create"), # Corrected endpoint
-    re_path(r"^department/auditoriums/?$", department_auditoriums_list, name="department_auditoriums_list"), # New endpoint
-    re_path(r"^department/auditoriums/(?P<auditorium_id>\d+)/courses/?$", department_auditorium_courses, name="department_auditorium_courses"), # New endpoint for courses by auditorium
-    re_path(r"^department/auditoriums/(?P<auditorium_id>\d+)/schedules/?$", department_auditorium_schedules_list_create, name="department_auditorium_schedules_list_create"), # Renamed view
-    re_path(r"^department/auditoriums/(?P<auditorium_id>\d+)/schedules/(?P<schedule_id>\d+)/?$", department_auditorium_schedule_detail, name="department_auditorium_schedule_detail"), # New endpoint for schedule detail
-    re_path(r"^department/student-performance/?$", department_student_performance, name="department_student_performance"), # New endpoint for student performance
-    re_path(r"^department/teacher-distribution/?$", department_teacher_distribution, name="department_teacher_distribution"), # New endpoint for teacher distribution
-    re_path(r"^department/auditoires-with-courses/?$", department_auditoires_with_courses, name="department_auditoires_with_courses"), # New endpoint for auditoires with courses
-    re_path(r"^department/assign-course/?$", department_assign_course, name="department_assign_course"), # New endpoint for assigning courses
+    re_path(r"^department/students/?$", department_students_list, name="department_students_list"),
+    re_path(r"^department/teachers/?$", department_teachers_list, name="department_teachers_list"),
+    re_path(r"^department/activities/?$", department_activities_list, name="department_activities_list"),
+    re_path(r"^department/courses/?$", department_courses_list, name="department_courses_list"),
+    re_path(r"^department/course-create/?$", department_course_create, name="department_course_create"),
+    re_path(r"^department/auditoriums/?$", department_auditoriums_list, name="department_auditoriums_list"),
+    re_path(r"^department/auditoriums/(?P<auditorium_id>\d+)/courses/?$", department_auditorium_courses, name="department_auditorium_courses"),
+    re_path(r"^department/auditoriums/(?P<auditorium_id>\d+)/schedules/?$", department_auditorium_schedules_list_create, name="department_auditorium_schedules_list_create"),
+    re_path(r"^department/auditoriums/(?P<auditorium_id>\d+)/schedules/(?P<schedule_id>\d+)/?$", department_auditorium_schedule_detail, name="department_auditorium_schedule_detail"),
+    re_path(r"^department/student-performance/?$", department_student_performance, name="department_student_performance"),
+    re_path(r"^department/teacher-distribution/?$", department_teacher_distribution, name="department_teacher_distribution"),
+    re_path(r"^department/auditoires-with-courses/?$", department_auditoires_with_courses, name="department_auditoires_with_courses"),
+    re_path(r"^department/assign-course/?$", department_assign_course, name="department_assign_course"),
     re_path(r"^jury/summary/?$", jury_summary, name="jury_summary"),
     re_path(r"^jury/defenses/?$", jury_defenses, name="jury_defenses"),
     re_path(r"^apparitorat/summary/?$", apparitorat_summary, name="apparitorat_summary"),
