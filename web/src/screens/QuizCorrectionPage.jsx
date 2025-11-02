@@ -9,48 +9,26 @@ export default function QuizCorrectionPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // --- Données de démonstration (Mock Data) pour le développement frontend ---
-  // REMPLACER CES DONNÉES PAR LES RÉSULTATS DE VOS APPELS API RÉELS
-  const mockQuizData = {
-    title: `Quiz ${quiz_id}: Introduction à la Physique Quantique`,
-    total_questions: 3,
-    questions: [
-      { id: 1, text: "Quelle est la capitale de la France ?", type: "text", correct_answer: "Paris" },
-      { id: 2, text: "2 + 2 = ?", type: "number", correct_answer: "4" },
-      { id: 3, text: "Les oiseaux volent-ils ?", type: "boolean", correct_answer: "Oui" },
-    ],
-  };
-
-  const mockAttemptData = {
-    student_name: "Jean Dupont",
-    submitted_at: "2023-10-27T10:30:00Z",
-    answers: [
-      { question_id: 1, student_answer: "Paris" },
-      { question_id: 2, student_answer: "5" },
-      { question_id: 3, student_answer: "Oui" },
-    ],
-  };
-  // -------------------------------------------------------------------------
-
   useEffect(() => {
     const fetchQuizData = async () => {
       try {
         setLoading(true);
-        // --- REMPLACER CES APPELS AXIOS PAR VOS APPELS API RÉELS ---
-        // const quizRes = await axios.get(`/api/quizzes/${quiz_id}`);
-        // const attemptRes = await axios.get(`/api/quizzes/${quiz_id}/attempt/${attempt_id}`);
+        const quizRes = await axios.get(`/api/quizzes/my/${quiz_id}`);
+        console.log("Quiz data received:", quizRes.data); // Ajoutez ce log pour inspecter la réponse
+        setQuizDetails(quizRes.data);
 
-        // setQuizDetails(quizRes.data);
+        // L'appel API pour les détails de la tentative n'a pas de correspondance claire dans urls.py pour un assistant.
+        // Il faudra peut-être un nouvel endpoint ou une autre approche.
+        // Pour l'instant, je le commente pour éviter l'erreur 404.
+        // const attemptRes = await axios.get(`/api/quizzes/${quiz_id}/attempt/${attempt_id}`);
         // setAttemptDetails(attemptRes.data);
 
-        // --- Utilisation des données de démonstration en attendant l'API réelle ---
-        setQuizDetails(mockQuizData);
-        setAttemptDetails(mockAttemptData);
-        // -------------------------------------------------------------------------
+        // Placeholder for attempt details if needed for UI, remove once actual API is implemented
+        setAttemptDetails({ student_name: "Chargement...", submitted_at: new Date().toISOString(), answers: [] });
 
       } catch (err) {
         console.error("Erreur lors du chargement des données du quiz:", err);
-        setError("Impossible de charger les détails du quiz ou de la tentative. (Vérifiez votre API backend)");
+        setError("Impossible de charger les détails du quiz ou de la tentative. Veuillez vérifier le backend.");
       } finally {
         setLoading(false);
       }
@@ -75,8 +53,13 @@ export default function QuizCorrectionPage() {
     );
   }
 
-  // Les données utilisées seront directement quizDetails et attemptDetails (qui sont maintenant les mock data)
-  // Plus besoin de mockQuizDetails ou mockAttemptDetails conditionnels ici
+  if (!quizDetails || !attemptDetails) {
+    return (
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-6 flex items-center justify-center">
+        <p className="text-xl text-gray-600 dark:text-gray-300">Aucune donnée trouvée pour ce quiz ou cette tentative.</p>
+      </div>
+    );
+  }
 
   const handleGradeChange = (questionId, newGrade) => {
     // Logique pour mettre à jour la note d'une question
@@ -101,7 +84,7 @@ export default function QuizCorrectionPage() {
         </div>
 
         <div className="space-y-6">
-          {quizDetails.questions.map((question, index) => {
+          {quizDetails.questions && quizDetails.questions.map((question, index) => {
             const studentAnswerObj = attemptDetails.answers.find(ans => ans.question_id === question.id);
             const studentAnswer = studentAnswerObj ? studentAnswerObj.student_answer : "Pas de réponse";
 
