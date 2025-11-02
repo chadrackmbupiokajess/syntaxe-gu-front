@@ -61,11 +61,12 @@ import AssistantToGrade from '../screens/AssistantToGrade';
 import AssistantProfile from '../screens/AssistantProfile';
 import AssistantStudentProfile from '../screens/AssistantStudentProfile';
 import AssistantSubmissionDetail from '../screens/AssistantSubmissionDetail';
+import QuizCorrectionPage from '../screens/QuizCorrectionPage';
 
 // Section-specific components (for nested routes)
 import GestionPedagogique from '../components/GestionPedagogique';
-import GestionPedagogiqueSection from '../components/GestionPedagogiqueSection'; // Import new component
-import GestionHoraires from '../components/GestionHoraires'; // New import
+import GestionPedagogiqueSection from '../components/GestionPedagogiqueSection';
+import GestionHoraires from '../components/GestionHoraires';
 import SupervisionDepartements from '../components/SupervisionDepartements';
 import GestionEnseignants from '../components/GestionEnseignants';
 import GestionEtudiants from '../components/GestionEtudiants';
@@ -73,8 +74,8 @@ import CoordinationAdministrative from '../components/CoordinationAdministrative
 import SectionProfile from '../screens/SectionProfile';
 import DgProfile from '../screens/DgProfile';
 import DepartementProfile from '../screens/DepartementProfile';
-import SectionReports from '../screens/SectionReports'; // Import new component
-import SectionMessages from '../screens/SectionMessages'; // Import new component
+import SectionReports from '../screens/SectionReports';
+import SectionMessages from '../screens/SectionMessages';
 
 // DG-specific components
 import DgAcademicReports from '../screens/DgAcademicReports';
@@ -128,10 +129,13 @@ export default function App() {
               <Route path="quizzes" element={<AssistantQuizzes />} />
               <Route path="quizzes/new" element={<AssistantNewQuiz />} />
               <Route path="quizzes/:id" element={<AssistantQuizDetails />} />
-              <Route path="quizzes/:quizId/submission/:submissionId" element={<AssistantSubmissionDetail />} />
+              {/* Ancienne route pour les soumissions de quiz, potentiellement redondante ou à remplacer */}              
+              {/* <Route path="quizzes/:quizId/submission/:submissionId" element={<AssistantSubmissionDetail />} /> */}
               <Route path="notifications" element={<StudentNotifications />} />
               <Route path="a-corriger" element={<AssistantToGrade />} />
               <Route path="profil" element={<AssistantProfile />} />
+              {/* Nouvelle route spécifique pour la correction de quiz */}              
+              <Route path="quizzes/:quiz_id/submission/:attempt_id" element={<QuizCorrectionPage />} />
             </Route>
           </Route>
 
