@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '../api/configAxios';
 import KpiCard from '../components/KpiCard';
 import ListWithFilters from '../components/ListWithFilters';
 import Skeleton from '../components/Skeleton';
@@ -9,6 +9,7 @@ import { FaUsers, FaBook, FaCalendarAlt, FaCheckCircle } from 'react-icons/fa';
 export default function SgaDashboard() {
   const { push } = useToast();
   const [loading, setLoading] = useState(true);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false); // Modal state
   const [data, setData] = useState({
     kpi: null,
     programApprovals: [],
@@ -51,6 +52,9 @@ export default function SgaDashboard() {
     fetchData();
     push({ title: 'Données rafraîchies', status: 'success' });
   };
+
+  const openScheduleModal = () => setIsScheduleModalOpen(true);
+  const closeScheduleModal = () => setIsScheduleModalOpen(false);
 
   return (
     <div className="grid gap-8">
@@ -131,6 +135,51 @@ export default function SgaDashboard() {
           { label: 'Planifier', onClick: (row) => push({ title: 'Action', message: `Planification de ${row.event}.` }) },
         ]}
       />
+
+      {/* Auditoire et Horaire Section */}
+      <ListWithFilters
+        title="Auditoires et Horaires"
+        data={[{ id: 1, name: 'Principal', description: 'Voir les horaires des cours' }]} // Dummy data
+        loading={loading}
+        onRefresh={refreshData}
+        columns={[
+          { key: 'name', header: 'Auditoire' },
+          { key: 'description', header: 'Description' },
+        ]}
+        actions={[
+          { label: "Voir l'horaire", onClick: openScheduleModal },
+        ]}
+      />
+
+      {/* Schedule Modal */}
+      {isScheduleModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
+          <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl">
+            <h2 className="text-2xl font-bold mb-4">Horaire des cours</h2>
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr>
+                  <th className="border-b-2 p-2">Jour</th>
+                  <th className="border-b-2 p-2">Heures</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td className="border-b p-2">Lundi</td><td className="border-b p-2">8:00 - 17:00</td></tr>
+                <tr><td className="border-b p-2">Mardi</td><td className="border-b p-2">8:00 - 17:00</td></tr>
+                <tr><td className="border-b p-2">Mercredi</td><td className="border-b p-2">8:00 - 17:00</td></tr>
+                <tr><td className="border-b p-2">Jeudi</td><td className="border-b p-2">8:00 - 17:00</td></tr>
+                <tr><td className="border-b p-2">Vendredi</td><td className="border-b p-2">8:00 - 17:00</td></tr>
+                <tr><td className="border-b p-2">Samedi</td><td className="border-b p-2">9:00 - 12:00</td></tr>
+              </tbody>
+            </table>
+            <div className="text-right mt-4">
+              <button onClick={closeScheduleModal} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

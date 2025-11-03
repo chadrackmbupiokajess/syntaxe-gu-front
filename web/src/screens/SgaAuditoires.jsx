@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from '../api/configAxios';
 import ListWithFilters from '../components/ListWithFilters';
 import Skeleton from '../components/Skeleton';
 import { useToast } from '../shared/ToastProvider';
@@ -11,6 +11,8 @@ export default function SgaAuditoires() {
   const [departements, setDepartements] = useState([]);
   const [selectedDepartement, setSelectedDepartement] = useState('');
   const [selectedSectionName, setSelectedSectionName] = useState('');
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [selectedAuditorium, setSelectedAuditorium] = useState(null);
 
   const fetchDepartements = async () => {
     try {
@@ -60,6 +62,16 @@ export default function SgaAuditoires() {
     push({ title: 'Données rafraîchies', status: 'success' });
   };
 
+  const openScheduleModal = (auditorium) => {
+    setSelectedAuditorium(auditorium);
+    setIsScheduleModalOpen(true);
+  };
+
+  const closeScheduleModal = () => {
+    setIsScheduleModalOpen(false);
+    setSelectedAuditorium(null);
+  };
+
   return (
     <div className="p-6 bg-white dark:bg-slate-800 rounded-lg shadow-xl">
       <h2 className="text-2xl font-bold text-black dark:text-white mb-4">Auditoires & Horaires</h2>
@@ -106,9 +118,57 @@ export default function SgaAuditoires() {
           { key: 'course_count', header: 'Nombre de cours' },
         ]}
         actions={[
-          { label: 'Voir Horaires', onClick: (row) => push({ title: 'Horaires', message: `Voir les horaires de ${row.name}` }) },
+          { label: 'Voir Horaires', onClick: openScheduleModal },
         ]}
       />
+
+      {isScheduleModalOpen && selectedAuditorium && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-4xl">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Horaire pour {selectedAuditorium.name}</h2>
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr>
+                  <th className="border-b-2 p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">Jour</th>
+                  <th className="border-b-2 p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">Heure de début</th>
+                  <th className="border-b-2 p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">Heure de fin</th>
+                  <th className="border-b-2 p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">Cours</th>
+                  <th className="border-b-2 p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">Enseignant</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* Dummy Data - Replace with API call */}
+                <tr>
+                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">Lundi</td>
+                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">08:00</td>
+                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">10:00</td>
+                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">Introduction à la programmation</td>
+                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">Dr. Ba</td>
+                </tr>
+                <tr>
+                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">Mardi</td>
+                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">10:00</td>
+                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">12:00</td>
+                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">Bases de données</td>
+                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">Prof. Diallo</td>
+                </tr>
+                 <tr>
+                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">Mercredi</td>
+                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">14:00</td>
+                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">16:00</td>
+                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">Réseaux Informatiques</td>
+                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">M. Sow</td>
+                </tr>
+              </tbody>
+            </table>
+            <div className="text-right mt-6">
+              <button onClick={closeScheduleModal} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

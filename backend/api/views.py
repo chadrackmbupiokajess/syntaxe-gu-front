@@ -1318,7 +1318,7 @@ def quizzes_student_attempt_submit(request, id: int):
             for question_id, answer_value in answers_data.items():
                 question = Question.objects.get(id=question_id)
                 points = 0
-                
+
                 answer = Answer.objects.create(
                     attempt=attempt,
                     question=question,
@@ -1345,7 +1345,7 @@ def quizzes_student_attempt_submit(request, id: int):
                         submitted_choices = set(str(v) for v in answer_value) if isinstance(answer_value, list) else set()
                         if correct_choices == submitted_choices:
                             points = question_points
-                
+
                 answer.points_obtained = points
                 answer.save()
                 total_score += points
@@ -1495,7 +1495,7 @@ def dg_actions(request):
 def sga_kpi_summary(request):
     total_students = User.objects.filter(role='etudiant').count()
     total_teachers = User.objects.filter(Q(role='professeur') | Q(role='assistant')).count()
-    
+
     # Programmes à examiner: Compter les cours créés récemment (ex: dans les 30 derniers jours)
     # Ou les cours sans assignation d'enseignant (nécessitant une décision)
     # Pour l'instant, on prend les 5 derniers cours créés comme proxy.
@@ -1539,14 +1539,15 @@ def sga_program_approvals(request):
 @permission_classes([IsAuthenticated, IsSGA])
 def sga_calendar_events(request):
     # Récupérer les événements du calendrier académique
-    events = Calendrier.objects.select_related('course', 'auditoire').order_by('day', 'start_time')
+    events = Calendrier.objects.select_related('course', 'teacher', 'auditoire').order_by('day', 'start_time')
     calendar_data = []
     for event in events:
         calendar_data.append({
             "id": event.id,
             "event": f"{event.course.name if event.course else 'Libre'} ({event.auditoire.name if event.auditoire else 'N/A'})",
             "date": f"{event.day} {event.start_time.strftime('%H:%M')}",
-            "type": "Cours"
+            "type": "Cours",
+            "teacher": event.teacher.get_full_name() if event.teacher else "N/A",
         })
     return Response(calendar_data)
 
@@ -1623,6 +1624,49 @@ def sga_departements_list(request):
             "section": dept.section.name if dept.section else "N/A",
         })
     return Response(departements_data)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsSGA])
+def sga_auditoire_schedules(request, auditoire_id):
+    schedules_data = []
+    try:
+        auditoire = Auditoire.objects.get(id=auditoire_id)
+        # Order by day of week (Monday=0, Sunday=6) and then by start time
+        # This requires a custom ordering or mapping if days are stored as strings
+        day_order = {'Lundi': 0, 'Mardi': 1, 'Mercredi': 2, 'Jeudi': 3, 'Vendredi': 4, 'Samedi': 5, 'Dimanche': 6}
+
+        events = Calendrier.objects.filter(auditoire=auditoire).select_related('course', 'teacher')
+
+        # Group events by day
+        schedules_by_day = {day: [] for day in day_order.keys()}
+        for event in events:
+            schedules_by_day[event.day].append({
+                "id": event.id,
+                "startTime": event.start_time.strftime('%H:%M'),
+                "endTime": event.end_time.strftime('%H:%M'),
+                "courseName": event.course.name if event.course else "N/A",
+                "teacherName": event.teacher.get_full_name() if event.teacher else "N/A",
+            })
+
+        # Sort events within each day by start time
+        for day in schedules_by_day:
+            schedules_by_day[day].sort(key=lambda x: x['startTime'])
+
+        # Convert to a list of days with their sorted events
+        for day, events_list in sorted(schedules_by_day.items(), key=lambda item: day_order[item[0]]):
+            if events_list:
+                schedules_data.append({
+                    "day": day,
+                    "events": events_list
+                })
+
+    except Auditoire.DoesNotExist:
+        return Response({"detail": "Auditoire non trouvé."}, status=404)
+    except Exception as e:
+        return Response({"detail": f"Erreur lors du chargement des horaires: {e}"}, status=500)
+
+    return Response(schedules_data)
 
 
 # ---- Endpoints SGAD (placeholders)
@@ -2449,7 +2493,7 @@ def jury_summary(request):
 def jury_defenses(request):
     rows = [
         {"id": 11, "etudiant": "STU-00231", "sujet": "IA et éducation", "date": "2025-11-04", "jury": "A"},
-        {"id": 12, "etudiant": "STU-00411", "sujet": "Sécurité réseaux", "date": "2025-11-10", "jury": "B"},
+        {"id": 12, "etudiant": "STU-00411", "sujet": "Blockchain et Logistique", "date": "2025-11-10", "jury": "B"},
     ]
     return Response(rows)
 
