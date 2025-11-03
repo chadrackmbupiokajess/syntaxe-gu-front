@@ -1588,9 +1588,15 @@ def sga_deliberation_sessions(request):
 @permission_classes([IsAuthenticated, IsSGA])
 def sga_auditoires_list(request):
     auditoires_data = []
-    auditoires = Auditoire.objects.select_related('departement__section').all().order_by('level', 'name')
+    departement_id = request.query_params.get('departement_id')
 
-    for auditoire in auditoires:
+    auditoires_qs = Auditoire.objects.select_related('departement__section')
+    if departement_id:
+        auditoires_qs = auditoires_qs.filter(departement__id=departement_id)
+
+    auditoires_qs = auditoires_qs.annotate(course_count=Count('courses')) # Annotate with course count
+
+    for auditoire in auditoires_qs.order_by('level', 'name'):
         student_count = User.objects.filter(current_auditoire=auditoire, role='etudiant').count()
         auditoires_data.append({
             "id": auditoire.id,
@@ -1599,8 +1605,24 @@ def sga_auditoires_list(request):
             "section": auditoire.departement.section.name if auditoire.departement and auditoire.departement.section else "N/A",
             "level": auditoire.level,
             "student_count": student_count,
+            "course_count": auditoire.course_count, # Use the annotated count
         })
     return Response(auditoires_data)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsSGA])
+def sga_departements_list(request):
+    departements_data = []
+    departements = Departement.objects.select_related('section').all().order_by('name')
+
+    for dept in departements:
+        departements_data.append({
+            "id": dept.id,
+            "name": dept.name,
+            "section": dept.section.name if dept.section else "N/A",
+        })
+    return Response(departements_data)
 
 
 # ---- Endpoints SGAD (placeholders)
