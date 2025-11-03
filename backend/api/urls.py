@@ -41,6 +41,7 @@ from .views import (
     sga_deliberation_sessions,
     sga_auditoires_list,
     sga_departements_list,
+    sga_auditoire_schedules,
     sgad_summary,
     sgad_paie,
     section_summary,
@@ -168,6 +169,7 @@ urlpatterns = [
     re_path(r"^sga/evaluation-supervision/deliberation-sessions/?$", sga_deliberation_sessions, name="sga_deliberation_sessions"),
     re_path(r"^sga/auditoires/?$", sga_auditoires_list, name="sga_auditoires_list"),
     re_path(r"^sga/departements/?$", sga_departements_list, name="sga_departements_list"),
+    re_path(r"^sga/auditoires/(?P<auditoire_id>\d+)/schedule/?$", sga_auditoire_schedules, name="sga_auditoire_schedule"),
 
     re_path(r"^sgad/summary/?$", sgad_summary, name="sgad_summary"),
     re_path(r"^sgad/paie/?$", sgad_paie, name="sgad_paie"),

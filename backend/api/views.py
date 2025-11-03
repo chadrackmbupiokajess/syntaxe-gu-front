@@ -1630,31 +1630,38 @@ def sga_departements_list(request):
 @permission_classes([IsAuthenticated, IsSGA])
 def sga_auditoire_schedules(request, auditoire_id):
     schedules_data = []
+    session_type = request.query_params.get('session_type', 'session')  # Default to 'session'
+
     try:
         auditoire = Auditoire.objects.get(id=auditoire_id)
-        # Order by day of week (Monday=0, Sunday=6) and then by start time
-        # This requires a custom ordering or mapping if days are stored as strings
         day_order = {'Lundi': 0, 'Mardi': 1, 'Mercredi': 2, 'Jeudi': 3, 'Vendredi': 4, 'Samedi': 5, 'Dimanche': 6}
 
-        events = Calendrier.objects.filter(auditoire=auditoire).select_related('course', 'teacher')
+        # Filter by auditoire and session_type
+        events_qs = Calendrier.objects.filter(auditoire=auditoire)
+        if session_type:
+            events_qs = events_qs.filter(session_type=session_type)
+        
+        events = events_qs.select_related('course', 'teacher')
 
         # Group events by day
         schedules_by_day = {day: [] for day in day_order.keys()}
         for event in events:
-            schedules_by_day[event.day].append({
-                "id": event.id,
-                "startTime": event.start_time.strftime('%H:%M'),
-                "endTime": event.end_time.strftime('%H:%M'),
-                "courseName": event.course.name if event.course else "N/A",
-                "teacherName": event.teacher.get_full_name() if event.teacher else "N/A",
-            })
+            if event.day in schedules_by_day:
+                schedules_by_day[event.day].append({
+                    "id": event.id,
+                    "startTime": event.start_time.strftime('%H:%M'),
+                    "endTime": event.end_time.strftime('%H:%M'),
+                    "courseName": event.course.name if event.course else "N/A",
+                    "teacherName": event.teacher.get_full_name() if event.teacher else "N/A",
+                    "session_type": event.session_type,
+                })
 
         # Sort events within each day by start time
         for day in schedules_by_day:
             schedules_by_day[day].sort(key=lambda x: x['startTime'])
 
         # Convert to a list of days with their sorted events
-        for day, events_list in sorted(schedules_by_day.items(), key=lambda item: day_order[item[0]]):
+        for day, events_list in sorted(schedules_by_day.items(), key=lambda item: day_order.get(item[0], 7)):
             if events_list:
                 schedules_data.append({
                     "day": day,

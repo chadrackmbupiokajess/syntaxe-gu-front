@@ -13,6 +13,8 @@ export default function SgaAuditoires() {
   const [selectedSectionName, setSelectedSectionName] = useState('');
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [selectedAuditorium, setSelectedAuditorium] = useState(null);
+  const [schedule, setSchedule] = useState(null);
+  const [sessionType, setSessionType] = useState('session');
 
   const fetchDepartements = async () => {
     try {
@@ -38,10 +40,26 @@ export default function SgaAuditoires() {
     }
   };
 
+  const fetchSchedule = async (auditoriumId, sessionType) => {
+    try {
+      const response = await axios.get(`/api/sga/auditoires/${auditoriumId}/schedule?session_type=${sessionType}`);
+      setSchedule(response.data);
+    } catch (error) {
+      push({ title: 'Erreur', message: "Erreur lors du chargement de l'horaire.", status: 'error' });
+      console.error("Error loading schedule:", error);
+    }
+  };
+
   useEffect(() => {
     fetchDepartements();
     fetchAuditoires();
   }, []);
+
+  useEffect(() => {
+    if (selectedAuditorium) {
+      fetchSchedule(selectedAuditorium.id, sessionType);
+    }
+  }, [sessionType, selectedAuditorium]);
 
   const handleDepartementChange = (e) => {
     const deptId = e.target.value;
@@ -70,26 +88,30 @@ export default function SgaAuditoires() {
   const closeScheduleModal = () => {
     setIsScheduleModalOpen(false);
     setSelectedAuditorium(null);
+    setSchedule(null);
   };
 
-  const scheduleData = {
-    "08:00 - 12:03": {
-      Lundi: { course: "Physique", teacher: "Dash Puindi Nzita" },
-      Mardi: { course: "Physique", teacher: "Dash Puindi Nzita" },
-      Mercredi: { course: "Physique", teacher: "Dash Puindi Nzita" },
-      Jeudi: { course: "Physique", teacher: "Dash Puindi Nzita", symbol: "+" },
-      Vendredi: { course: "Physique", teacher: "Dash Puindi Nzita" },
-      Samedi: null,
-    },
-    "16:34 - 17:32": {
-      Lundi: { course: "-", teacher: null },
-      Mardi: null,
-      Mercredi: { course: "Physique", teacher: "Dash Puindi Nzita" },
-      Jeudi: { course: "-", teacher: null },
-      Vendredi: { course: "Physique", teacher: "Dash Puindi Nzita", symbol: "+" },
-      Samedi: { course: "+", teacher: null },
-    },
+  const formatSchedule = (scheduleData) => {
+    if (!scheduleData) return {};
+
+    const formatted = {};
+    scheduleData.forEach(day => {
+      day.events.forEach(event => {
+        const time = `${event.startTime} - ${event.endTime}`;
+        if (!formatted[time]) {
+          formatted[time] = {};
+        }
+        formatted[time][day.day] = {
+          course: event.courseName,
+          teacher: event.teacherName,
+        };
+      });
+    });
+
+    return formatted;
   };
+
+  const scheduleData = formatSchedule(schedule);
 
   return (
     <div className="p-6 bg-white dark:bg-slate-800 rounded-lg shadow-xl">
@@ -144,40 +166,53 @@ export default function SgaAuditoires() {
       {isScheduleModalOpen && selectedAuditorium && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
           <div className="bg-white dark:bg-slate-800 p-8 rounded-lg shadow-lg w-full max-w-6xl">
-            <h2 className="text-2xl font-bold mb-4 text-black dark:text-white">Horaires pour : {selectedAuditorium.name}</h2>
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-100 dark:bg-slate-700">
-                  <th className="border-b-2 p-2 w-32 dark:border-slate-600 text-black dark:text-white">Heure</th>
-                  <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Lundi</th>
-                  <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Mardi</th>
-                  <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Mercredi</th>
-                  <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Jeudi</th>
-                  <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Vendredi</th>
-                  <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Samedi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(scheduleData).map(([time, days]) => (
-                  <tr key={time}>
-                    <td className="border-b p-2 font-medium dark:border-slate-600 text-black dark:text-white">{time}</td>
-                    {['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'].map(day => (
-                      <td key={day} className="border-b p-2 align-top dark:border-slate-600">
-                        {days[day] ? (
-                          <div className='text-center text-black dark:text-white'>
-                            <p className="font-semibold">{days[day].course}</p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">{days[day].teacher}</p>
-                            {days[day].symbol && <p className="text-lg font-bold">{days[day].symbol}</p>}
-                          </div>
-                        ) : (
-                          <div className='text-center text-gray-500 dark:text-gray-400'>-</div>
-                        )}
-                      </td>
-                    ))}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-black dark:text-white">Horaires pour : {selectedAuditorium.name}</h2>
+              <select
+                className="p-2 border rounded-md dark:bg-slate-700 dark:text-white dark:border-slate-600 focus:ring-blue-500 focus:border-blue-500"
+                value={sessionType}
+                onChange={(e) => setSessionType(e.target.value)}
+              >
+                <option value="session">Session</option>
+                <option value="mi-session">Mi-Session</option>
+              </select>
+            </div>
+            {schedule ? (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-100 dark:bg-slate-700">
+                    <th className="border-b-2 p-2 w-32 dark:border-slate-600 text-black dark:text-white">Heure</th>
+                    <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Lundi</th>
+                    <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Mardi</th>
+                    <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Mercredi</th>
+                    <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Jeudi</th>
+                    <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Vendredi</th>
+                    <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Samedi</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {Object.entries(scheduleData).map(([time, days]) => (
+                    <tr key={time}>
+                      <td className="border-b p-2 font-medium dark:border-slate-600 text-black dark:text-white">{time}</td>
+                      {['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'].map(day => (
+                        <td key={day} className="border-b p-2 align-top dark:border-slate-600">
+                          {days[day] ? (
+                            <div className='text-center text-black dark:text-white'>
+                              <p className="font-semibold">{days[day].course}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">{days[day].teacher}</p>
+                            </div>
+                          ) : (
+                            <div className='text-center text-gray-500 dark:text-gray-400'>-</div>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <Skeleton className="h-64" />
+            )}
             <div className="text-right mt-6">
               <button onClick={closeScheduleModal} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
                 Fermer
