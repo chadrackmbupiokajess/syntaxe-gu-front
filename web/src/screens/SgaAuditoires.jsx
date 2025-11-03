@@ -72,6 +72,25 @@ export default function SgaAuditoires() {
     setSelectedAuditorium(null);
   };
 
+  const scheduleData = {
+    "08:00 - 12:03": {
+      Lundi: { course: "Physique", teacher: "Dash Puindi Nzita" },
+      Mardi: { course: "Physique", teacher: "Dash Puindi Nzita" },
+      Mercredi: { course: "Physique", teacher: "Dash Puindi Nzita" },
+      Jeudi: { course: "Physique", teacher: "Dash Puindi Nzita", symbol: "+" },
+      Vendredi: { course: "Physique", teacher: "Dash Puindi Nzita" },
+      Samedi: null,
+    },
+    "16:34 - 17:32": {
+      Lundi: { course: "-", teacher: null },
+      Mardi: null,
+      Mercredi: { course: "Physique", teacher: "Dash Puindi Nzita" },
+      Jeudi: { course: "-", teacher: null },
+      Vendredi: { course: "Physique", teacher: "Dash Puindi Nzita", symbol: "+" },
+      Samedi: { course: "+", teacher: null },
+    },
+  };
+
   return (
     <div className="p-6 bg-white dark:bg-slate-800 rounded-lg shadow-xl">
       <h2 className="text-2xl font-bold text-black dark:text-white mb-4">Auditoires & Horaires</h2>
@@ -124,41 +143,39 @@ export default function SgaAuditoires() {
 
       {isScheduleModalOpen && selectedAuditorium && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-4xl">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Horaire pour {selectedAuditorium.name}</h2>
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-lg shadow-lg w-full max-w-6xl">
+            <h2 className="text-2xl font-bold mb-4 text-black dark:text-white">Horaires pour : {selectedAuditorium.name}</h2>
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr>
-                  <th className="border-b-2 p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">Jour</th>
-                  <th className="border-b-2 p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">Heure de début</th>
-                  <th className="border-b-2 p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">Heure de fin</th>
-                  <th className="border-b-2 p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">Cours</th>
-                  <th className="border-b-2 p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">Enseignant</th>
+                <tr className="bg-gray-100 dark:bg-slate-700">
+                  <th className="border-b-2 p-2 w-32 dark:border-slate-600 text-black dark:text-white">Heure</th>
+                  <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Lundi</th>
+                  <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Mardi</th>
+                  <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Mercredi</th>
+                  <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Jeudi</th>
+                  <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Vendredi</th>
+                  <th className="border-b-2 p-2 dark:border-slate-600 text-black dark:text-white">Samedi</th>
                 </tr>
               </thead>
               <tbody>
-                {/* Dummy Data - Replace with API call */}
-                <tr>
-                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">Lundi</td>
-                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">08:00</td>
-                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">10:00</td>
-                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">Introduction à la programmation</td>
-                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">Dr. Ba</td>
-                </tr>
-                <tr>
-                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">Mardi</td>
-                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">10:00</td>
-                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">12:00</td>
-                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">Bases de données</td>
-                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">Prof. Diallo</td>
-                </tr>
-                 <tr>
-                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">Mercredi</td>
-                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">14:00</td>
-                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">16:00</td>
-                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">Réseaux Informatiques</td>
-                  <td className="border-b p-2 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-300">M. Sow</td>
-                </tr>
+                {Object.entries(scheduleData).map(([time, days]) => (
+                  <tr key={time}>
+                    <td className="border-b p-2 font-medium dark:border-slate-600 text-black dark:text-white">{time}</td>
+                    {['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'].map(day => (
+                      <td key={day} className="border-b p-2 align-top dark:border-slate-600">
+                        {days[day] ? (
+                          <div className='text-center text-black dark:text-white'>
+                            <p className="font-semibold">{days[day].course}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">{days[day].teacher}</p>
+                            {days[day].symbol && <p className="text-lg font-bold">{days[day].symbol}</p>}
+                          </div>
+                        ) : (
+                          <div className='text-center text-gray-500 dark:text-gray-400'>-</div>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
             <div className="text-right mt-6">
