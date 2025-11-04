@@ -75,7 +75,8 @@ def auth_me(request):
         "id": user.id,
         "username": user.matricule,
         "email": user.email,
-        "role": user.role, # Changed from "roles": [user.role] to "role": user.role
+        "full_name": user.get_full_name(),
+        "role": user.role,
     })
 
 @api_view(["GET"])
@@ -1663,6 +1664,42 @@ def sga_create_student_inscription(request):
         # Log the error for debugging
         print(f"Error creating student: {e}") 
         return Response({"detail": f"An unexpected error occurred: {e}"}, status=500)
+
+@api_view(['GET', 'PATCH'])
+@permission_classes([IsAuthenticated, IsSGA])
+def sga_profile(request):
+    user = request.user
+    if request.method == 'PATCH':
+        data = request.data
+        user.first_name = data.get('first_name', user.first_name)
+        user.last_name = data.get('last_name', user.last_name)
+        user.email = data.get('email', user.email)
+        user.phone = data.get('phone', user.phone)
+        user.office = data.get('office', user.office)
+        user.address = data.get('address', user.address)
+
+        if 'profile_picture' in request.FILES:
+            user.profile_picture = request.FILES['profile_picture']
+
+        current_password = data.get('current_password')
+        new_password = data.get('new_password')
+        if current_password and new_password:
+            if not user.check_password(current_password):
+                return Response({"detail": "Mot de passe actuel incorrect."}, status=400)
+            user.set_password(new_password)
+        
+        user.save()
+
+    return Response({
+        "prenom": user.first_name,
+        "nom": user.last_name,
+        "email": user.email,
+        "phone": user.phone,
+        "office": user.office,
+        "address": user.address,
+        "avatar": user.profile_picture.url if user.profile_picture else None,
+        "role": user.get_role_display(),
+    })
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsSGA])

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from '../api/configAxios';
 import { useToast } from '../shared/ToastProvider';
+import { useSelector } from 'react-redux'; // Import useSelector
 
 export default function SgaInscriptions() {
   const { push } = useToast();
+  const user = useSelector(state => state.auth.me); // Get user object directly
   const [sections, setSections] = useState([]);
   const [departements, setDepartements] = useState([]);
   const [auditoires, setAuditoires] = useState([]);
@@ -150,8 +152,9 @@ export default function SgaInscriptions() {
           </div>
           <div className="border-t mt-8 pt-8 flex justify-end">
             <div className="w-1/3 text-center">
-              <div className="border-t-2 border-dashed w-full mb-2"></div>
-              <p className="text-sm">Cachet de l'Université</p>
+                <p className="text-sm h-6">{user ? user.full_name : ''}</p>
+                <div className="border-t-2 border-dashed w-full mt-2"></div>
+                <p className="text-sm">Signature</p>
             </div>
           </div>
         </div>
