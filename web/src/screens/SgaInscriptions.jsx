@@ -128,15 +128,32 @@ export default function SgaInscriptions() {
     const selectedDepartementObj = departements.find(d => d.id === parseInt(selectedDepartement));
     return (
       <div className="p-6 bg-white dark:bg-slate-800 rounded-lg shadow-xl">
-        <h2 className="text-2xl font-bold text-black dark:text-white mb-6">Fiche d'Inscription</h2>
-        <div className="printable-area space-y-4 p-4 border rounded-lg">
-          <h3 className="text-xl font-semibold text-center">Fiche d'Inscription Provisoire</h3>
-          <div><strong>Matricule:</strong> {newStudent.matricule}</div>
-          <div><strong>Nom Complet:</strong> {newStudent.full_name}</div>
-          <div><strong>Section:</strong> {selectedSectionObj?.name}</div>
-          <div><strong>Département:</strong> {selectedDepartementObj?.name}</div>
-          <div><strong>Auditoire:</strong> {newStudent.auditoire}</div>
-          <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">Veuillez conserver cette fiche. Le mot de passe initial est: <strong>{newStudent.password}</strong></div>
+        <div className="printable-area space-y-4 p-8 border rounded-lg font-mono text-gray-800 bg-gray-50">
+          <div className="flex justify-between items-center border-b pb-4">
+            <div className="flex items-center">
+              <img src="/placeholder-logo.png" alt="University Logo" className="h-16 w-16 mr-4"/>
+              <div>
+                <h2 className="text-2xl font-bold">Université de Goma</h2>
+                <p className="text-sm">Fiche d'Inscription</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-sm">Date: {new Date().toLocaleDateString()}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-x-8 gap-y-4 pt-4">
+            <div><strong className="font-semibold">Matricule:</strong> {newStudent.matricule}</div>
+            <div><strong className="font-semibold">Nom Complet:</strong> {newStudent.full_name}</div>
+            <div><strong className="font-semibold">Section:</strong> {selectedSectionObj?.name}</div>
+            <div><strong className="font-semibold">Département:</strong> {selectedDepartementObj?.name}</div>
+            <div><strong className="font-semibold">Auditoire:</strong> {newStudent.auditoire}</div>
+          </div>
+          <div className="border-t mt-8 pt-8 flex justify-end">
+            <div className="w-1/3 text-center">
+              <div className="border-t-2 border-dashed w-full mb-2"></div>
+              <p className="text-sm">Cachet de l'Université</p>
+            </div>
+          </div>
         </div>
         <div className="flex justify-end gap-4 mt-6">
           <button onClick={() => window.print()} className="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500">Imprimer</button>
