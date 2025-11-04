@@ -1,4 +1,6 @@
 import uuid
+import random
+import datetime
 
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
@@ -12,6 +14,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
 from django.db.models import Q, Count, Sum, Avg
+from django.utils.crypto import get_random_string
 
 from academics.models import Course, Auditoire, Calendrier, CourseAssignment, Section, Departement, CourseMessage, Paiement
 from evaluations.models import Assignment, Submission, Quiz, Question, Choice, Answer, QuizAttempt
@@ -1551,16 +1554,41 @@ def sga_calendar_events(request):
         })
     return Response(calendar_data)
 
-@api_view(["GET"])
+@api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated, IsSGA])
 def sga_enrollment_requests(request):
-    # Étudiants ayant un auditoire mais n'ayant pas encore payé la première tranche
+    if request.method == 'POST':
+        student_id = request.data.get('student_id')
+        action = request.data.get('action') # 'approve' or 'reject'
+
+        if not student_id or not action:
+            return Response({"detail": "student_id and action are required."}, status=400)
+
+        try:
+            student = User.objects.get(id=student_id, role='etudiant')
+        except User.DoesNotExist:
+            return Response({"detail": "Student not found."}, status=404)
+
+        if action == 'approve':
+            # Logic to approve enrollment, e.g., update student status
+            student.status = 'actif' # Assuming 'actif' is a valid status
+            student.save()
+            return Response({"detail": f"Enrollment for {student.get_full_name()} approved."})
+        elif action == 'reject':
+            # Logic to reject enrollment
+            student.status = 'rejeté' # Assuming 'rejeté' is a valid status
+            student.save()
+            return Response({"detail": f"Enrollment for {student.get_full_name()} rejected."})
+        else:
+            return Response({"detail": "Invalid action."}, status=400)
+
+    # GET request
     pending_students = User.objects.filter(
         role='etudiant',
         current_auditoire__isnull=False
     ).exclude(
         payments__tranche_number=1, payments__amount__gt=0
-    ).select_related('current_auditoire__departement').distinct().order_by('last_name', 'first_name')[:10]
+    ).select_related('current_auditoire__departement').distinct().order_by('last_name', 'first_name')
 
     enrollment_data = []
     for student in pending_students:
@@ -1571,6 +1599,70 @@ def sga_enrollment_requests(request):
             "status": "En attente de paiement 1ère tranche" # Ou un statut plus précis
         })
     return Response(enrollment_data)
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated, IsSGA])
+def sga_create_student_inscription(request):
+    data = request.data
+    email = data.get('email')
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    auditoire_id = data.get('auditoire_id')
+
+    if not all([email, first_name, last_name, auditoire_id]):
+        return Response({"detail": "Email, Prénom, Nom et Auditoire sont requis."}, status=400)
+
+    if User.objects.filter(email=email).exists():
+        return Response({"detail": "Un utilisateur avec cet email existe déjà."}, status=400)
+
+    try:
+        auditoire = Auditoire.objects.get(id=auditoire_id)
+    except Auditoire.DoesNotExist:
+        return Response({"detail": "Auditoire non trouvé."}, status=404)
+
+    matricule = f"MAT-{datetime.date.today().year}-{uuid.uuid4().hex[:4].upper()}"
+    while User.objects.filter(matricule=matricule).exists():
+        matricule = f"MAT-{datetime.date.today().year}-{uuid.uuid4().hex[:4].upper()}"
+    
+    password = get_random_string(10)
+
+    try:
+        user = User.objects.create_user(
+            matricule=matricule,
+            password=password,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            role='etudiant',
+            status='pending'
+        )
+
+        user.post_name = data.get('post_name', '')
+        user.sexe = data.get('sexe', 'M')
+        user.current_auditoire = auditoire
+        user.description = data.get('description', '')
+        user.phone = data.get('phone', '')
+        user.address = data.get('address', '')
+        user.office = data.get('office', '')
+        
+        if 'profile_picture' in request.FILES:
+            user.profile_picture = request.FILES['profile_picture']
+        
+        user.save()
+
+        return Response({
+            "id": user.id,
+            "full_name": user.get_full_name(),
+            "email": user.email,
+            "matricule": user.matricule,
+            "auditoire": auditoire.name,
+            "password": password
+        }, status=201)
+
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error creating student: {e}") 
+        return Response({"detail": f"An unexpected error occurred: {e}"}, status=500)
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsSGA])
@@ -1615,9 +1707,12 @@ def sga_auditoires_list(request):
 @permission_classes([IsAuthenticated, IsSGA])
 def sga_departements_list(request):
     departements_data = []
-    departements = Departement.objects.select_related('section').all().order_by('name')
+    section_id = request.query_params.get('section_id')
+    departements_qs = Departement.objects.select_related('section').all().order_by('name')
+    if section_id:
+        departements_qs = departements_qs.filter(section__id=section_id)
 
-    for dept in departements:
+    for dept in departements_qs:
         departements_data.append({
             "id": dept.id,
             "name": dept.name,
