@@ -26,6 +26,8 @@ export default function SgaInscriptions() {
     status: 'pending',
   });
 
+  const [view, setView] = useState('form'); // 'form' or 'preview'
+
   const fetchSections = async () => {
     try {
       const response = await axios.get('/api/section/list');
@@ -83,8 +85,16 @@ export default function SgaInscriptions() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handlePreview = (e) => {
     e.preventDefault();
+    setView('preview');
+  };
+
+  const handleEdit = () => {
+    setView('form');
+  };
+
+  const handleConfirm = async () => {
     const postData = new FormData();
     for (const key in formData) {
       postData.append(key, formData[key]);
@@ -100,15 +110,45 @@ export default function SgaInscriptions() {
       setFormData({ first_name: '', last_name: '', post_name: '', email: '', sexe: 'M', profile_picture: null, description: '', phone: '', address: '', auditoire_id: '', office: '', status: 'pending' });
       setSelectedSection('');
       setSelectedDepartement('');
+      setView('form');
     } catch (error) {
       push({ title: 'Erreur', message: error.response?.data?.detail || 'Une erreur est survenue.', status: 'error' });
     }
   };
 
+  if (view === 'preview') {
+    const selectedSectionObj = sections.find(s => s.id === parseInt(selectedSection));
+    const selectedDepartementObj = departements.find(d => d.id === parseInt(selectedDepartement));
+    const selectedAuditoire = auditoires.find(a => a.id === parseInt(formData.auditoire_id));
+    return (
+      <div className="p-6 bg-white dark:bg-slate-800 rounded-lg shadow-xl">
+        <h2 className="text-2xl font-bold text-black dark:text-white mb-6">Prévisualisation de l'Inscription</h2>
+        <div className="space-y-4">
+          <div><strong>Prénom:</strong> {formData.first_name}</div>
+          <div><strong>Nom:</strong> {formData.last_name}</div>
+          <div><strong>Post-nom:</strong> {formData.post_name}</div>
+          <div><strong>Email:</strong> {formData.email}</div>
+          <div><strong>Sexe:</strong> {formData.sexe === 'M' ? 'Masculin' : 'Féminin'}</div>
+          <div><strong>Téléphone:</strong> {formData.phone}</div>
+          <div><strong>Adresse:</strong> {formData.address}</div>
+          <div><strong>Section:</strong> {selectedSectionObj?.name}</div>
+          <div><strong>Département:</strong> {selectedDepartementObj?.name}</div>
+          <div><strong>Auditoire:</strong> {selectedAuditoire?.name}</div>
+          <div><strong>Description:</strong> {formData.description}</div>
+          {formData.profile_picture && <div><strong>Photo de profil:</strong> <img src={URL.createObjectURL(formData.profile_picture)} alt="Profile Preview" className="h-24 w-24 object-cover rounded-full" /></div>}
+        </div>
+        <div className="flex justify-end gap-4 mt-6">
+          <button onClick={handleEdit} className="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500">Modifier</button>
+          <button onClick={handleConfirm} className="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500">Valider</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 bg-white dark:bg-slate-800 rounded-lg shadow-xl">
       <h2 className="text-2xl font-bold text-black dark:text-white mb-6">Inscrire un Nouvel Étudiant</h2>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handlePreview} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -200,7 +240,7 @@ export default function SgaInscriptions() {
 
         <div className="text-right">
           <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500">
-            Inscrire l'étudiant
+            Prévisualiser l'inscription
           </button>
         </div>
       </form>
