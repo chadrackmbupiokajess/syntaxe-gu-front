@@ -26,7 +26,8 @@ export default function SgaInscriptions() {
     status: 'pending',
   });
 
-  const [view, setView] = useState('form'); // 'form' or 'preview'
+  const [view, setView] = useState('form'); // 'form', 'preview', or 'receipt'
+  const [newStudent, setNewStudent] = useState(null);
 
   const fetchSections = async () => {
     try {
@@ -106,15 +107,44 @@ export default function SgaInscriptions() {
           'Content-Type': 'multipart/form-data',
         },
       });
-      push({ title: 'Succès', message: `Étudiant ${response.data.full_name} inscrit avec succès. Mot de passe: ${response.data.password}` });
-      setFormData({ first_name: '', last_name: '', post_name: '', email: '', sexe: 'M', profile_picture: null, description: '', phone: '', address: '', auditoire_id: '', office: '', status: 'pending' });
-      setSelectedSection('');
-      setSelectedDepartement('');
-      setView('form');
+      push({ title: 'Succès', message: `Étudiant ${response.data.full_name} inscrit avec succès.` });
+      setNewStudent(response.data);
+      setView('receipt');
     } catch (error) {
       push({ title: 'Erreur', message: error.response?.data?.detail || 'Une erreur est survenue.', status: 'error' });
     }
   };
+
+  const handleNewInscription = () => {
+    setFormData({ first_name: '', last_name: '', post_name: '', email: '', sexe: 'M', profile_picture: null, description: '', phone: '', address: '', auditoire_id: '', office: '', status: 'pending' });
+    setSelectedSection('');
+    setSelectedDepartement('');
+    setNewStudent(null);
+    setView('form');
+  }
+
+  if (view === 'receipt') {
+    const selectedSectionObj = sections.find(s => s.id === parseInt(selectedSection));
+    const selectedDepartementObj = departements.find(d => d.id === parseInt(selectedDepartement));
+    return (
+      <div className="p-6 bg-white dark:bg-slate-800 rounded-lg shadow-xl">
+        <h2 className="text-2xl font-bold text-black dark:text-white mb-6">Fiche d'Inscription</h2>
+        <div className="printable-area space-y-4 p-4 border rounded-lg">
+          <h3 className="text-xl font-semibold text-center">Fiche d'Inscription Provisoire</h3>
+          <div><strong>Matricule:</strong> {newStudent.matricule}</div>
+          <div><strong>Nom Complet:</strong> {newStudent.full_name}</div>
+          <div><strong>Section:</strong> {selectedSectionObj?.name}</div>
+          <div><strong>Département:</strong> {selectedDepartementObj?.name}</div>
+          <div><strong>Auditoire:</strong> {newStudent.auditoire}</div>
+          <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">Veuillez conserver cette fiche. Le mot de passe initial est: <strong>{newStudent.password}</strong></div>
+        </div>
+        <div className="flex justify-end gap-4 mt-6">
+          <button onClick={() => window.print()} className="py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500">Imprimer</button>
+          <button onClick={handleNewInscription} className="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500">Inscrire un autre étudiant</button>
+        </div>
+      </div>
+    )
+  }
 
   if (view === 'preview') {
     const selectedSectionObj = sections.find(s => s.id === parseInt(selectedSection));
