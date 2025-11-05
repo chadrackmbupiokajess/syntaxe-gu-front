@@ -23,7 +23,7 @@ const DashboardSection = ({ title, loading, children, itemCount }) => (
   </div>
 );
 
-export default function BibliothequeDashboard() {
+export default function BibliothecaireDashboard() {
   const { push } = useToast();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
@@ -37,9 +37,9 @@ export default function BibliothequeDashboard() {
     try {
       // Replace with actual API endpoints for the librarian
       const [kpiRes, recentActivityRes, overdueBooksRes] = await Promise.all([
-        axios.get('/api/bibliotheque/kpi'),
-        axios.get('/api/bibliotheque/recent-activity'),
-        axios.get('/api/bibliotheque/overdue-books'),
+        axios.get('/api/bibliothecaire/kpi'),
+        axios.get('/api/bibliothecaire/recent-activity'),
+        axios.get('/api/bibliothecaire/overdue-books'),
       ]);
 
       setData({
@@ -49,9 +49,7 @@ export default function BibliothequeDashboard() {
       });
     } catch (error) {
       push({ title: 'Erreur de chargement', message: 'Impossible de récupérer les données du tableau de bord.', status: 'error' });
-      console.error("Error loading Bibliotheque dashboard data:", error);
-      // Set empty data on error to avoid crash
-      setData({ kpi: { availableBooks: 0, borrowedBooks: 0, activeMembers: 0, overdueReturns: 0 }, recentActivity: [], overdueBooks: [] });
+      console.error("Error loading Bibliothecaire dashboard data:", error);
     } finally {
       setLoading(false);
     }

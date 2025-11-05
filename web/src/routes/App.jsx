@@ -9,6 +9,7 @@ import DgLayout from '../components/DgLayout';
 import SgaLayout from '../components/SgaLayout';
 import SectionLayout from '../components/SectionLayout';
 import DepartementLayout from '../components/DepartementLayout';
+import BibliothequeLayout from '../components/BibliothequeLayout'; // Importation du nouveau layout
 import ProtectedRoute from '../shared/ProtectedRoute';
 import RoleRoute from '../shared/RoleRoute';
 import Unauthorized from '../shared/Unauthorized';
@@ -211,7 +212,9 @@ export default function App() {
             <Route index element={<ITDashboard />} />
           </Route>
           <Route path="/bibliotheque" element={<RoleRoute allowedRoles={['bibliothecaire']} />}> 
-            <Route index element={<BibliothequeDashboard />} />
+            <Route element={<BibliothequeLayout />}>
+              <Route index element={<BibliothequeDashboard />} />
+            </Route>
           </Route>
 
         </Route>

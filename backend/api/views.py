@@ -1025,7 +1025,7 @@ def assistant_auditorium_create_quiz(request, code: str):
     except (ValueError, TypeError):
         return Response({"detail": "Code d'auditoire invalide"}, status=400)
     except Exception as e:
-        return Response({"detail": f"Erreur de création du quiz: {e}"}, status=400)
+        return Response({"detail": f"Erreur de création du quiz: {e}"}, status=500)
 
 
 @api_view(["GET"])
@@ -1699,6 +1699,7 @@ def sga_profile(request):
         "address": user.address,
         "avatar": user.profile_picture.url if user.profile_picture else None,
         "role": user.get_role_display(),
+        "date_joined": user.date_joined.isoformat(),
     })
 
 @api_view(["GET"])

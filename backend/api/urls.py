@@ -211,4 +211,5 @@ urlpatterns = [
 
     path("accounts/", include("accounts.urls")),
     path("messaging/", include("messaging.urls")),
+    path("bibliotheque/", include("bibliotheque.urls")),
 ]

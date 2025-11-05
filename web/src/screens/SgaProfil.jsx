@@ -93,6 +93,7 @@ export default function SgaProfile() {
   };
 
   const calculateDuration = (startDate) => {
+    if (!startDate) return 'N/A';
     const start = new Date(startDate);
     const now = new Date();
     let years = now.getFullYear() - start.getFullYear();
@@ -113,8 +114,6 @@ export default function SgaProfile() {
   if (!profile) {
     return <div>Chargement du profil...</div>;
   }
-
-  const datePriseFonction = '2021-08-01';
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -145,12 +144,12 @@ export default function SgaProfile() {
               <span className="font-medium text-slate-700 dark:text-slate-300">{profile.office || 'N/A'}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-200 dark:border-slate-700">
-              <span className="text-slate-500 dark:text-slate-400">Date de prise de fonction:</span>
-              <span className="font-medium text-slate-700 dark:text-slate-300">{new Date(datePriseFonction).toLocaleDateString()}</span>
+              <span className="text-slate-500 dark:text-slate-400">Date de nomination:</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">{new Date(profile.date_joined).toLocaleDateString()}</span>
             </div>
             <div className="flex justify-between py-1">
               <span className="text-slate-500 dark:text-slate-400">Durée en fonction:</span>
-              <span className="font-medium text-slate-700 dark:text-slate-300">{calculateDuration(datePriseFonction)}</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">{calculateDuration(profile.date_joined)}</span>
             </div>
           </div>
         </div>
