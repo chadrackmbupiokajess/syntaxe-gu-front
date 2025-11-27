@@ -55,6 +55,24 @@ export default function QuizCorrectionPage() {
     }
   };
 
+  const getAnswerText = (question, answer) => {
+    if (question.type === 'text') {
+      return answer;
+    }
+    if (question.type === 'single') {
+      const choice = question.choices.find(c => c.id === answer);
+      return choice ? choice.text : "Pas de réponse";
+    }
+    if (question.type === 'multiple') {
+      if (!Array.isArray(answer)) return "Pas de réponse";
+      return answer.map(ansId => {
+        const choice = question.choices.find(c => c.id === ansId);
+        return choice ? choice.text : '';
+      }).join(', ');
+    }
+    return "Pas de réponse";
+  };
+
   if (loading) {
     return <div className="card p-4">Chargement...</div>;
   }
@@ -109,12 +127,13 @@ export default function QuizCorrectionPage() {
           <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">Questions et Réponses de l'Étudiant</h3>
           <div className="space-y-4">
             {submissionDetails.quiz.questionnaire.map((question, index) => {
-              const studentAnswer = submissionDetails.answers[question.id] || "Pas de réponse";
+              const studentAnswer = submissionDetails.answers[question.id];
+              const answerText = getAnswerText(question, studentAnswer);
 
               return (
                 <div key={question.id} className="border-b border-slate-200 dark:border-slate-700 pb-4 last:border-b-0">
                   <p className="font-medium text-slate-700 dark:text-slate-300">Question {index + 1}: {question.question}</p>
-                  <p className="text-md text-gray-700 dark:text-gray-200 mb-2">Réponse: <span className="font-medium text-indigo-600 dark:text-indigo-400">{String(studentAnswer)}</span></p>
+                  <p className="text-md text-gray-700 dark:text-gray-200 mb-2">Réponse: <span className="font-medium text-indigo-600 dark:text-indigo-400">{answerText}</span></p>
                 </div>
               );
             })}
