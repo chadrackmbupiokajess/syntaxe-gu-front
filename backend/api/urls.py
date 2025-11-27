@@ -73,7 +73,7 @@ from .views import (
     library_summary,
     library_gestion_reservations,
     quizzes_student_start,
-    quizzes_student_attempt_submit,
+    submit_quiz_answers,
     tptd_student_submit,
     tptd_student_detail,
     quizzes_student_detail,
@@ -86,8 +86,9 @@ from .views import (
     assistant_profile,
     assistant_grades,
     assistant_submission_detail,
+    assistant_quiz_submission_detail,
     assistant_grade_submission,
-    assistant_grade_quiz_attempt,
+    assistant_grade_quiz_submission,
     student_messages,
     user_list,
     department_auditorium_courses,
@@ -118,7 +119,7 @@ urlpatterns = [
     re_path(r"^quizzes/student/(?P<id>\d+)/?$", quizzes_student_detail, name="quizzes_student_detail"),
     re_path(r"^quizzes/student/my-attempts/?$", quizzes_student_my_attempts, name="quizzes_student_my_attempts"),
     re_path(r"^tptd/student/my-submissions/?$", tptd_student_my_submissions, name="tptd_student_my_submissions"),
-    re_path(r"^quizzes/student/attempts/(?P<id>\d+)/submit/?$", quizzes_student_attempt_submit, name="quizzes_student_attempt_submit"),
+    re_path(r"^quizzes/student/(?P<quiz_id>\d+)/submit/?$", submit_quiz_answers, name="submit_quiz_answers"),
     re_path(r"^tptd/student/(?P<id>\d+)/submit/?$", tptd_student_submit, name="tptd_student_submit"),
     re_path(r"^student/courses/?$", student_courses, name="student_courses"),
     re_path(r"^student/calendar/?$", student_calendar, name="student_calendar"),
@@ -155,7 +156,8 @@ urlpatterns = [
     re_path(r"^assistant/tptd/(?P<assignment_id>\d+)/submission/(?P<submission_id>\d+)/grade/?$", assistant_grade_submission, name="assistant_grade_submission"),
 
     # New Assistant Quiz Grading endpoint
-    re_path(r"^assistant/quizzes/(?P<quiz_id>\d+)/attempt/(?P<attempt_id>\d+)/grade/?$", assistant_grade_quiz_attempt, name="assistant_grade_quiz_attempt"),
+    re_path(r"^assistant/quizzes/(?P<quiz_id>\d+)/submission/(?P<submission_id>\d+)/?$", assistant_quiz_submission_detail, name="assistant_quiz_submission_detail"),
+    re_path(r"^assistant/quizzes/(?P<quiz_id>\d+)/submission/(?P<submission_id>\d+)/grade/?$", assistant_grade_quiz_submission, name="assistant_grade_quiz_submission"),
 
     # Admin & other roles endpoints
     re_path(r"^pdg/summary/?$", pdg_summary, name="pdg_summary"),

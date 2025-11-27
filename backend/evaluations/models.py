@@ -80,47 +80,22 @@ class Choice(models.Model):
     def __str__(self):
         return self.choice_text
 
-class QuizAttempt(models.Model):
-    SUBMISSION_REASONS = (
-        ('manual', 'Manuel'),
-        ('time-out', 'Temps écoulé'),
-        ('left-page', 'Page quittée'),
+class QuizSubmission(models.Model):
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='submissions')
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE, 
+        related_name='quiz_submissions', 
+        limit_choices_to={'role': 'etudiant'}
     )
-    CORRECTION_STATUS = (
-        ('automatic', 'Automatique'),
-        ('manual', 'Manuel'),
-        ('pending', 'En attente'),
-    )
-    student = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='quiz_attempts', limit_choices_to={'role': 'etudiant'})
-    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='attempts')
+    answers = models.JSONField(default=dict, help_text="Réponses de l'étudiant au format JSON")
     score = models.FloatField(null=True, blank=True)
-    feedback = models.TextField(blank=True, null=True) # AJOUT DU CHAMP FEEDBACK
-    total_questions = models.PositiveIntegerField(default=0)
+    feedback = models.TextField(blank=True, null=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
-    submission_reason = models.CharField(max_length=10, choices=SUBMISSION_REASONS, default='left-page')
-    correction_status = models.CharField(max_length=10, choices=CORRECTION_STATUS, default='pending')
+    graded_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        unique_together = ('student', 'quiz') # Assure une seule tentative par étudiant par quiz
+        unique_together = ('student', 'quiz')
 
     def __str__(self):
-        return f"Attempt by {self.student} on {self.quiz.title}"
-
-    def save(self, *args, **kwargs):
-        if not self.pk:  # Only on creation
-            if self.submission_reason in ['time-out', 'left-page']:
-                self.correction_status = 'automatic'
-            else:
-                self.correction_status = 'pending'
-        super().save(*args, **kwargs)
-
-
-class Answer(models.Model):
-    attempt = models.ForeignKey(QuizAttempt, on_delete=models.CASCADE, related_name='answers')
-    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
-    selected_choices = models.ManyToManyField(Choice, blank=True)
-    answer_text = models.TextField(blank=True) # For free text questions
-    points_obtained = models.FloatField(null=True, blank=True)
-
-    def __str__(self):
-        return f"Answer for attempt {self.attempt.id} to {self.question.question_text[:50]}..."
+        return f"Quiz Submission by {self.student} for {self.quiz.title}"

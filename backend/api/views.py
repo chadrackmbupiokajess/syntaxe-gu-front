@@ -1,6 +1,8 @@
 import uuid
 import random
 import datetime
+import logging
+import json
 
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
@@ -17,7 +19,7 @@ from django.db.models import Q, Count, Sum, Avg
 from django.utils.crypto import get_random_string
 
 from academics.models import Course, Auditoire, Calendrier, CourseAssignment, Section, Departement, CourseMessage, Paiement
-from evaluations.models import Assignment, Submission, Quiz, Question, Choice, Answer, QuizAttempt
+from evaluations.models import Assignment, Submission, Quiz, Question, Choice, QuizSubmission
 from rest_framework.permissions import BasePermission, IsAuthenticated # Import BasePermission and IsAuthenticated
 
 User = get_user_model()
@@ -392,23 +394,23 @@ def assistant_tograde(request):
                 "assignment_id": s.assignment.id,
             })
 
-        quiz_attempts = QuizAttempt.objects.select_related(
+        quiz_submissions = QuizSubmission.objects.select_related(
             "quiz__course__auditoire__departement",
             "student"
-        ).filter(quiz__assistant=user, correction_status__in=['pending', 'manual'])
+        ).filter(quiz__assistant=user, score__isnull=True)
 
-        for qa in quiz_attempts:
+        for qs in quiz_submissions:
             items.append({
-                "id": qa.id,
+                "id": qs.id,
                 "type": "Quiz",
-                "title": qa.quiz.title,
-                "student_name": qa.student.get_full_name(),
-                "course_name": qa.quiz.course.name,
-                "auditorium": qa.quiz.course.auditoire.name,
-                "department": qa.quiz.course.auditoire.departement.name,
-                "submitted_at": qa.submitted_at,
-                "quiz_id": qa.quiz.id,
-                "attempt_id": qa.id
+                "title": qs.quiz.title,
+                "student_name": qs.student.get_full_name(),
+                "course_name": qs.quiz.course.name,
+                "auditorium": qs.quiz.course.auditoire.name,
+                "department": qs.quiz.course.auditoire.departement.name,
+                "submitted_at": qs.submitted_at,
+                "quiz_id": qs.quiz.id,
+                "submission_id": qs.id
             })
 
     except Exception as e:
@@ -461,6 +463,56 @@ def assistant_submission_detail(request, assignment_id: int, submission_id: int)
         return Response({"detail": f"Une erreur inattendue est survenue: {e}"}, status=500)
 
 
+@api_view(["GET"])
+@permission_classes(DEV_PERMS)
+def assistant_quiz_submission_detail(request, quiz_id: int, submission_id: int):
+    try:
+        submission = QuizSubmission.objects.select_related(
+            'quiz__course', 
+            'student'
+        ).get(id=submission_id, quiz__id=quiz_id)
+
+        if submission.quiz.assistant != request.user:
+            return Response({"detail": "Accès non autorisé à cette soumission."}, status=403)
+
+        quiz = submission.quiz
+        questions_data = []
+        for q in quiz.questions.prefetch_related('choices').all():
+            choices_data = []
+            for c in q.choices.all():
+                choices_data.append({
+                    "id": c.id,
+                    "text": c.choice_text,
+                    "is_correct": c.is_correct,
+                })
+            questions_data.append({
+                "id": q.id,
+                "question": q.question_text,
+                "type": q.question_type,
+                "choices": choices_data,
+            })
+
+        data = {
+            "id": submission.id,
+            "quiz": {
+                "id": quiz.id,
+                "title": quiz.title,
+                "total_points": quiz.total_points,
+                "questionnaire": questions_data,
+            },
+            "student_name": submission.student.get_full_name(),
+            "submitted_at": submission.submitted_at,
+            "answers": submission.answers,
+            "score": submission.score,
+        }
+        return Response(data)
+    except QuizSubmission.DoesNotExist:
+        return Response({"detail": "Soumission de quiz non trouvée."}, status=404)
+    except Exception as e:
+        logging.error(f"Error in assistant_quiz_submission_detail: {e}", exc_info=True)
+        return Response({"detail": "Une erreur inattendue est survenue."}, status=500)
+
+
 @api_view(["POST"])
 @permission_classes(DEV_PERMS)
 def assistant_grade_submission(request, assignment_id: int, submission_id: int):
@@ -495,33 +547,30 @@ def assistant_grade_submission(request, assignment_id: int, submission_id: int):
 
 @api_view(["POST"])
 @permission_classes(DEV_PERMS)
-def assistant_grade_quiz_attempt(request, quiz_id: int, attempt_id: int):
+def assistant_grade_quiz_submission(request, quiz_id: int, submission_id: int):
     try:
         with transaction.atomic():
-            attempt = QuizAttempt.objects.select_related('quiz__assistant', 'student').get(id=attempt_id, quiz__id=quiz_id)
+            submission = QuizSubmission.objects.select_related('quiz__assistant', 'student').get(id=submission_id, quiz__id=quiz_id)
 
-            if attempt.quiz.assistant != request.user:
-                return Response({"detail": "Accès non autorisé à cette tentative de quiz."}, status=403)
+            if submission.quiz.assistant != request.user:
+                return Response({"detail": "Accès non autorisé à cette soumission de quiz."}, status=403)
 
             total_score = request.data.get("total_score")
 
             if total_score is None:
                 return Response({"detail": "Le score total est requis."}, status=400)
 
-            # Validate that the score is within the allowed range
-            if not (0 <= float(total_score) <= attempt.quiz.total_points):
-                return Response({"detail": f"La note doit être entre 0 et {attempt.quiz.total_points}."}, status=400)
+            if not (0 <= float(total_score) <= submission.quiz.total_points):
+                return Response({"detail": f"La note doit être entre 0 et {submission.quiz.total_points}."}, status=400)
 
-            # Update the overall quiz attempt score and status
-            attempt.score = total_score
-            attempt.correction_status = 'graded'
-            attempt.graded_at = timezone.now()
-            attempt.save()
+            submission.score = total_score
+            submission.graded_at = timezone.now()
+            submission.save()
 
             return Response({"detail": "Correction du quiz soumise avec succès.", "total_score": total_score}, status=200)
 
-    except QuizAttempt.DoesNotExist:
-        return Response({"detail": "Tentative de quiz non trouvée ou accès non autorisé."}, status=404)
+    except QuizSubmission.DoesNotExist:
+        return Response({"detail": "Soumission de quiz non trouvée ou accès non autorisé."}, status=404)
     except Exception as e:
         return Response({"detail": f"Une erreur inattendue est survenue: {e}"}, status=500)
 
@@ -1046,8 +1095,8 @@ def quizzes_student_available(request):
     items = []
     user = request.user
     if user.current_auditoire:
-        attempted_quiz_ids = QuizAttempt.objects.filter(student=user).values_list('quiz_id', flat=True)
-        qs = Quiz.objects.select_related("course", "assistant").filter(course__auditoire=user.current_auditoire).exclude(id__in=attempted_quiz_ids)
+        submitted_quiz_ids = QuizSubmission.objects.filter(student=user).values_list('quiz_id', flat=True)
+        qs = Quiz.objects.select_related("course", "assistant").filter(course__auditoire=user.current_auditoire).exclude(id__in=submitted_quiz_ids)
 
         for q in qs:
             deadline = (q.created_at or timezone.now()) + timedelta(days=7)
@@ -1159,17 +1208,16 @@ def quizzes_student_detail(request, id):
 @permission_classes(DEV_PERMS)
 def quizzes_student_my_attempts(request):
     items = []
-    attempts = QuizAttempt.objects.select_related('quiz__course', 'quiz__assistant').filter(student=request.user).order_by('-submitted_at')
-    for a in attempts:
-        assistant_name = a.quiz.assistant.get_full_name() if a.quiz.assistant else "N/A"
+    submissions = QuizSubmission.objects.select_related('quiz__course', 'quiz__assistant').filter(student=request.user).order_by('-submitted_at')
+    for s in submissions:
+        assistant_name = s.quiz.assistant.get_full_name() if s.quiz.assistant else "N/A"
         items.append({
-            "id": a.id,
-            "quiz_title": a.quiz.title,
-            "course_name": a.quiz.course.name,
-            "score": a.score,
-            "total_questions": a.total_questions,
-            "submitted_at": a.submitted_at,
-            "submission_reason": a.get_submission_reason_display(),
+            "id": s.id,
+            "quiz_title": s.quiz.title,
+            "course_name": s.quiz.course.name,
+            "score": s.score,
+            "total_points": s.quiz.total_points,
+            "submitted_at": s.submitted_at,
             "assistant_name": assistant_name,
         })
     return Response(items)
@@ -1181,19 +1229,9 @@ def tptd_student_my_submissions(request):
     items = []
     user = request.user
     if user.current_auditoire:
-        overdue_assignments = Assignment.objects.filter(
-            course__auditoire=user.current_auditoire,
-            deadline__lt=timezone.now()
-        ).exclude(submissions__student=user)
-
-        for assignment in overdue_assignments:
-            Submission.objects.create(
-                assignment=assignment,
-                student=user,
-                status='non-soumis',
-                grade=0,
-                submitted_at=assignment.deadline
-            )
+        # The problematic block for creating overdue submissions has been removed.
+        # A separate, deliberate mechanism (e.g., a nightly script) should handle this logic
+        # to avoid side effects in a GET request.
 
         subs = Submission.objects.select_related("assignment", "assignment__course", "assignment__assistant").filter(student=user).order_by("-submitted_at")[:20]
         for s in subs:
@@ -1282,101 +1320,46 @@ def quizzes_student_start(request, id: int):
         user = request.user
         quiz = Quiz.objects.get(id=id)
 
-        attempt, created = QuizAttempt.objects.get_or_create(
-            student=user,
-            quiz=quiz,
-            defaults={'total_questions': quiz.questions.count(), 'submission_reason': 'manual'}
-        )
+        # This view is now simplified, as the complex logic is moved to the submission.
+        # We can check if a submission already exists if we want to prevent re-starting.
+        if QuizSubmission.objects.filter(student=user, quiz=quiz).exists():
+            return Response({"detail": "Vous avez déjà commencé ou soumis ce quiz."}, status=400)
 
-        return Response({"status": "ok", "attempt_id": attempt.id})
+        return Response({"status": "ok", "quiz_id": quiz.id})
     except Quiz.DoesNotExist:
         return Response({"detail": "Quiz ou profil introuvable."}, status=404)
 
 
 @api_view(["POST"])
 @permission_classes(DEV_PERMS)
-def quizzes_student_attempt_submit(request, id: int):
+def submit_quiz_answers(request, quiz_id: int):
     try:
-        with transaction.atomic():
-            user = request.user
-            attempt = QuizAttempt.objects.select_related('quiz').get(id=id, student=user)
+        user = request.user
+        quiz = Quiz.objects.get(id=quiz_id)
+        
+        answers = request.data.get('answers', {})
 
-            if attempt.submitted_at:
-                return Response({"detail": "Vous avez déjà soumis ce quiz."}, status=400)
+        # Prevent duplicate submissions
+        if QuizSubmission.objects.filter(quiz=quiz, student=user).exists():
+            return Response({"detail": "Vous avez déjà soumis ce quiz."}, status=400)
 
-            answers_data = request.data.get('answers', {})
-            reason = request.data.get('reason', 'manual')
-            attempt.submission_reason = reason
+        # Basic validation
+        if not isinstance(answers, dict):
+            return Response({"detail": "Les réponses doivent être un dictionnaire."}, status=400)
 
-            Answer.objects.filter(attempt=attempt).delete()
+        submission = QuizSubmission.objects.create(
+            quiz=quiz,
+            student=user,
+            answers=answers,
+            submitted_at=timezone.now(),
+        )
+        return Response({"status": "submitted", "submission_id": submission.id})
 
-            total_score = 0
-            quiz = attempt.quiz
-            has_text_question = quiz.questions.filter(question_type='text').exists()
-
-            if has_text_question:
-                attempt.correction_status = 'manual'
-            else:
-                attempt.correction_status = 'pending'
-
-            for question_id, answer_value in answers_data.items():
-                question = Question.objects.get(id=question_id)
-                points = 0
-
-                answer = Answer.objects.create(
-                    attempt=attempt,
-                    question=question,
-                    answer_text=str(answer_value) if question.question_type == 'text' else ''
-                )
-
-                if question.question_type in ['single', 'multiple'] and answer_value:
-                    try:
-                        if isinstance(answer_value, list):
-                            answer.selected_choices.set(answer_value)
-                        else:
-                            answer.selected_choices.set([answer_value])
-                    except (ValueError, TypeError):
-                        pass
-
-                if not has_text_question:
-                    question_points = getattr(question, 'points', 10)
-                    if question.question_type == 'single':
-                        correct_choice = question.choices.filter(is_correct=True).first()
-                        if correct_choice and str(correct_choice.id) == str(answer_value):
-                            points = question_points
-                    elif question.question_type == 'multiple':
-                        correct_choices = set(str(c.id) for c in question.choices.filter(is_correct=True))
-                        submitted_choices = set(str(v) for v in answer_value) if isinstance(answer_value, list) else set()
-                        if correct_choices == submitted_choices:
-                            points = question_points
-
-                answer.points_obtained = points
-                answer.save()
-                total_score += points
-
-            if not has_text_question:
-                attempt.score = total_score
-                attempt.correction_status = 'graded'
-
-            attempt.submitted_at = timezone.now()
-            attempt.save()
-
-        response_data = {
-            "status": "submitted",
-            "correction_status": attempt.correction_status,
-            "total_questions": attempt.total_questions
-        }
-        if not has_text_question:
-            response_data["score"] = attempt.score
-
-        return Response(response_data)
-
-    except QuizAttempt.DoesNotExist:
-        return Response({"detail": "Tentative de quiz non trouvée. Veuillez démarrer le quiz d'abord."}, status=404)
-    except (Quiz.DoesNotExist, Question.DoesNotExist):
-        return Response({"detail": "Erreur: Quiz ou profil introuvable."}, status=404)
+    except Quiz.DoesNotExist:
+        return Response({"detail": "Quiz non trouvé."}, status=404)
     except Exception as e:
-        return Response({"detail": f"Une erreur est survenue: {str(e)}"}, status=500)
+        logging.error(f"Error in submit_quiz_answers for quiz {quiz_id} by user {user.id}: {e}")
+        return Response({"detail": "Une erreur inattendue est survenue lors de la soumission."}, status=500)
 
 
 @api_view(["POST"])
@@ -1384,18 +1367,26 @@ def quizzes_student_attempt_submit(request, id: int):
 def tptd_student_submit(request, id: int):
     try:
         user = request.user
-        a = Assignment.objects.get(id=id)
+        assignment = Assignment.objects.get(id=id)
+
+        # Prevent duplicate submissions
+        if Submission.objects.filter(assignment=assignment, student=user).exists():
+            return Response({"detail": "Vous avez déjà soumis ce travail."}, status=400)
+
         content = request.data.get('content', '')
         Submission.objects.create(
-            assignment=a,
+            assignment=assignment,
             student=user,
             content=content,
             status='soumis',
             submitted_at=timezone.now(),
         )
         return Response({"status": "submitted"})
+    except Assignment.DoesNotExist:
+        return Response({"detail": "Travail non trouvé."}, status=404)
     except Exception as e:
-        return Response({"status": "error"}, status=500)
+        logging.error(f"Error in tptd_student_submit for assignment {id} by user {user.id}: {e}")
+        return Response({"detail": "Une erreur inattendue est survenue lors de la soumission."}, status=500)
 
 
 # ---- Endpoints PDG (placeholders) ----

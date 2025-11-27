@@ -78,9 +78,8 @@ export default function StudentQuizDetail() {
   const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState({});
-  const [submissionResult, setSubmissionResult] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
-  const [attemptId, setAttemptId] = useState(null);
 
   const submittedRef = useRef(false);
 
@@ -88,54 +87,45 @@ export default function StudentQuizDetail() {
     if (submittedRef.current) return;
     submittedRef.current = true;
 
-    const res = await safePost(`/api/quizzes/student/attempts/${attemptId}/submit/`, { answers, reason });
-    if (res) {
-      setSubmissionResult(res);
-      if (res.correction_status === 'automatic') {
-        toast.push({ title: "Succès", message: `Quiz soumis ! Votre score: ${res.score}/${res.total_questions}` });
-      } else if (res.correction_status === 'pending') {
-        toast.push({ title: "Soumission enregistrée", message: "Votre quiz est en attente de correction.", kind: 'info' });
-      } else if (res.detail) {
-         toast.push({ title: "Information", message: res.detail, kind: 'info' });
-      }
+    const res = await safePost(`/api/quizzes/student/${id}/submit/`, { answers });
+    if (res && res.status === 'submitted') {
+      setSubmitted(true);
+      toast.push({ title: "Succès", message: "Quiz soumis avec succès !" });
+      navigate('/etudiant/travaux', { state: { tab: 'quiz' } });
     } else {
-      toast.push({ title: "Erreur", message: "Erreur lors de la soumission du quiz.", kind: 'error' });
+      toast.push({ title: "Erreur", message: res?.detail || "Erreur lors de la soumission du quiz.", kind: 'error' });
       submittedRef.current = false; // Allow retry if submission fails
     }
-  }, [attemptId, answers, toast]);
+  }, [id, answers, toast, navigate]);
 
   useEffect(() => {
-    const fetchAndStartQuiz = async () => {
+    const fetchQuiz = async () => {
       setLoading(true);
-      const startRes = await safePost(`/api/quizzes/student/${id}/start/`);
-      if (startRes && startRes.attempt_id) {
-        setAttemptId(startRes.attempt_id);
-        const data = await safeGet(`/api/quizzes/student/${id}/`);
-        if (data) {
-          setQuiz(data);
-          const initialAnswers = {};
-          data.questions?.forEach(q => {
-            if (q.type === 'multiple') {
-              initialAnswers[q.id] = [];
-            } else if (q.type === 'single') {
-              initialAnswers[q.id] = null;
-            } else {
-              initialAnswers[q.id] = '';
-            }
-          });
-          setAnswers(initialAnswers);
-          if (!submissionResult) {
-            setTimeLeft(data.duration * 60);
+      const data = await safeGet(`/api/quizzes/student/${id}/`);
+      if (data) {
+        setQuiz(data);
+        const initialAnswers = {};
+        data.questions?.forEach(q => {
+          if (q.type === 'multiple') {
+            initialAnswers[q.id] = [];
+          } else if (q.type === 'single') {
+            initialAnswers[q.id] = null;
+          } else {
+            initialAnswers[q.id] = '';
           }
+        });
+        setAnswers(initialAnswers);
+        if (!submitted) {
+          setTimeLeft(data.duration * 60);
         }
       } else {
-        toast.push({ title: "Erreur", message: "Impossible de démarrer le quiz.", kind: 'error' });
+        toast.push({ title: "Erreur", message: "Impossible de charger le quiz.", kind: 'error' });
         navigate('/etudiant/travaux');
       }
       setLoading(false);
     };
 
-    fetchAndStartQuiz();
+    fetchQuiz();
   }, [id, navigate, toast]);
 
   // Effet pour le compte à rebours
@@ -143,12 +133,12 @@ export default function StudentQuizDetail() {
     if (timeLeft === 0) {
       handleSubmit('time-out');
     }
-    if (!timeLeft || submissionResult) return;
+    if (!timeLeft || submitted) return;
     const intervalId = setInterval(() => {
       setTimeLeft(prevTime => prevTime - 1);
     }, 1000);
     return () => clearInterval(intervalId);
-  }, [timeLeft, submissionResult, handleSubmit]);
+  }, [timeLeft, submitted, handleSubmit]);
 
   const formatTime = useMemo(() => {
     if (timeLeft === null) return "00:00";
@@ -178,7 +168,7 @@ export default function StudentQuizDetail() {
                 <p className="text-slate-600 dark:text-slate-400">Cours: {quiz.course_name}</p>
                 <p className="text-slate-600 dark:text-slate-400">Par: {quiz.assistant_name}</p>
             </div>
-            {!submissionResult && (
+            {!submitted && (
                 <div className="text-2xl font-bold p-4 rounded-lg bg-slate-200 dark:bg-slate-700">
                     {formatTime}
                 </div>
@@ -188,20 +178,10 @@ export default function StudentQuizDetail() {
         <p className="text-red-500 font-semibold">À passer avant le: {new Date(quiz.deadline).toLocaleString()}</p>
       </div>
 
-      {submissionResult ? (
+      {submitted ? (
         <div className="card p-6 text-center">
-            <h2 className="text-2xl font-bold mb-4">Résultats du Quiz</h2>
-            {submissionResult.correction_status === 'pending' || submissionResult.score === null || submissionResult.score === undefined ? (
-                <>
-                    <p className="text-2xl font-semibold mt-4">Résultats du Quiz est en attente</p>
-                    <p className="text-slate-600 dark:text-slate-400 mt-2">Votre soumission a été enregistrée et sera corrigée manuellement.</p>
-                </>
-            ) : (
-                <>
-                    <p className="text-4xl font-bold">{submissionResult.score} / {submissionResult.total_questions}</p>
-                    <p className="text-slate-600 dark:text-slate-400 mt-2">Votre score a été enregistré.</p>
-                </>
-            )}
+            <h2 className="text-2xl font-bold mb-4">Quiz Soumis</h2>
+            <p className="text-slate-600 dark:text-slate-400 mt-2">Votre soumission a été enregistrée.</p>
             <button onClick={() => navigate('/etudiant/travaux', { state: { tab: 'quiz' } })} className="btn btn-secondary mt-4">Retour aux travaux</button>
         </div>
       ) : (
@@ -212,7 +192,7 @@ export default function StudentQuizDetail() {
                 question={q}
                 answer={answers[q.id]}
                 onAnswerChange={handleAnswerChange}
-                submitted={!!submissionResult}
+                submitted={submitted}
             />
             ))}
 

@@ -144,7 +144,7 @@ export default function App() {
               <Route path="a-corriger" element={<AssistantToGrade />} />
               <Route path="profil" element={<AssistantProfile />} />
               {/* Nouvelle route spécifique pour la correction de quiz */}              
-              <Route path="quizzes/:quiz_id/submission/:attempt_id" element={<QuizCorrectionPage />} />
+              <Route path="quizzes/:quiz_id/submission/:submission_id" element={<QuizCorrectionPage />} />
             </Route>
           </Route>
 

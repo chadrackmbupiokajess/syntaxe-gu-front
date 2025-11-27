@@ -96,7 +96,7 @@ export default function AssistantToGrade() {
                                 <tbody>
                                   {(submissionItems || []).map(s => {
                                     const submissionUrl = s.type === 'Quiz'
-                                      ? `/assistant/quizzes/${s.quiz_id}/submission/${s.attempt_id}`
+                                      ? `/assistant/quizzes/${s.quiz_id}/submission/${s.submission_id}`
                                       : `/assistant/tptd/${s.assignment_id}/submission/${s.id}`;
 
                                     const buttonColorClass = s.type === 'Quiz'
