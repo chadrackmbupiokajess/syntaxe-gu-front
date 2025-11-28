@@ -16,6 +16,8 @@ class UserSerializer(serializers.ModelSerializer):
     """
     Sérialiseur pour le modèle User personnalisé.
     """
+    full_name = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = (
@@ -26,8 +28,11 @@ class UserSerializer(serializers.ModelSerializer):
             'last_name',
             'post_name',
             'role',
-            'get_full_name',
+            'full_name',
             'profile_picture',
             # Ajoutez d'autres champs que vous voulez exposer via l'API
         )
-        read_only_fields = ('id', 'get_full_name')
+        read_only_fields = ('id', 'full_name')
+
+    def get_full_name(self, obj):
+        return obj.get_full_name()

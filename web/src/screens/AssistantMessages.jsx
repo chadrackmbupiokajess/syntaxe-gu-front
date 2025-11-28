@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { safeGet, safePost } from '../api/safeGet'; // Use safeGet/safePost
+import { safeGet, safePost } from '../api/safeGet';
 
 // --- Helper Functions ---
 
@@ -92,11 +92,7 @@ function ChatArea({ course, currentUser }) {
       setLoading(true);
       try {
         const response = await safeGet(`/api/messaging/courses/${course.code}/auditoriums/${course.auditorium_id}/messages/`);
-        if (response) {
-            setMessages(response);
-        } else {
-            setMessages([]);
-        }
+        setMessages(response || []);
         scrollToBottom();
       } catch (error) {
         console.error("Erreur lors de la récupération des messages:", error);
@@ -142,7 +138,13 @@ function ChatArea({ course, currentUser }) {
   const chatElements = [];
   let lastDate = null;
   
-  const currentUserFullName = currentUser?.full_name || '';
+  const getCurrentUserFullName = () => {
+    if (currentUser && currentUser.first_name && currentUser.last_name) {
+      return `${currentUser.first_name} ${currentUser.last_name}`.trim();
+    }
+    return currentUser?.full_name || '';
+  };
+  const currentUserFullName = getCurrentUserFullName();
 
   messages.forEach((msg) => {
     const msgDate = new Date(msg.timestamp).toDateString();
