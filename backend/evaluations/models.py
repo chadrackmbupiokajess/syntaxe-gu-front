@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 from academics.models import Course, Auditoire
 
 # --- TP/TD Models ---
@@ -81,6 +82,15 @@ class Choice(models.Model):
         return self.choice_text
 
 class QuizSubmission(models.Model):
+    SUBMISSION_STATUSES = (
+        ('en_cours', 'En cours'),
+        ('soumis', 'Soumis'),
+    )
+    SUBMISSION_REASONS = (
+        ('manual', 'Manuel'),
+        ('time-out', 'Temps écoulé'),
+        ('left-page', 'Page quittée'),
+    )
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, related_name='submissions')
     student = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
@@ -91,8 +101,11 @@ class QuizSubmission(models.Model):
     answers = models.JSONField(default=dict, help_text="Réponses de l'étudiant au format JSON")
     score = models.FloatField(null=True, blank=True)
     feedback = models.TextField(blank=True, null=True)
-    submitted_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=SUBMISSION_STATUSES, default='en_cours')
+    started_at = models.DateTimeField(default=timezone.now)
+    submitted_at = models.DateTimeField(null=True, blank=True)
     graded_at = models.DateTimeField(null=True, blank=True)
+    submission_reason = models.CharField(max_length=10, choices=SUBMISSION_REASONS, default='manual')
 
     class Meta:
         unique_together = ('student', 'quiz')

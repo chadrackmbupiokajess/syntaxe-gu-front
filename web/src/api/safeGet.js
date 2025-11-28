@@ -1,5 +1,11 @@
 import axios from 'axios'
 
+export function getCsrfToken() {
+    return document.cookie.split('; ')
+        .find(row => row.startsWith('csrftoken='))
+        ?.split('=')[1];
+}
+
 export async function safeGet(url, fallback = null) {
   try {
     const { data } = await axios.get(url)

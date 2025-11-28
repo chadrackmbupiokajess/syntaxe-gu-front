@@ -5,6 +5,7 @@ import logging
 import json
 
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import permissions
 from rest_framework.response import Response
@@ -1172,6 +1173,17 @@ def quizzes_student_detail(request, id):
         if user.current_auditoire != quiz.course.auditoire:
             return Response({"detail": "Accès non autorisé à ce quiz."}, status=403)
 
+        # Crée ou récupère la tentative de quiz
+        submission, created = QuizSubmission.objects.get_or_create(
+            student=user,
+            quiz=quiz,
+            defaults={'status': 'en_cours'}
+        )
+
+        # Si la tentative est déjà soumise, on peut le signaler au frontend
+        if submission.status == 'soumis':
+            return Response({"detail": "Vous avez déjà soumis ce quiz.", "attempt": {"status": "soumis"}}, status=400)
+
         questions = []
         for q in quiz.questions.all():
             choices = []
@@ -1197,6 +1209,12 @@ def quizzes_student_detail(request, id):
             "assistant_name": assistant_name,
             "deadline": deadline,
             "questions": questions,
+            "attempt": {
+                "id": submission.id,
+                "status": submission.status,
+                "answers": submission.answers,
+                "started_at": submission.started_at.isoformat()
+            }
         }
         return Response(data)
 
@@ -1332,31 +1350,31 @@ def quizzes_student_start(request, id: int):
 
 @api_view(["POST"])
 @permission_classes(DEV_PERMS)
+@csrf_exempt
 def submit_quiz_answers(request, quiz_id: int):
     try:
         user = request.user
         quiz = Quiz.objects.get(id=quiz_id)
-        
+
         answers = request.data.get('answers', {})
+        reason = request.data.get('reason', 'manual')
 
-        # Prevent duplicate submissions
-        if QuizSubmission.objects.filter(quiz=quiz, student=user).exists():
-            return Response({"detail": "Vous avez déjà soumis ce quiz."}, status=400)
+        # Récupère la tentative existante
+        submission = QuizSubmission.objects.get(quiz=quiz, student=user, status='en_cours')
 
-        # Basic validation
-        if not isinstance(answers, dict):
-            return Response({"detail": "Les réponses doivent être un dictionnaire."}, status=400)
+        # Met à jour la tentative
+        submission.answers = answers
+        submission.submission_reason = reason
+        submission.status = 'soumis'
+        submission.submitted_at = timezone.now()
+        submission.save()
 
-        submission = QuizSubmission.objects.create(
-            quiz=quiz,
-            student=user,
-            answers=answers,
-            submitted_at=timezone.now(),
-        )
         return Response({"status": "submitted", "submission_id": submission.id})
 
     except Quiz.DoesNotExist:
         return Response({"detail": "Quiz non trouvé."}, status=404)
+    except QuizSubmission.DoesNotExist:
+        return Response({"detail": "Aucune tentative de quiz en cours trouvée."}, status=404)
     except Exception as e:
         logging.error(f"Error in submit_quiz_answers for quiz {quiz_id} by user {user.id}: {e}")
         return Response({"detail": "Une erreur inattendue est survenue lors de la soumission."}, status=500)

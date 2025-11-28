@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { safeGet, safePost } from '../api/safeGet';
+import { safeGet, safePost, getCsrfToken } from '../api/safeGet';
 import { useToast } from '../shared/ToastProvider';
 
 // Composant pour une seule question
@@ -82,42 +82,60 @@ export default function StudentQuizDetail() {
   const [timeLeft, setTimeLeft] = useState(null);
 
   const submittedRef = useRef(false);
+  const answersRef = useRef(answers);
 
-  const handleSubmit = useCallback(async (reason = 'manual') => {
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
+  const submitQuiz = useCallback(async (reason = 'manual') => {
     if (submittedRef.current) return;
     submittedRef.current = true;
 
-    const res = await safePost(`/api/quizzes/student/${id}/submit/`, { answers });
+    const res = await safePost(`/api/quizzes/student/${id}/submit/`, { answers: answersRef.current, reason });
     if (res && res.status === 'submitted') {
       setSubmitted(true);
       toast.push({ title: "Succès", message: "Quiz soumis avec succès !" });
       navigate('/etudiant/travaux', { state: { tab: 'quiz' } });
     } else {
-      toast.push({ title: "Erreur", message: res?.detail || "Erreur lors de la soumission du quiz.", kind: 'error' });
-      submittedRef.current = false; // Allow retry if submission fails
+      // Si la soumission échoue, on ne veut pas que l'étudiant soit bloqué
+      submittedRef.current = false;
     }
-  }, [id, answers, toast, navigate]);
+  }, [id, toast, navigate]);
 
   useEffect(() => {
     const fetchQuiz = async () => {
       setLoading(true);
       const data = await safeGet(`/api/quizzes/student/${id}/`);
       if (data) {
+        if (data.attempt && data.attempt.status === 'soumis') {
+            toast.push({ title: "Info", message: "Vous avez déjà soumis ce quiz.", kind: 'info' });
+            navigate('/etudiant/travaux', { state: { tab: 'quiz' } });
+            return;
+        }
+
         setQuiz(data);
-        const initialAnswers = {};
+        const initialAnswers = data.attempt?.answers || {};
         data.questions?.forEach(q => {
-          if (q.type === 'multiple') {
-            initialAnswers[q.id] = [];
-          } else if (q.type === 'single') {
-            initialAnswers[q.id] = null;
-          } else {
-            initialAnswers[q.id] = '';
+          if (!(q.id in initialAnswers)) {
+            if (q.type === 'multiple') {
+              initialAnswers[q.id] = [];
+            } else if (q.type === 'single') {
+              initialAnswers[q.id] = null;
+            } else {
+              initialAnswers[q.id] = '';
+            }
           }
         });
         setAnswers(initialAnswers);
-        if (!submitted) {
-          setTimeLeft(data.duration * 60);
-        }
+
+        const now = new Date();
+        const startedAt = new Date(data.attempt.started_at);
+        const durationInSeconds = data.duration * 60;
+        const timePassed = (now - startedAt) / 1000;
+        const remaining = Math.max(0, durationInSeconds - timePassed);
+        setTimeLeft(remaining);
+
       } else {
         toast.push({ title: "Erreur", message: "Impossible de charger le quiz.", kind: 'error' });
         navigate('/etudiant/travaux');
@@ -130,20 +148,37 @@ export default function StudentQuizDetail() {
 
   // Effet pour le compte à rebours
   useEffect(() => {
-    if (timeLeft === 0) {
-      handleSubmit('time-out');
+    if (submitted || timeLeft === null) return;
+    if (timeLeft <= 0) {
+      submitQuiz('time-out');
+      return;
     }
-    if (!timeLeft || submitted) return;
-    const intervalId = setInterval(() => {
-      setTimeLeft(prevTime => prevTime - 1);
+    const timerId = setInterval(() => {
+      setTimeLeft(prevTime => prevTime > 0 ? prevTime - 1 : 0);
     }, 1000);
-    return () => clearInterval(intervalId);
-  }, [timeLeft, submitted, handleSubmit]);
+
+    return () => clearInterval(timerId);
+  }, [timeLeft, submitted, submitQuiz]);
+
+  // Effet pour la soumission en quittant la page
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!submittedRef.current && quiz) {
+        submitQuiz('left-page');
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [quiz, submitQuiz]);
 
   const formatTime = useMemo(() => {
     if (timeLeft === null) return "00:00";
     const minutes = Math.floor(timeLeft / 60);
-    const seconds = timeLeft % 60;
+    const seconds = Math.floor(timeLeft % 60);
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }, [timeLeft]);
 
@@ -185,7 +220,7 @@ export default function StudentQuizDetail() {
             <button onClick={() => navigate('/etudiant/travaux', { state: { tab: 'quiz' } })} className="btn btn-secondary mt-4">Retour aux travaux</button>
         </div>
       ) : (
-        <form onSubmit={(e) => { e.preventDefault(); handleSubmit('manual'); }}>
+        <form onSubmit={(e) => { e.preventDefault(); submitQuiz('manual'); }}>
             {quiz.questions?.map(q => (
             <QuizQuestion
                 key={q.id}
