@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import { safeGet, safePost } from '../api/safeGet'; // Use safeGet/safePost
 
 // --- Helper Functions ---
 
@@ -31,7 +31,6 @@ function formatDateSeparator(dateStr) {
 // --- Components ---
 
 function CourseSidebar({ courses, onSelectCourse, selectedCourse }) {
-  // Group courses by auditorium
   const groupedCourses = courses.reduce((acc, course) => {
     const auditoriumKey = `${course.auditorium_id}-${course.auditorium}`;
     if (!acc[auditoriumKey]) {
@@ -46,7 +45,7 @@ function CourseSidebar({ courses, onSelectCourse, selectedCourse }) {
   }, {});
 
   return (
-    <div className="flex flex-col bg-slate-800 text-white w-1/4 min-h-screen p-4">
+    <div className="flex flex-col bg-slate-100 dark:bg-slate-800 w-1/4 min-h-screen p-4 border-r border-slate-200 dark:border-slate-700">
       <h2 className="text-xl font-bold mb-4">Discussions par Cours</h2>
       <nav className="flex flex-col gap-4">
         {Object.values(groupedCourses).map(auditorium => (
@@ -58,13 +57,12 @@ function CourseSidebar({ courses, onSelectCourse, selectedCourse }) {
                 onClick={() => onSelectCourse(course)}
                 className={`w-full text-left p-2 rounded-md transition-colors duration-200 mb-1 ${
                   selectedCourse?.id === course.id
-                    ? 'bg-blue-600 font-semibold'
-                    : 'hover:bg-slate-700'
+                    ? 'bg-blue-500 text-white font-semibold'
+                    : 'hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
                 <p className="font-medium">{course.title}</p>
-                <p className="text-sm text-white/60">{course.auditorium}</p>
-                <p className="text-xs text-white/50">{course.department}</p>
+                <p className="text-sm text-slate-400">{course.department}</p>
               </button>
             ))}
           </div>
@@ -74,7 +72,7 @@ function CourseSidebar({ courses, onSelectCourse, selectedCourse }) {
   );
 }
 
-function ChatArea({ course }) {
+function ChatArea({ course, currentUser }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -86,16 +84,23 @@ function ChatArea({ course }) {
   }
 
   useEffect(() => {
-    if (!course || !course.code || !course.auditorium_id) return;
+    if (!course || !course.code || !course.auditorium_id) {
+        setMessages([]);
+        return;
+    }
     const fetchMessages = async () => {
       setLoading(true);
       try {
-        // Updated API call to include course_code and auditorium_id
-        const response = await axios.get(`/api/messaging/chat/${course.code}/${course.auditorium_id}/messages`);
-        setMessages(response.data);
+        const response = await safeGet(`/api/messaging/courses/${course.code}/auditoriums/${course.auditorium_id}/messages/`);
+        if (response) {
+            setMessages(response);
+        } else {
+            setMessages([]);
+        }
         scrollToBottom();
       } catch (error) {
         console.error("Erreur lors de la récupération des messages:", error);
+        setMessages([]);
       }
       setLoading(false);
     };
@@ -108,9 +113,10 @@ function ChatArea({ course }) {
     e.preventDefault();
     if (!newMessage.trim() || !course || !course.code || !course.auditorium_id) return;
     try {
-      // Updated API call to include course_code and auditorium_id
-      const response = await axios.post(`/api/messaging/chat/${course.code}/${course.auditorium_id}/messages`, { text: newMessage });
-      setMessages(prev => [...prev, response.data]);
+      const response = await safePost(`/api/messaging/courses/${course.code}/auditoriums/${course.auditorium_id}/messages/`, { text: newMessage });
+      if(response) {
+        setMessages(prev => [...prev, response]);
+      }
       setNewMessage('');
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
@@ -126,43 +132,41 @@ function ChatArea({ course }) {
   };
 
   if (!course) {
-    return <div className="flex-1 p-8 text-center text-white/70">Sélectionnez un cours pour voir les messages.</div>;
+    return <div className="flex-1 p-8 text-center text-slate-500">Sélectionnez un cours pour voir les messages.</div>;
   }
 
   if (loading) {
-    return <div className="flex-1 p-8 text-center text-white/70">Chargement des messages...</div>;
+    return <div className="flex-1 p-8 text-center text-slate-500">Chargement des messages...</div>;
   }
 
   const chatElements = [];
   let lastDate = null;
+  
+  const currentUserFullName = currentUser?.full_name || '';
 
-  messages.forEach((msg, index) => {
-    const msgDate = new Date(msg.at).toDateString();
+  messages.forEach((msg) => {
+    const msgDate = new Date(msg.timestamp).toDateString();
     if (msgDate !== lastDate) {
       chatElements.push(
         <div key={`date-${msgDate}`} className="text-center text-sm text-slate-400 my-4">
-          {formatDateSeparator(msg.at)}
+          {formatDateSeparator(msg.timestamp)}
         </div>
       );
       lastDate = msgDate;
     }
 
-    // Assuming the backend response for messages includes sender_id and the current user's ID is available
-    // For AssistantMessages, we don't have currentUser prop, so we'll assume 'You' for now or fetch current user if needed
-    // For now, let's assume the assistant is always 'You' in this view for simplicity, or we need to pass current user info.
-    // A more robust solution would involve fetching the current user's ID in AssistantMessages component.
-    const isSelf = msg.user === 'Vous'; // This logic needs to be refined if actual user identification is required
+    const isSelf = msg.sender === currentUserFullName;
     const avatar = (
       <div className={`w-8 h-8 rounded-full ${isSelf ? 'bg-blue-500' : 'bg-slate-600'} flex-shrink-0 flex items-center justify-center font-bold text-white`}>
-        {isSelf ? 'V' : msg.user.charAt(0).toUpperCase()}
+        {isSelf ? 'Moi' : msg.sender.charAt(0).toUpperCase()}
       </div>
     );
     const messageBubble = (
-      <div className={`max-w-lg px-3 pt-2 pb-1 rounded-2xl ${isSelf ? 'bg-blue-700 rounded-tr-none' : 'bg-slate-700 rounded-tl-none'}`}>
-        {!isSelf && <p className="text-sm font-semibold text-white/80 mb-1">{msg.user}</p>}
+      <div className={`max-w-lg px-3 pt-2 pb-1 rounded-2xl ${isSelf ? 'bg-blue-600 text-white rounded-br-none' : 'bg-slate-200 dark:bg-slate-700 rounded-bl-none'}`}>
+        {!isSelf && <p className="text-sm font-semibold text-slate-800 dark:text-white/80 mb-1">{msg.sender}</p>}
         <p className="whitespace-pre-wrap break-words">{msg.text}</p>
-        <div className="text-right text-xs text-white/60 mt-1">
-          {new Date(msg.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        <div className="text-right text-xs text-slate-500 dark:text-white/60 mt-1">
+          {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </div>
       </div>
     );
@@ -177,27 +181,27 @@ function ChatArea({ course }) {
   });
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-900">
-      <div className="p-4 bg-slate-800 border-b border-slate-700">
+    <div className="flex-1 flex flex-col bg-white dark:bg-slate-900">
+      <div className="p-4 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
         <h3 className="text-xl font-bold">{course.title} ({course.auditorium})</h3>
-        <p className="text-sm text-white/60">{course.auditorium} - {course.department}</p>
+        <p className="text-sm text-slate-400">{course.department}</p>
       </div>
       <div className="flex-1 p-6 overflow-y-auto">
         <div className="flex flex-col gap-4">
-          {chatElements}
+          {chatElements.length > 0 ? chatElements : <p className="text-center text-slate-500">Aucun message pour ce cours.</p>}
           <div ref={messagesEndRef} />
         </div>
       </div>
-      <div className="p-4 bg-slate-800 border-t border-slate-700">
+      <div className="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
         <form onSubmit={handleSendMessage} className="flex items-end gap-3">
-          <div className="flex-1 bg-slate-700 rounded-2xl flex items-end p-1">
+          <div className="flex-1 bg-slate-200 dark:bg-slate-700 rounded-2xl flex items-end p-1">
             <textarea
               ref={textareaRef}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onInput={handleTextareaInput}
               placeholder="Écrivez votre message..."
-              className="flex-1 bg-transparent text-white placeholder-slate-400 resize-none overflow-hidden focus:outline-none px-3 py-2"
+              className="flex-1 bg-transparent placeholder-slate-500 resize-none overflow-hidden focus:outline-none px-3 py-2"
               rows="1"
             />
           </div>
@@ -215,39 +219,50 @@ function ChatArea({ course }) {
 export default function AssistantMessages() {
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchInitialData = async () => {
       try {
-        // The /api/assistant/courses endpoint should return auditorium_id and auditorium_name
-        const response = await axios.get('/api/assistant/courses');
-        const fetchedCourses = response.data;
+        const [coursesResponse, userResponse] = await Promise.all([
+            safeGet('/api/assistant/courses'),
+            safeGet('/api/auth/me'),
+        ]);
+        const fetchedCourses = coursesResponse || [];
         setCourses(fetchedCourses);
+        setCurrentUser(userResponse || {});
 
-        const auditoriumCode = searchParams.get('auditorium');
-        if (auditoriumCode) {
-          // Find course by auditorium ID, not just auditorium name
-          const courseToSelect = fetchedCourses.find(c => c.auditorium_id === parseInt(auditoriumCode));
+        const auditoriumId = searchParams.get('auditorium');
+        const courseId = searchParams.get('course');
+
+        if (courseId) {
+            const courseToSelect = fetchedCourses.find(c => c.id === parseInt(courseId));
+            if (courseToSelect) {
+              setSelectedCourse(courseToSelect);
+            }
+        } else if (auditoriumId) {
+          const courseToSelect = fetchedCourses.find(c => c.auditorium_id === parseInt(auditoriumId));
           if (courseToSelect) {
             setSelectedCourse(courseToSelect);
           }
         }
+
       } catch (error) {
-        console.error("Erreur lors de la récupération des cours:", error);
+        console.error("Erreur lors de la récupération des données initiales:", error);
       }
     };
-    fetchCourses();
+    fetchInitialData();
   }, [searchParams]);
 
   return (
-    <div className="flex min-h-screen bg-slate-900 text-white">
+    <div className="flex min-h-screen">
       <CourseSidebar 
         courses={courses} 
         onSelectCourse={setSelectedCourse}
         selectedCourse={selectedCourse}
       />
-      <ChatArea key={selectedCourse?.id} course={selectedCourse} />
+      <ChatArea key={selectedCourse?.id} course={selectedCourse} currentUser={currentUser} />
     </div>
   );
 }

@@ -1,8 +1,9 @@
 from django.contrib import admin
-from .models import UserMessage
+from .models import Message
 
-@admin.register(UserMessage)
-class UserMessageAdmin(admin.ModelAdmin):
-    list_display = ('course', 'user', 'text', 'created_at')
-    list_filter = ('course', 'user', 'created_at')
-    search_fields = ('text', 'user__username')
+@admin.register(Message)
+class MessageAdmin(admin.ModelAdmin):
+    list_display = ('sender', 'course', 'auditorium', 'timestamp', 'text')
+    list_filter = ('course', 'auditorium', 'sender', 'timestamp')
+    search_fields = ('text', 'sender__username', 'course__name')
+    date_hierarchy = 'timestamp'

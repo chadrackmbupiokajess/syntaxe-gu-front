@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { safeGet, safePost } from '../api/safeGet';
+import { safeGet, safePost } from '../api/safeGet'; // Assuming safeGet/safePost handle axios internally
 
 // --- Helper Functions ---
 
@@ -72,7 +72,7 @@ function CourseSidebar({ courses, onSelectCourse, selectedCourse }) {
   );
 }
 
-function ChatArea({ course, currentUser }) { // Removed studentMeta as it's not used
+function ChatArea({ course, currentUser }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -92,10 +92,10 @@ function ChatArea({ course, currentUser }) { // Removed studentMeta as it's not 
     const fetchMessages = async () => {
       setLoading(true);
       try {
-        // Updated API call to include course_code and auditorium_id
-        const response = await safeGet(`/api/messaging/chat/${course.code}/${course.auditorium_id}/messages`);
+        // UPDATED API CALL URL
+        const response = await safeGet(`/api/messaging/courses/${course.code}/auditoriums/${course.auditorium_id}/messages/`);
         if (response) {
-            setMessages(response); // No client-side filtering needed now
+            setMessages(response);
         } else {
             setMessages([]);
         }
@@ -115,17 +115,11 @@ function ChatArea({ course, currentUser }) { // Removed studentMeta as it's not 
     e.preventDefault();
     if (!newMessage.trim() || !course || !course.code || !course.auditorium_id) return;
     try {
-      // Updated API call to include course_code and auditorium_id
-      const response = await safePost(`/api/messaging/chat/${course.code}/${course.auditorium_id}/messages`, { text: newMessage }); // Changed body to text as per backend
+      // UPDATED API CALL URL and payload
+      const response = await safePost(`/api/messaging/courses/${course.code}/auditoriums/${course.auditorium_id}/messages/`, { text: newMessage });
       if(response) {
-        setMessages(prev => [...prev, {
-          id: response.id,
-          user: response.user,
-          text: response.text,
-          at: response.at,
-          sender_id: currentUser.id, // Assuming currentUser.id is available
-          sender_type: currentUser.roles[0], // Assuming currentUser.roles is an array of strings
-        }]);
+        // Backend now returns the full message object on POST, so we can add it directly
+        setMessages(prev => [...prev, response]);
       }
       setNewMessage('');
       if (textareaRef.current) {
@@ -152,29 +146,41 @@ function ChatArea({ course, currentUser }) { // Removed studentMeta as it's not 
   const chatElements = [];
   let lastDate = null;
 
+  // Helper to get full name from currentUser
+  const getCurrentUserFullName = () => {
+    if (currentUser && currentUser.first_name && currentUser.last_name) {
+      return `${currentUser.first_name} ${currentUser.last_name}`.trim();
+    }
+    return '';
+  };
+  const currentUserFullName = getCurrentUserFullName();
+
   messages.forEach((msg, index) => {
-    const msgDate = new Date(msg.at).toDateString(); // Changed created_at to at
+    // UPDATED FIELD NAME: msg.at -> msg.timestamp
+    const msgDate = new Date(msg.timestamp).toDateString();
     if (msgDate !== lastDate) {
       chatElements.push(
+        // UPDATED FIELD NAME: msg.at -> msg.timestamp
         <div key={`date-${msgDate}`} className="text-center text-sm text-slate-400 my-4">
-          {formatDateSeparator(msg.at)} // Changed created_at to at
+          {formatDateSeparator(msg.timestamp)}
         </div>
       );
       lastDate = msgDate;
     }
 
-    const isSelf = msg.sender_id === currentUser.id; // Assuming sender_id is available in msg
+    // UPDATED LOGIC for isSelf: Compare msg.sender (from backend) with current user's full name
+    const isSelf = msg.sender === currentUserFullName;
     const avatar = (
       <div className={`w-8 h-8 rounded-full ${isSelf ? 'bg-blue-500' : 'bg-slate-600'} flex-shrink-0 flex items-center justify-center font-bold text-white`}>
-        {isSelf ? 'Moi' : msg.user.charAt(0).toUpperCase()} // Changed msg.sender to msg.user
+        {isSelf ? 'Moi' : msg.sender.charAt(0).toUpperCase()}
       </div>
     );
     const messageBubble = (
       <div className={`max-w-lg px-3 pt-2 pb-1 rounded-2xl ${isSelf ? 'bg-blue-600 text-white rounded-br-none' : 'bg-slate-200 dark:bg-slate-700 rounded-bl-none'}`}>
-        {!isSelf && <p className="text-sm font-semibold text-slate-800 dark:text-white/80 mb-1">{msg.user}</p>} // Changed msg.sender to msg.user
-        <p className="whitespace-pre-wrap break-words">{msg.text}</p> // Changed msg.body to msg.text
+        {!isSelf && <p className="text-sm font-semibold text-slate-800 dark:text-white/80 mb-1">{msg.sender}</p>}
+        <p className="whitespace-pre-wrap break-words">{msg.text}</p>
         <div className="text-right text-xs text-slate-500 dark:text-white/60 mt-1">
-          {new Date(msg.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} // Changed created_at to at
+          {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </div>
       </div>
     );
@@ -191,7 +197,7 @@ function ChatArea({ course, currentUser }) { // Removed studentMeta as it's not 
   return (
     <div className="flex-1 flex flex-col bg-white dark:bg-slate-900">
       <div className="p-4 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-        <h3 className="text-xl font-bold">{course.title} ({course.auditorium_name})</h3> {/* Added auditorium_name */}
+        <h3 className="text-xl font-bold">{course.title} ({course.auditorium_name})</h3>
       </div>
       <div className="flex-1 p-6 overflow-y-auto">
         <div className="flex flex-col gap-4">

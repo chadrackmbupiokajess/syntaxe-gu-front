@@ -1,15 +1,18 @@
 from django.db import models
-from django.conf import settings
+from django.contrib.auth import get_user_model
+from academics.models import Course, Auditoire
 
-class UserMessage(models.Model):
-    course = models.ForeignKey('academics.Course', on_delete=models.CASCADE, related_name='user_messages')
-    auditorium = models.ForeignKey('academics.Auditoire', on_delete=models.CASCADE, related_name='auditorium_messages', null=True, blank=True) # Corrected model name
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
+User = get_user_model()
+
+class Message(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='chat_messages')
+    auditorium = models.ForeignKey(Auditoire, on_delete=models.CASCADE, related_name='chat_messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
     text = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ['created_at']
+    timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'Message from {self.user.get_full_name()} in {self.course.name} ({self.auditorium.name if self.auditorium else "No Auditorium"}) at {self.created_at.strftime("%Y-%m-%d %H:%M")}'
+        return f'Message from {self.sender} in {self.course.name} ({self.auditorium.name}) at {self.timestamp}'
+
+    class Meta:
+        ordering = ['timestamp']

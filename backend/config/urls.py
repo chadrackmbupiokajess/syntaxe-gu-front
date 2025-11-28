@@ -8,6 +8,8 @@ urlpatterns = [
     path("api/", include("api.urls")),
     path("api/auth/", include("accounts.urls")),
     path("api/tp_td/", include("tp_td.urls")),
+    # AJOUT DE CETTE LIGNE POUR INCLURE LES URLS DE MESSAGING
+    path("api/messaging/", include("messaging.urls")), 
 ]
 
 if settings.DEBUG:

@@ -1,45 +1,33 @@
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import permissions
-from django.apps import apps
-from .models import UserMessage
-
-Course = apps.get_model('academics', 'Course')
-Auditoire = apps.get_model('academics', 'Auditoire') # Corrected model name
+from rest_framework import status
+from .models import Message
+from .serializers import MessageSerializer
+from academics.models import Course, Auditoire
 
 @api_view(['GET', 'POST'])
-@permission_classes([permissions.IsAuthenticated])
-def course_chat_messages(request, course_code: str, auditorium_id: int):
+@permission_classes([IsAuthenticated])
+def message_list(request, course_code, auditorium_id):
+    """
+    List all messages for a given course and auditorium, or create a new message.
+    """
     try:
         course = Course.objects.get(code=course_code)
-    except Course.DoesNotExist:
-        return Response({"detail": "Cours non trouvé."}, status=404)
-
-    try:
         auditorium = Auditoire.objects.get(id=auditorium_id)
+    except Course.DoesNotExist:
+        return Response({'error': 'Course not found'}, status=status.HTTP_404_NOT_FOUND)
     except Auditoire.DoesNotExist:
-        return Response({"detail": "Auditorium non trouvé."}, status=404)
+        return Response({'error': 'Auditorium not found'}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'GET':
-        messages = UserMessage.objects.filter(course=course, auditorium=auditorium).select_related('user').order_by('created_at')
-        data = [{
-            "id": msg.id,
-            "user": msg.user.get_full_name(),
-            "text": msg.text,
-            "at": msg.created_at.isoformat(),
-        } for msg in messages]
-        return Response(data)
+        messages = Message.objects.filter(course=course, auditorium=auditorium)
+        serializer = MessageSerializer(messages, many=True)
+        return Response(serializer.data)
 
     elif request.method == 'POST':
-        text = request.data.get('text', '').strip()
-        if not text:
-            return Response({"detail": "Le message ne peut pas être vide."}, status=400)
-        
-        msg = UserMessage.objects.create(course=course, auditorium=auditorium, user=request.user, text=text)
-        
-        return Response({
-            "id": msg.id,
-            "user": request.user.get_full_name(),
-            "text": msg.text,
-            "at": msg.created_at.isoformat(),
-        }, status=201)
+        serializer = MessageSerializer(data=request.data, context={'request': request, 'course': course, 'auditorium': auditorium})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

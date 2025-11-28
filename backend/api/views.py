@@ -1275,7 +1275,6 @@ def student_courses(request):
     user = request.user
     if user.current_auditoire:
         for c in Course.objects.filter(auditoire=user.current_auditoire).select_related("auditoire"):
-            code = f"{c.name[:3].upper()}-{c.id}"
             title = c.name
             credits = c.credits
             assign = CourseAssignment.objects.filter(course=c).select_related("assistant").first()
@@ -1284,7 +1283,7 @@ def student_courses(request):
 
             rows.append({
                 "id": c.id,
-                "code": code,
+                "code": c.code,
                 "title": title,
                 "credits": credits,
                 "instructor": instructor,
